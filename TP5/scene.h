@@ -3,14 +3,17 @@
 #include <stdlib.h>
 #include <vector>
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <TP5/camera.h>
+
 
 class Scene{
     public : 
     GameObject root;
     Camera camera;
     GLuint programID;
+    std::vector<GameObject*> lights;
         Scene(){}
 
     void animation(float deltaTime){
@@ -25,6 +28,9 @@ class Scene{
     }
 
     void draw(float elapsedTime){
+        for(auto& i : this->lights){
+            i->draw(camera.globalTransform.t, elapsedTime);
+        }
         this->animation(elapsedTime);
         this->root.draw(camera.globalTransform.t, elapsedTime);
     }

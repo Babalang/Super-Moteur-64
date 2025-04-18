@@ -221,21 +221,32 @@ int main( void )
     // Affichage de la Map :
     std::cout<<"Chargement de la Map"<<std::endl;
     GameObject Map;
-    Plane map(16);
+    Plane map(64);
     Map.setPlan(map);
     scene.root.addChild(&Map);
     Map.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
-    Map.setLocalTransform(Transform().scale(5));
+    Map.setLocalTransform(Transform().scale(50));
+
     
     // Affichage de l'objet :
     GameObject Obj;
     std::cout<<"Chargement de l'objet"<<std::endl;
-    Obj.setLODMeshes("../mesh/sphere.off",true);
+    Obj.setLODMeshes("../mesh/suzanne.off",true, "../texture/assemblies/");
     Map.addChild(&Obj);
-    Obj.setLocalTransform(Transform().scale(0.1));
+    Obj.setLocalTransform(Transform().scale(0.3));
     Obj.setGlobalTransform(Obj.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
-    Obj.height2parent = 0.1f;   
-
+    Obj.height2parent = 0.3f;   
+    
+    // Affichage de la lumière :
+    std::cout<<"Chargement de la lumière"<<std::endl;
+    GameObject light;
+    light.setLODMeshes("../mesh/sphere.off",false, "../texture/s2.ppm");
+    light.setLocalTransform(Transform().scale(0.1 * Map.transform.s));
+    light.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,Map.transform.s,0.0),1.0));
+    light.lightIntensity = 2.0f * pow(Map.transform.s,2.0f);
+    light.isLight = true;
+    light.lightColor = glm::vec3(1.0f,1.0f,1.0f)* light.lightIntensity;
+    scene.lights.push_back(&light);
 
     // Ajout de la caméra :
     std::cout<<"Chargement de la Caméra"<<std::endl;
@@ -290,7 +301,17 @@ int main( void )
         glm::mat4 Projection = scene.camera.projectionMatrix;
         GLint uniProjection = glGetUniformLocation(programID,"proj");
         glUniformMatrix4fv(uniProjection,1,GL_FALSE,&Projection[0][0]);
+        GLuint CamPosUniformID = glGetUniformLocation(programID,"camPos");
+        glUniform3f(CamPosUniformID,camera.globalTransform.t[0],camera.globalTransform.t[1],camera.globalTransform.t[2]);
+        int cpt = 0;
+        for(auto& i : scene.lights){
+            GLuint lightPosLoc = glGetUniformLocation(programID, "lightPositions[0]");
+            glUniform3fv(lightPosLoc, 1, glm::value_ptr(i->globalTransform.t));
 
+            GLuint LightColorUniformID = glGetUniformLocation(programID,"lightColors[0]");
+            glUniform3f(LightColorUniformID, i->lightColor[0], i->lightColor[1], i->lightColor[2]);
+
+        }
         scene.draw(deltaTime);
         
 

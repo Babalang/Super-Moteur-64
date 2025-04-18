@@ -7,19 +7,16 @@ flat in int isPBRout;
 in vec3 worldPos;
 in vec3 Normal;
 
-uniform sampler2D Texture;
-uniform sampler2D Text2DGrass;
 uniform float GrassHeight;
-uniform sampler2D Text2DRock;
 uniform float RockHeight;
-uniform sampler2D Text2DSnow;
 uniform vec3 camPos;
-uniform vec3 albedo;
-uniform float metallic;
-uniform float roughness;
-uniform float ao;
 uniform vec3 lightPositions[1];
 uniform vec3 lightColors[1];
+uniform sampler2D albedoMap;
+uniform sampler2D normalMap;
+uniform sampler2D metallicMap;
+uniform sampler2D roughnessMap;
+uniform sampler2D aoMap;
 // Ouput data
 out vec4 color;
 const float PI = 3.14159265359;
@@ -61,11 +58,64 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 	
     return ggx1 * ggx2;
 }
+vec3 getNormalFromNormalMap()
+{
+    vec3 tangentNormal = texture(normalMap, TexCoordout).rgb;
+    tangentNormal = tangentNormal * 2.0 - 1.0;
 
+    // Construct TBN (Tangent, Bitangent, Normal) matrix
+    vec3 Q1 = dFdx(worldPos);
+    vec3 Q2 = dFdy(worldPos);
+    vec2 st1 = dFdx(TexCoordout);
+    vec2 st2 = dFdy(TexCoordout);
+
+    vec3 N = normalize(Normal);
+    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);
+    vec3 B = normalize(cross(N, T));
+
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
 
 
 void main(){
+        vec3 albedo = vec3(0.0);
+        vec3 normal = normalize(Normal);
+        float metallic = 0.4;
+        float roughness = 0.0;
+        float ao = 1.0;
+        int test = 0;
         if (isPBRout == 1){
+                albedo = pow(texture(albedoMap, TexCoordout).rgb, vec3(2.2));
+                normal     = getNormalFromNormalMap();
+                metallic  = texture(metallicMap, TexCoordout).r;
+                roughness = texture(roughnessMap, TexCoordout).r;
+                ao        = texture(aoMap, TexCoordout).r;
+                test = 1;
+        } else if(useHeightMapout == 1){
+                if(height<GrassHeight){
+                        albedo = texture(albedoMap, TexCoordout).rgb;
+                        metallic = 0.0;
+                        roughness = 0.6;
+                        ao = 0.3;
+                } else if(height<RockHeight){
+                        albedo = texture(normalMap, TexCoordout).rgb;
+                        metallic = 0.0;
+                        roughness = 0.7;
+                        ao = 0.4;
+                } else{
+                        albedo = texture(roughnessMap, TexCoordout).rgb;
+                        metallic = 0.0;
+                        roughness = 0.8;
+                        ao = 0.3;
+                }
+                test = 2;
+
+        } else{
+                color = texture(albedoMap,TexCoordout);
+        }
+        if(test != 0){
                 vec3 N = normalize(Normal);
                 vec3 V = normalize(camPos - worldPos);
 
@@ -108,18 +158,5 @@ void main(){
                 colortmp = pow(colortmp, vec3(1.0/2.2));  
                 
                 color = vec4(colortmp, 1.0);
-        }
-        else if(useHeightMapout == 1){
-                if(height<GrassHeight){
-                        color = texture(Text2DGrass, TexCoordout);
-                } else if(height<RockHeight){
-                        color = texture(Text2DRock, TexCoordout);
-                } else{
-                        color = texture(Text2DSnow, TexCoordout);
                 }
-
-        } 
-        else{
-                color = texture(Texture,TexCoordout);
-        }
 }

@@ -30,6 +30,14 @@ class GameObject{
         glm::vec3 Force = glm::vec3(0.0,poids * -9.83,0.0);
         glm::vec3 acceleration =Force/poids;
 
+        // light
+        int index = 0;
+        bool isLight = false;
+        float lightIntensity = 1.0f;
+        glm::vec3 lightColor = glm::vec3(1.0f,1.0f,1.0f);
+        
+        bool isMoving = true;
+
         GameObject() : parent(nullptr), programID(0) {}
 
         void setChild(const std::vector<GameObject*> enfants){
@@ -60,7 +68,7 @@ class GameObject{
             this->hasMesh = true;
         }
 
-        void setPlan(Plane p){this->plan = p ; hasPlan = true;}
+        void setPlan(Plane p){this->plan = p ; this->hasPlan = true;}
 
         void setGlobalTransform(Transform t){
             this->globalTransform=t;
@@ -88,51 +96,58 @@ class GameObject{
         }
 
         void draw(const glm::vec3 cameraPosition, float deltaTime){
-            GLuint PBRboolUniformID = glGetUniformLocation(programID, "isPBR");
-            GLuint CamPosUniformID = glGetUniformLocation(programID,"camPos");
-            GLuint LightPositionUniformID = glGetUniformLocation(programID,"lightPositions[0]");
-            GLuint LightColorUniformID = glGetUniformLocation(programID,"lightColors[0]");
-            if(speed != glm::vec3(0.0,0.0,0.0)) PhysicMove(deltaTime);
-            if(hasMesh){
-                if(this->mesh.isPBR == true){
-                    glUniform3f(CamPosUniformID,cameraPosition.x,cameraPosition.y,cameraPosition.z);
-                    glUniform3f(LightPositionUniformID,5.0,10.0,5.0);
-                    glUniform3f(LightColorUniformID,1.0,0.0,0.0);
-                    glUniform3f(glGetUniformLocation(programID,"albedo"), 0.0,1.0,0.0);
-                    glUniform1f(glGetUniformLocation(programID,"metallic"),0.4);
-                    glUniform1f(glGetUniformLocation(programID,"roughness"),0.1);
-                    glUniform1f(glGetUniformLocation(programID,"ao"), 0.5);
-                    glUniform1i(PBRboolUniformID,1);
-                } else {glUniform1i(PBRboolUniformID,0);}
-                updateLOD(cameraPosition);
-                glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
-                this->mesh.draw();
-                
-            }
-            if(hasPlan){
-                glUniform1i(PBRboolUniformID,0);
-                glUniform1f(glGetUniformLocation(programID, "scale"), this->transform.s);
-                if(this->plan.hasHeightMap){
-                    this->plan.drawHM();
-                } else {
+            if(isMoving){
+                GLuint PBRboolUniformID = glGetUniformLocation(programID, "isPBR");
+                if(speed != glm::vec3(0.0,0.0,0.0)) PhysicMove(deltaTime);
+                if(hasMesh){
                     glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
-                    this->plan.draw();
+                    if(this->mesh.isPBR == true){
+                        glUniform1i(PBRboolUniformID,1);
+                    } else {glUniform1i(PBRboolUniformID,0);}
+                    updateLOD(cameraPosition);
+                    this->mesh.draw();
+                    
                 }
-            }
-            for(int i=0;i<this->enfant.size();i++){
-                this->enfant[i]->draw(cameraPosition,deltaTime);
+                if(hasPlan){
+                    glUniform1i(PBRboolUniformID,0);
+                    glUniform1f(glGetUniformLocation(programID, "scale"), this->transform.s);
+                    if(this->plan.hasHeightMap){
+                        this->plan.drawHM();
+                    } else {
+                        glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
+                        this->plan.draw();
+                    }
+                }
+                for(int i=0;i<this->enfant.size();i++){
+                    this->enfant[i]->draw(cameraPosition,deltaTime);
+                }
             }
         }
 
         void setLODMeshes(const char * pathToObj = "../mesh/suzanne.off", bool isPBR = false, const char* pathToText = "../texture/2k_moon.jpg") {
-            Mesh highRes(pathToObj, pathToText,isPBR);
-            Mesh mediumRes(pathToObj, pathToText, isPBR);
-            Mesh lowRes(pathToObj, pathToText,isPBR);
-            mediumRes.simplify(15);
-            lowRes.simplify(5);
-            this->highMesh = highRes;
-            this->medMesh = mediumRes;
-            this->lowMesh = lowRes;
+            if(isPBR){
+                std::string basePath(pathToText);
+                Mesh highRes(pathToObj, "", isPBR);
+                Mesh mediumRes(pathToObj, "", isPBR);
+                Mesh lowRes(pathToObj, "", isPBR);
+                highRes.loadPBR((basePath + "albedo.png").c_str(),(basePath + "normal.png").c_str(),(basePath + "roughness.png").c_str(),(basePath + "metallic.png").c_str(),(basePath + "ao.png").c_str());
+                mediumRes.loadPBR((basePath + "albedo.png").c_str(),(basePath + "normal.png").c_str(),(basePath + "roughness.png").c_str(),(basePath + "metallic.png").c_str(),(basePath + "ao.png").c_str());
+                lowRes.loadPBR((basePath + "albedo.png").c_str(),(basePath + "normal.png").c_str(),(basePath + "roughness.png").c_str(),(basePath + "metallic.png").c_str(),(basePath + "ao.png").c_str());
+                mediumRes.simplify(15);
+                lowRes.simplify(5);
+                this->highMesh = highRes;
+                this->medMesh = mediumRes;
+                this->lowMesh = lowRes;
+            } else{
+                Mesh highRes(pathToObj, pathToText,isPBR);
+                Mesh mediumRes(pathToObj, pathToText, isPBR);
+                Mesh lowRes(pathToObj, pathToText,isPBR);
+                mediumRes.simplify(15);
+                lowRes.simplify(5);
+                this->highMesh = highRes;
+                this->medMesh = mediumRes;
+                this->lowMesh = lowRes;
+            }
             hasMesh = true;
 
         }
@@ -186,6 +201,7 @@ class GameObject{
                 Mov.t[1] = this->height2parent+height;
             } else if(speed == glm::vec3(0.0)) speed = glm::vec3(0.0,-1.0,0.0);
             this->setGlobalTransform(Mov);
+            isMoving = true;
         }
 
         void PhysicMove(float deltaTime){
@@ -201,5 +217,7 @@ class GameObject{
                 speed = glm::vec3(0.0f);
             }
             this->setGlobalTransform(Mov);
+            std::cout<<this->globalTransform.t[0]<<" "<<this->globalTransform.t[1]<<" "<<this->globalTransform.t[2]<<std::endl;
+            isMoving = true;
         }
 };

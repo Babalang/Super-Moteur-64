@@ -50,9 +50,9 @@ class Plane : public Mesh{
         Plane():Mesh(),size(0){}
 
         Plane(int size):Mesh(""),size(size){
-            generatePlan(size);
             loadHeightMaps(programID);
-            hasHeightMap = true;
+            generatePlan(size);
+            isPBR = false;
         }
 
         Plane(int size, const char* texture):size(size),Mesh(""){
@@ -60,17 +60,21 @@ class Plane : public Mesh{
             this->filename = texture;
             loadTexture();
             hasHeightMap = false;
+            isPBR = false;
         }
 
         void generatePlan(int size){
             indexed_vertices.clear(); indices.clear(); triangles.clear(); texCoords.clear();
-            indexed_vertices.resize(size*size);texCoords.resize(size*size);
+            indexed_vertices.resize(size*size);texCoords.resize(size*size); normal.resize(size*size);
             int v = 0;
             for (int i=0;i<size;i+=1){
                 for(int j=0;j<size;j+=1){
                     glm::vec3 vertex = glm::vec3(i/float(size-1)-0.5,0,j/float(size-1)-0.5);
                     indexed_vertices[v] = vertex;
                     texCoords[v] = glm::vec2(1.0-float(i)/(size-1),1.0-float(j)/(size-1));
+                    getHeightAtUV(texCoords[v], 1.0f);
+                    indexed_vertices[v][1] = getHeightAtUV(texCoords[v], 1.0f);
+                    normal[v] = glm::vec3(0.0,1.0,0.0);
                     v++;
                 }
             }
@@ -119,37 +123,38 @@ class Plane : public Mesh{
             Text2DGrass = Loadtexture("../texture/grass.png");
             Text2DRock = Loadtexture("../texture/rock.png");
             Text2DSnow = Loadtexture("../texture/snowrocks.png");
+            if(Text2DHMID == 0) {
+                std::cerr << "Failed to load height map texture." << std::endl;
+            } else {
+                hasHeightMap = true;
+            }
         }
 
         void drawHM() {
             HM2DUniformID = glGetUniformLocation( programID, "HeightMapSampler");
-            Text2DGrassUniform = glGetUniformLocation( programID, "Text2DGrass");
-            Text2DRockUniform = glGetUniformLocation( programID, "Text2DRock");
-            Text2DSnowUniform = glGetUniformLocation( programID, "Text2DSnow");
+            Text2DGrassUniform = glGetUniformLocation( programID, "albedoMap");
+            Text2DRockUniform = glGetUniformLocation( programID, "normalMap");
+            Text2DSnowUniform = glGetUniformLocation( programID, "roughnessMap");
             GrassHeightID = glGetUniformLocation( programID, "GrassHeight");
             RockHeightID = glGetUniformLocation( programID, "RockHeight");
-            glUseProgram(this->programID);
             bool heightMapAvailable = (Text2DHMID != 0);
             glUniform1i(glGetUniformLocation(programID, "useHeightMap"), heightMapAvailable==true ? 1 : 0);
+            glUniform1i(glGetUniformLocation(programID, "isPBR"), isPBR==true ? 1 : 0);
             glUniform1f(GrassHeightID, GrassHeight);
             glUniform1f(RockHeightID, RockHeight);
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, Text2DHMID);
-            glUniform1i(HM2DUniformID, 0);
-    
-            glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, Text2DGrass);
-            glUniform1i(Text2DGrassUniform, 1);
-    
-            glActiveTexture(GL_TEXTURE2);
+            glUniform1i(Text2DGrassUniform, 0);
+            
+            glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, Text2DRock);
-            glUniform1i(Text2DRockUniform, 2);
-    
-            glActiveTexture(GL_TEXTURE3);
+            glUniform1i(Text2DRockUniform, 1);
+            
+            glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, Text2DSnow);
-            glUniform1i(Text2DSnowUniform, 3);
-
+            glUniform1i(Text2DSnowUniform, 2);
+    
             glGenBuffers(1, &this->vertexbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, this->vertexbuffer);
             glBufferData(GL_ARRAY_BUFFER, this->vertices_Espace.size() * sizeof(glm::vec3), &this->vertices_Espace[0], GL_STATIC_DRAW);
@@ -162,13 +167,21 @@ class Plane : public Mesh{
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementbuffer);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(unsigned short), &this->indices[0], GL_STATIC_DRAW);
 
+            glGenBuffers(1,&this->normalbuffer);
+            glBindBuffer(GL_ARRAY_BUFFER,this->normalbuffer);
+            glBufferData(GL_ARRAY_BUFFER,this->normal.size()*sizeof(glm::vec3),&this->normal[0],GL_STATIC_DRAW);
+
             glEnableVertexAttribArray(0);
             glBindBuffer(GL_ARRAY_BUFFER, this->vertexbuffer);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
+            
             glEnableVertexAttribArray(1);
             glBindBuffer(GL_ARRAY_BUFFER, this->Text2DUVBufferID);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+            
+            glEnableVertexAttribArray(2);
+            glBindBuffer(GL_ARRAY_BUFFER, this->normalbuffer);
+            glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,0,(void*)0);
 
             glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_SHORT, (void*)0);
 
@@ -207,6 +220,30 @@ class Plane : public Mesh{
             return glm::vec2(u, v);
         }
 
+        // Fonction pour appliquer un filtre de moyenne mobile sur la heightmap
+        float applySmoothingFilter(int x, int y, int textureWidth, int textureHeight, const std::vector<unsigned char>& textureData) {
+            float sum = 0.0f;
+            int count = 0;
+
+            // Appliquer un filtre de 3x3 (pixel voisin immédiat)
+            for (int dy = -4; dy <= 4; ++dy) {
+                for (int dx = -4; dx <= 4; ++dx) {
+                    int nx = x + dx;
+                    int ny = y + dy;
+
+                    // Gérer les bords de l'image
+                    if (nx >= 0 && ny >= 0 && nx < textureWidth && ny < textureHeight) {
+                        int index = ny * textureWidth + nx;
+                        sum += (textureData[index] / 255.0f);  // Valeur normalisée de [0,1]
+                        ++count;
+                    }
+                }
+            }
+
+            // Retourner la moyenne des voisins
+            return sum / count;
+        }
+
         float getHeightAtUV(const glm::vec2& uv, float scale) {
             if(hasHeightMap){
                 int textureWidth = 512;
@@ -217,8 +254,8 @@ class Plane : public Mesh{
                 glBindTexture(GL_TEXTURE_2D, 0);
                 int x = static_cast<int>(uv.x * textureWidth) % textureWidth;
                 int y = static_cast<int>(uv.y * textureHeight) % textureHeight;
-                int index = y * textureWidth + x;
-                return ((textureData[index] / 255.0f)-0.5)*scale;
+                float smoothedHeight = applySmoothingFilter(x, y, textureWidth, textureHeight, textureData);
+                return ((smoothedHeight - 0.5) * scale);  // Retourner la hauteur lissée
             } 
             return 0.0f;
         }
