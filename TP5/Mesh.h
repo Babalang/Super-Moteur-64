@@ -28,6 +28,22 @@ using namespace glm;
 #include<unordered_map>
 #include "Transform.h"
 
+
+
+struct MTL{
+    std::string nom;
+    float ns;
+    glm::vec3 ka;
+    glm::vec3 kd;
+    glm::vec3 ks;
+    glm::vec3 ke;
+    float ni;
+    float d;
+    int illum;
+    char* texture;
+};
+
+
 class Mesh{
 
     public :
@@ -51,6 +67,9 @@ class Mesh{
         GLuint Text2DroughnessID;
         GLuint Text2DmetallicID;
         GLuint Text2DaoID;
+        std::vector<GLuint> texturesID;
+        int scale=1;
+        MTL mtl;
 
         Mesh():filename(""){}
 
@@ -318,6 +337,33 @@ class Mesh{
                 indices.push_back(triangles[i][2]);
             }
             generateUVs();
+        }
+
+        void creerTextureOBJ(const char* f){
+            int width, height, numComponents;
+            unsigned char * data = stbi_load (f,
+                                            &width,
+                                            &height,
+                                            &numComponents, 
+                                            0);
+            glGenTextures (1, &this->textureID);
+            glBindTexture (GL_TEXTURE_2D, this->textureID);
+            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexImage2D (GL_TEXTURE_2D,
+                        0,
+                        (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
+                        width,
+                        height,
+                        0,
+                        (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
+                        GL_UNSIGNED_BYTE,
+                        data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            stbi_image_free(data);
+            glBindTexture (GL_TEXTURE_2D, 0); 
         }
         
 };

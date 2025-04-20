@@ -231,7 +231,7 @@ int main( void )
     // Affichage de l'objet :
     GameObject Obj;
     std::cout<<"Chargement de l'objet"<<std::endl;
-    Obj.setLODMeshes("../mesh/suzanne.off",true, "../texture/assemblies/");
+    Obj.setLODMeshes("../meshes/suzanne.off",true, "../texture/assemblies/");
     Map.addChild(&Obj);
     Obj.setLocalTransform(Transform().scale(0.3));
     Obj.setGlobalTransform(Obj.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
@@ -240,7 +240,7 @@ int main( void )
     // Affichage de la lumière :
     std::cout<<"Chargement de la lumière"<<std::endl;
     GameObject light;
-    light.setLODMeshes("../mesh/sphere.off",false, "../texture/s2.ppm");
+    light.setLODMeshes("../meshes/sphere.off",false, "../texture/s2.ppm");
     light.setLocalTransform(Transform().scale(0.1 * Map.transform.s));
     light.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,Map.transform.s,0.0),1.0));
     light.lightIntensity = 2.0f * pow(Map.transform.s,2.0f);
@@ -255,6 +255,12 @@ int main( void )
     camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,-1.0),1.0)));
     scene.camera = camera;
     scene.camera.lookAt(&Obj);
+
+    Mesh Mchateau;GameObject GOchateau;
+    scene.lireOBJ("../meshes/Peaches_Castle.obj", &GOchateau);
+    GOchateau.setTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
+    GOchateau.setEspace(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
+    scene.root.addEnfantOBJ(&GOchateau);
 
 
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
