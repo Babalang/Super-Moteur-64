@@ -20,7 +20,7 @@ class Scene{
     void animation(float deltaTime){
 
         GameObject* Map = this->root.enfant[0];
-        GameObject* Obj = this->root.enfant[1];    
+        GameObject* Obj = Map->enfant[Map->objetsOBJ.size()];    
 
         if(camera.mode == CAMERA_MODE::CLASSIC){
             camera.setGlobalTransform(Obj->globalTransform.combine_with(Transform(camera.transform.m,glm::vec3(0.0,1.0,-1.0),1.0)));
@@ -29,7 +29,7 @@ class Scene{
     }
 
     void draw(float elapsedTime){
-        for(auto& i : this->lights){
+        for(auto& i : this->lights){ 
             i->draw(camera.globalTransform.t, elapsedTime);
         }
         this->animation(elapsedTime);
@@ -38,6 +38,7 @@ class Scene{
 
     void rajouterOBJ(GameObject *go){
         for(int i=0;i<objetsOBJ.size();i++){
+            objetsOBJ[i].programID=this->programID;
             objetsOBJ[i].mesh.programID=programID;
             objetsOBJ[i].mesh.creerTextureOBJ(objetsOBJ[i].mesh.mtl.texture);
             go->addEnfantOBJ(&objetsOBJ[i]);
@@ -45,7 +46,7 @@ class Scene{
     }
     bool lireOBJ(const char* filename, GameObject *go){
         printf("Loading OBJ file %s...\n", filename);
-        GameObject *GOA; GameObject goa;goa.M=true;
+        GameObject *GOA; GameObject goa;goa.M=true;goa.programID=this->programID;
         goa.setTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
         goa.setEspace(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
         unsigned short nb=0;

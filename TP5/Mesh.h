@@ -55,7 +55,6 @@ class Mesh{
         std::vector<glm::vec3> normal;
         std::string filename;
         GLuint programID;
-        GLuint textureID;
         GLuint vertexbuffer;
         GLuint elementbuffer;
         GLuint Text2DUVBufferID;
@@ -143,8 +142,8 @@ class Mesh{
         void loadTexture(){
             int width, height, numComponents;
             unsigned char * data = stbi_load (this->filename.c_str(),&width,&height,&numComponents,0);
-            glGenTextures (1, &textureID);
-            glBindTexture (GL_TEXTURE_2D, textureID);
+            glGenTextures (1, &Text2DalbedoID);
+            glBindTexture (GL_TEXTURE_2D, Text2DalbedoID);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -171,12 +170,18 @@ class Mesh{
         }
 
         void sendTexture(){
+            GLuint PBRboolUniformID = glGetUniformLocation(programID, "isPBR");
+            GLuint useHeightMapUniformID = glGetUniformLocation(programID, "useHeightMap");
             if(!isPBR){
+                glUniform1i(useHeightMapUniformID, 0);
+                glUniform1i(PBRboolUniformID, 0);
                 GLuint Text2DUniformID = glGetUniformLocation(this->programID, "albedoMap");
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D,textureID);
+                glBindTexture(GL_TEXTURE_2D,Text2DalbedoID);
                 glUniform1i(Text2DUniformID,0);
             } else {
+                glUniform1i(useHeightMapUniformID, 0);
+                glUniform1i(PBRboolUniformID, 1);
                 GLuint Text2DalbedoUniformID = glGetUniformLocation(this->programID, "albedoMap");
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D,Text2DalbedoID);
@@ -201,10 +206,12 @@ class Mesh{
                 glActiveTexture(GL_TEXTURE4);
                 glBindTexture(GL_TEXTURE_2D,Text2DaoID);
                 glUniform1i(Text2DaoUniformID,4);
+
             }
         }
 
         void draw(){
+            glUseProgram(this->programID);
             glGenBuffers(1,&this->vertexbuffer);
             glBindBuffer(GL_ARRAY_BUFFER,this->vertexbuffer);
             glBufferData(GL_ARRAY_BUFFER,this->vertices_Espace.size()*sizeof(glm::vec3),&this->vertices_Espace[0],GL_STATIC_DRAW);
@@ -341,13 +348,18 @@ class Mesh{
 
         void creerTextureOBJ(const char* f){
             int width, height, numComponents;
+
             unsigned char * data = stbi_load (f,
                                             &width,
                                             &height,
                                             &numComponents, 
                                             0);
-            glGenTextures (1, &this->textureID);
-            glBindTexture (GL_TEXTURE_2D, this->textureID);
+            if(data == NULL){
+                std::cout<<"Erreur de chargement de la texture : "<<f<<std::endl;
+                return;
+            }
+            glGenTextures (1, &this->Text2DalbedoID);
+            glBindTexture (GL_TEXTURE_2D, this->Text2DalbedoID);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -367,3 +379,4 @@ class Mesh{
         }
         
 };
+

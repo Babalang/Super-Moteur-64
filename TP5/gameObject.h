@@ -7,6 +7,7 @@ class GameObject{
         // Construction de l'objet dans la scène : 
         GameObject *parent;
         std::vector<GameObject*> enfant;
+        std::vector<GameObject*> objetsOBJ;
         // Placement de l'objet
         Mesh mesh;
         Transform transform;
@@ -19,6 +20,7 @@ class GameObject{
         // Distance au parent
         float height2parent = 0.0f;
         // Gestion LOD 
+        bool hasLOD = false;
         Mesh highMesh;
         Mesh medMesh;
         Mesh lowMesh;
@@ -52,9 +54,13 @@ class GameObject{
         void addChild(GameObject* child){
             child->programID = this->programID;
             if(child->hasMesh){
-                child->highMesh.programID=this->programID;
-                child->medMesh.programID=this->programID;
-                child->lowMesh.programID=this->programID;
+                if(child->hasLOD){
+                    child->highMesh.programID=this->programID;
+                    child->medMesh.programID=this->programID;
+                    child->lowMesh.programID=this->programID;
+                } else {
+                    child->mesh.programID=this->programID;
+                }
             }
             if(child->hasPlan){
                 child->plan.programID=this->programID;
@@ -77,9 +83,13 @@ class GameObject{
             this->globalTransform=t;
             if(hasMesh) {
                 Transform tmp = this->globalTransform.combine_with(this->transform);
-                this->highMesh.setVerticesEspace(tmp);
-                this->medMesh.setVerticesEspace(tmp);
-                this->lowMesh.setVerticesEspace(tmp);
+                if(hasLOD){
+                    this->highMesh.setVerticesEspace(tmp);
+                    this->medMesh.setVerticesEspace(tmp);
+                    this->lowMesh.setVerticesEspace(tmp);
+                } else {
+                    this->mesh.setVerticesEspace(tmp);
+                }
             }
             if(hasPlan) this->plan.setVerticesEspace(this->globalTransform.combine_with(this->transform));
             for(auto& i :this->enfant){
@@ -99,47 +109,36 @@ class GameObject{
         }
 
         void draw(const glm::vec3 cameraPosition, float deltaTime){
-            // if(isMoving){
-            //     GLuint PBRboolUniformID = glGetUniformLocation(programID, "isPBR");
-            //     if(speed != glm::vec3(0.0,0.0,0.0)) PhysicMove(deltaTime);
-            //     if(hasMesh){
-            //         glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
-            //         if(this->mesh.isPBR == true){
-            //             glUniform1i(PBRboolUniformID,1);
-            //         } else {glUniform1i(PBRboolUniformID,0);}
-            //         updateLOD(cameraPosition);
-            //         this->mesh.draw();
-                    
-            //     }
-            //     if(hasPlan){
-            //         glUniform1i(PBRboolUniformID,0);
-            //         glUniform1f(glGetUniformLocation(programID, "scale"), this->transform.s);
-            //         if(this->plan.hasHeightMap){
-            //             this->plan.drawHM();
-            //         } else {
-            //             glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
-            //             this->plan.draw();
-            //         }
-            //     }
-            //     for(int i=0;i<this->enfant.size();i++){
-            //         this->enfant[i]->draw(cameraPosition,deltaTime);
-            //     }
-            // }
-            if(isMoving){
-                for(int i=0;i<this->enfant.size();i++){
-                    for(int j=0;j<this->enfant[i]->enfant.size();j++){
-                        if(hasMesh){
-                            std::cout<<"i"<<std::endl;
-                            this->enfant[i]->enfant[j]->mesh.draw();
-                        }
+            GLuint scaleUniformID = glGetUniformLocation(programID, "scale");
+            if (isMoving) {
+                if (speed != glm::vec3(0.0, 0.0, 0.0))
+                    PhysicMove(deltaTime);
+        
+                if (hasMesh || M) {
+                    if (hasLOD) {
+                        updateLOD(cameraPosition);
                     }
+                    this->mesh.draw();
+                }
+                if (hasPlan) {
+                    glUniform1f(scaleUniformID, this->transform.s);
+        
+                    if (this->plan.hasHeightMap) {
+                        this->plan.drawHM();
+                    } else {
+                        this->plan.draw();
+                    }
+                }
+                for (int i = 0; i < this->enfant.size(); i++) {
+                    this->enfant[i]->draw(cameraPosition, deltaTime);
                 }
             }
         }
+        
 
         void setLODMeshes(const char * pathToObj = "../mesh/suzanne.off", bool isPBR = false, const char* pathToText = "../texture/2k_moon.jpg") {
+            std::string basePath(pathToText);
             if(isPBR){
-                std::string basePath(pathToText);
                 Mesh highRes(pathToObj, "", isPBR);
                 Mesh mediumRes(pathToObj, "", isPBR);
                 Mesh lowRes(pathToObj, "", isPBR);
@@ -160,8 +159,13 @@ class GameObject{
                 this->highMesh = highRes;
                 this->medMesh = mediumRes;
                 this->lowMesh = lowRes;
+                this->highMesh.programID = this->programID;
+                this->medMesh.programID = this->programID;
+                this->lowMesh.programID = this->programID;
             }
             hasMesh = true;
+            hasLOD = true;
+
 
         }
 
@@ -325,6 +329,7 @@ class GameObject{
                     // std::cout<<e->mesh.vertices[i][0]<<" "<<e->mesh.vertices[i][1]<<" "<<e->mesh.vertices[i][2]<<std::endl;
                 }
             }
+            this->objetsOBJ.push_back(e);
             this->enfant.push_back(e);
         }
 

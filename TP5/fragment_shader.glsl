@@ -2,11 +2,10 @@
 
 in vec2 TexCoordout;
 in float height;
-flat in int useHeightMapout;
-flat in int isPBRout;
 in vec3 worldPos;
 in vec3 Normal;
-
+uniform int useHeightMap;
+uniform int isPBR;
 uniform float GrassHeight;
 uniform float RockHeight;
 uniform vec3 camPos;
@@ -80,20 +79,21 @@ vec3 getNormalFromNormalMap()
 
 
 void main(){
-        vec3 albedo = vec3(0.0);
+        vec3 albedo = texture(albedoMap, TexCoordout).rgb;
         vec3 normal = normalize(Normal);
         float metallic = 0.4;
         float roughness = 0.0;
         float ao = 1.0;
         int test = 0;
-        if (isPBRout == 1){
+        color = vec4(albedo,1.0);
+        if (isPBR == 1){
                 albedo = pow(texture(albedoMap, TexCoordout).rgb, vec3(2.2));
                 normal     = getNormalFromNormalMap();
                 metallic  = texture(metallicMap, TexCoordout).r;
                 roughness = texture(roughnessMap, TexCoordout).r;
                 ao        = texture(aoMap, TexCoordout).r;
                 test = 1;
-        } else if(useHeightMapout == 1){
+        } else if(useHeightMap == 1){
                 if(height<GrassHeight){
                         albedo = texture(albedoMap, TexCoordout).rgb;
                         metallic = 0.0;
@@ -112,8 +112,6 @@ void main(){
                 }
                 test = 2;
 
-        } else{
-                color = texture(albedoMap,TexCoordout);
         }
         if(test != 0){
                 vec3 N = normalize(Normal);

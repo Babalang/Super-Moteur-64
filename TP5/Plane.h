@@ -44,7 +44,7 @@ class Plane : public Mesh{
         GLuint RockHeightID;
         float GrassHeight = 0.3f;
         float RockHeight = 0.6f;
-        const char * heightmap = "../texture/heighMap.png";
+        const char * heightmap = "../textures/heighMap.png";
         bool hasHeightMap = false;
 
         Plane():Mesh(),size(0){}
@@ -120,9 +120,9 @@ class Plane : public Mesh{
 
         void loadHeightMaps(GLuint programID){
             Text2DHMID = Loadtexture(heightmap);
-            Text2DGrass = Loadtexture("../texture/grass.png");
-            Text2DRock = Loadtexture("../texture/rock.png");
-            Text2DSnow = Loadtexture("../texture/snowrocks.png");
+            Text2DGrass = Loadtexture("../textures/grass.png");
+            Text2DRock = Loadtexture("../textures/rock.png");
+            Text2DSnow = Loadtexture("../textures/snowrocks.png");
             if(Text2DHMID == 0) {
                 std::cerr << "Failed to load height map texture." << std::endl;
             } else {
@@ -131,6 +131,9 @@ class Plane : public Mesh{
         }
 
         void drawHM() {
+            GLuint PBRboolUniformID = glGetUniformLocation(programID, "isPBR");
+            GLuint useHeightMapUniformID = glGetUniformLocation(programID, "useHeightMap");
+            GLuint scaleUniformID = glGetUniformLocation(programID, "scale");
             HM2DUniformID = glGetUniformLocation( programID, "HeightMapSampler");
             Text2DGrassUniform = glGetUniformLocation( programID, "albedoMap");
             Text2DRockUniform = glGetUniformLocation( programID, "normalMap");

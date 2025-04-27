@@ -1,5 +1,4 @@
 #!/bin/bash
-chmod +x "$0"
 # Function to display an error message and exit
 function error_exit {
     echo "$1" 1>&2
