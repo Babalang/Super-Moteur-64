@@ -99,30 +99,40 @@ class GameObject{
         }
 
         void draw(const glm::vec3 cameraPosition, float deltaTime){
-            if(isMoving){
-                GLuint PBRboolUniformID = glGetUniformLocation(programID, "isPBR");
-                if(speed != glm::vec3(0.0,0.0,0.0)) PhysicMove(deltaTime);
-                if(hasMesh){
-                    glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
-                    if(this->mesh.isPBR == true){
-                        glUniform1i(PBRboolUniformID,1);
-                    } else {glUniform1i(PBRboolUniformID,0);}
-                    updateLOD(cameraPosition);
-                    this->mesh.draw();
+            // if(isMoving){
+            //     GLuint PBRboolUniformID = glGetUniformLocation(programID, "isPBR");
+            //     if(speed != glm::vec3(0.0,0.0,0.0)) PhysicMove(deltaTime);
+            //     if(hasMesh){
+            //         glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
+            //         if(this->mesh.isPBR == true){
+            //             glUniform1i(PBRboolUniformID,1);
+            //         } else {glUniform1i(PBRboolUniformID,0);}
+            //         updateLOD(cameraPosition);
+            //         this->mesh.draw();
                     
-                }
-                if(hasPlan){
-                    glUniform1i(PBRboolUniformID,0);
-                    glUniform1f(glGetUniformLocation(programID, "scale"), this->transform.s);
-                    if(this->plan.hasHeightMap){
-                        this->plan.drawHM();
-                    } else {
-                        glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
-                        this->plan.draw();
-                    }
-                }
+            //     }
+            //     if(hasPlan){
+            //         glUniform1i(PBRboolUniformID,0);
+            //         glUniform1f(glGetUniformLocation(programID, "scale"), this->transform.s);
+            //         if(this->plan.hasHeightMap){
+            //             this->plan.drawHM();
+            //         } else {
+            //             glUniform1i(glGetUniformLocation(programID, "useHeightMap"), 0);
+            //             this->plan.draw();
+            //         }
+            //     }
+            //     for(int i=0;i<this->enfant.size();i++){
+            //         this->enfant[i]->draw(cameraPosition,deltaTime);
+            //     }
+            // }
+            if(isMoving){
                 for(int i=0;i<this->enfant.size();i++){
-                    this->enfant[i]->draw(cameraPosition,deltaTime);
+                    for(int j=0;j<this->enfant[i]->enfant.size();j++){
+                        if(hasMesh){
+                            std::cout<<"i"<<std::endl;
+                            this->enfant[i]->enfant[j]->mesh.draw();
+                        }
+                    }
                 }
             }
         }

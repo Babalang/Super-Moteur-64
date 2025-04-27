@@ -20,7 +20,7 @@ class Scene{
     void animation(float deltaTime){
 
         GameObject* Map = this->root.enfant[0];
-        GameObject* Obj = Map->enfant[0];    
+        GameObject* Obj = this->root.enfant[1];    
 
         if(camera.mode == CAMERA_MODE::CLASSIC){
             camera.setGlobalTransform(Obj->globalTransform.combine_with(Transform(camera.transform.m,glm::vec3(0.0,1.0,-1.0),1.0)));
