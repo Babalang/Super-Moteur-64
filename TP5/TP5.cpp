@@ -243,7 +243,7 @@ int main( void )
 
     GameObject GOmariometal;
     std::cout<<"Chargement de l'objet"<<std::endl;
-    GOmariometal.setLODMeshes("../meshes/suzanne.off",true, "../textures/assemblies/");
+    GOmariometal.setLODMeshes("../meshes/sphere.off",true, "../textures/assemblies/");
     GOchateau.addChild(&GOmariometal);
     GOmariometal.setLocalTransform(Transform().scale(0.3));
     GOmariometal.setGlobalTransform(GOmariometal.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
@@ -262,11 +262,11 @@ int main( void )
     GameObject light;
     light.programID=programID;
     light.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
-    light.setLocalTransform(Transform().scale(0.1 * GOchateau.transform.s));
-    light.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,GOchateau.transform.s*10,0.0),1.0));
-    light.lightIntensity = 200.0f * pow(GOchateau.transform.s,2.0f);
+    light.setLocalTransform(Transform().scale(5.0f));
+    light.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(50.0,50.0,50.0),1.0));
+    light.lightIntensity = 100000.0f;
     light.isLight = true;
-    light.lightColor = glm::vec3(1.0f,1.0f,1.0f)* light.lightIntensity;
+    light.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light.lightIntensity;
     scene.lights.push_back(&light);
 
     // Ajout de la caméra :
@@ -329,7 +329,7 @@ int main( void )
         int cpt = 0;
         for(auto& i : scene.lights){
             GLuint lightPosLoc = glGetUniformLocation(programID, "lightPositions[0]");
-            glUniform3fv(lightPosLoc, 1, glm::value_ptr(i->globalTransform.t));
+            glUniform3f(lightPosLoc, i->globalTransform.t[0], i->globalTransform.t[1], i->globalTransform.t[2]);
 
             GLuint LightColorUniformID = glGetUniformLocation(programID,"lightColors[0]");
             glUniform3f(LightColorUniformID, i->lightColor[0], i->lightColor[1], i->lightColor[2]);

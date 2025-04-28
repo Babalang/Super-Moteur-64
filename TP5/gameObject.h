@@ -130,6 +130,14 @@ class GameObject{
                         this->plan.draw();
                     }
                 }
+                if(isLight){
+                    std::string lightPositionName = "LightPositions[" + std::to_string(this->index) + "]";
+                    GLuint LightID = glGetUniformLocation(programID, lightPositionName.c_str());
+                    glUniform3f(LightID, this->globalTransform.t[0], this->globalTransform.t[1], this->globalTransform.t[2]);
+                    std::string lightColorName = "lightColors[" + std::to_string(this->index) + "]";
+                    GLuint LightColorUniformID = glGetUniformLocation(programID, lightColorName.c_str());
+                    glUniform3f(LightColorUniformID, this->lightColor[0], this->lightColor[1], this->lightColor[2]);
+                }
                 for (int i = 0; i < this->enfant.size(); i++) {
                     //std::cout << "Dessin de l'enfant : " << enfant[i]->nom << std::endl;
                     this->enfant[i]->draw(cameraPosition, deltaTime);

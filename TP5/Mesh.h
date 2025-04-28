@@ -110,7 +110,7 @@ class Mesh{
             for(size_t i=0; i<triangles.size();i++){
                 for(size_t y = 0;y<3;y++){
                     if(normal[triangles[i][y]]==vec3(0.,0.,0.)){
-                        normal[triangles[i][y]]= -glm::cross(indexed_vertices[triangles[i][abs(y-1)%3]]-indexed_vertices[triangles[i][y]], indexed_vertices[triangles[i][(y+1)%3]]-indexed_vertices[triangles[i][y]] );
+                        normal[triangles[i][y]]= glm::cross(indexed_vertices[triangles[i][abs(y-1)%3]]-indexed_vertices[triangles[i][y]], indexed_vertices[triangles[i][(y+1)%3]]-indexed_vertices[triangles[i][y]] );
          //               std::cout<<normal[triangles[i][y]][0]<<" "<<normal[triangles[i][y]][1]<<" "<<normal[triangles[i][y]][2]<<std::endl;
                     }
                 }
