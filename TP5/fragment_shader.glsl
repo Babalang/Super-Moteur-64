@@ -79,15 +79,13 @@ vec3 getNormalFromNormalMap()
 
 
 void main(){
-        vec3 albedo = texture(albedoMap, TexCoordout).rgb;
+        vec3 albedo =  pow(texture(albedoMap, TexCoordout).rgb, vec3(2.2));
         vec3 normal = normalize(Normal);
         float metallic = 0.4;
-        float roughness = 0.0;
-        float ao = 1.0;
+        float roughness = 0.9;
+        float ao = 10.0;
         int test = 0;
-        color = vec4(albedo,1.0);
         if (isPBR == 1){
-                albedo = pow(texture(albedoMap, TexCoordout).rgb, vec3(2.2));
                 normal     = getNormalFromNormalMap();
                 metallic  = texture(metallicMap, TexCoordout).r;
                 roughness = texture(roughnessMap, TexCoordout).r;
@@ -111,9 +109,8 @@ void main(){
                         ao = 0.3;
                 }
                 test = 2;
-
         }
-        if(test != 0){
+
                 vec3 N = normalize(Normal);
                 vec3 V = normalize(camPos - worldPos);
 
@@ -157,4 +154,3 @@ void main(){
                 
                 color = vec4(colortmp, 1.0);
                 }
-}

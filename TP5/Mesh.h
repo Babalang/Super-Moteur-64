@@ -77,7 +77,9 @@ class Mesh{
             for(int i=0;i<this->indexed_vertices.size();i++){
                 this->texCoords.push_back(glm::vec2(0.0,0.0));
             }
-            loadTexture();
+            if(filename != ""){
+                loadTexture();
+            }
             generateUVs();
             if(test){
                 std::cout<<"Calcul des normales"<<std::endl;
@@ -142,6 +144,10 @@ class Mesh{
         void loadTexture(){
             int width, height, numComponents;
             unsigned char * data = stbi_load (this->filename.c_str(),&width,&height,&numComponents,0);
+            if(data == NULL){
+                std::cout<<"Erreur de chargement de la texture : "<<this->filename<<std::endl;
+                return;
+            }
             glGenTextures (1, &Text2DalbedoID);
             glBindTexture (GL_TEXTURE_2D, Text2DalbedoID);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -157,6 +163,10 @@ class Mesh{
         void loadTexture(GLuint& id, const char* path){
             int width, height, numComponents;
             unsigned char * data = stbi_load (path,&width,&height,&numComponents,0);
+            if(data == NULL){
+                std::cout<<"Erreur de chargement de la texture : "<<path<<std::endl;
+                return;
+            }
             glGenTextures (1, &id);
             glBindTexture (GL_TEXTURE_2D, id);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -211,6 +221,10 @@ class Mesh{
         }
 
         void draw(){
+            if(this->programID == 0){
+                std::cout<<"Erreur de chargement du shader !"<<std::endl;
+                return;
+            }
             glUseProgram(this->programID);
             glGenBuffers(1,&this->vertexbuffer);
             glBindBuffer(GL_ARRAY_BUFFER,this->vertexbuffer);

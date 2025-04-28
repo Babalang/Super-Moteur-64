@@ -7,7 +7,8 @@ class GameObject{
         // Construction de l'objet dans la scène : 
         GameObject *parent;
         std::vector<GameObject*> enfant;
-        std::vector<GameObject*> objetsOBJ;
+        std::vector<GameObject> objetsOBJ;
+        std::vector<GameObject*> objetsOBJtmp;
         // Placement de l'objet
         Mesh mesh;
         Transform transform;
@@ -108,7 +109,7 @@ class GameObject{
             if(hasPlan) this->plan.setVerticesEspace(this->globalTransform.combine_with(this->transform));
         }
 
-        void draw(const glm::vec3 cameraPosition, float deltaTime){
+        void draw(const glm::vec3 cameraPosition, float deltaTime) {
             GLuint scaleUniformID = glGetUniformLocation(programID, "scale");
             if (isMoving) {
                 if (speed != glm::vec3(0.0, 0.0, 0.0))
@@ -119,8 +120,8 @@ class GameObject{
                         updateLOD(cameraPosition);
                     }
                     this->mesh.draw();
-                }
-                if (hasPlan) {
+                    //std::cout << "Dessin de l'objet : " << nom << std::endl;
+                } else if (hasPlan) {
                     glUniform1f(scaleUniformID, this->transform.s);
         
                     if (this->plan.hasHeightMap) {
@@ -130,13 +131,14 @@ class GameObject{
                     }
                 }
                 for (int i = 0; i < this->enfant.size(); i++) {
+                    //std::cout << "Dessin de l'enfant : " << enfant[i]->nom << std::endl;
                     this->enfant[i]->draw(cameraPosition, deltaTime);
                 }
             }
         }
         
 
-        void setLODMeshes(const char * pathToObj = "../mesh/suzanne.off", bool isPBR = false, const char* pathToText = "../texture/2k_moon.jpg") {
+        void setLODMeshes(const char * pathToObj = "../meshes/suzanne.off", bool isPBR = false, const char* pathToText = "../textures/2k_moon.jpg") {
             std::string basePath(pathToText);
             if(isPBR){
                 Mesh highRes(pathToObj, "", isPBR);
@@ -150,6 +152,12 @@ class GameObject{
                 this->highMesh = highRes;
                 this->medMesh = mediumRes;
                 this->lowMesh = lowRes;
+                this->highMesh.programID = this->programID;
+                this->medMesh.programID = this->programID;
+                this->lowMesh.programID = this->programID;
+                highRes.compute_Normals();
+                mediumRes.compute_Normals();
+                lowRes.compute_Normals();
             } else{
                 Mesh highRes(pathToObj, pathToText,isPBR);
                 Mesh mediumRes(pathToObj, pathToText, isPBR);
@@ -162,6 +170,9 @@ class GameObject{
                 this->highMesh.programID = this->programID;
                 this->medMesh.programID = this->programID;
                 this->lowMesh.programID = this->programID;
+                highRes.compute_Normals();
+                mediumRes.compute_Normals();
+                lowRes.compute_Normals();
             }
             hasMesh = true;
             hasLOD = true;
@@ -180,32 +191,6 @@ class GameObject{
                 setMesh(lowMesh);
             }
         }
-
-
-        // void avancer(float deltaTime, vitesse = this->speed){ 
-        //     glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
-        //     float height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
-        //     std::cout<<this->height2parent<<std::endl;
-        //     this->setGlobalTransform(Transform(this->globalTransform.m,glm::vec3(this->globalTransform.t[0], this->height2parent + height, this->globalTransform.t[2]+(vitesse*deltaTime)),this->globalTransform.s));
-        // }
-
-        // void reculer(float deltaTime, vitesse = this->speed){ 
-        //     glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
-        //     float height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
-        //     this->setGlobalTransform(Transform(this->globalTransform.m,glm::vec3(this->globalTransform.t[0],  this->height2parent + height, this->globalTransform.t[2]-(vitesse*deltaTime)),this->globalTransform.s));
-        // }
-
-        // void droite(float deltaTime, vitesse = this->speed){ 
-        //     glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
-        //     float height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
-        //     this->setGlobalTransform(Transform(this->globalTransform.m,glm::vec3(this->globalTransform.t[0]-(vitesse*deltaTime),  this->height2parent + height, this->globalTransform.t[2]),this->globalTransform.s));
-        // }
-
-        // void gauche(float deltaTime, vitesse = this->speed){
-        //     glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
-        //     float height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
-        //     this->setGlobalTransform(Transform(this->globalTransform.m,glm::vec3(this->globalTransform.t[0]+(vitesse*deltaTime),  this->height2parent + height, this->globalTransform.t[2]),this->globalTransform.s));
-        // }
 
         void Move(float deltaTime, glm::vec3 axe, float vitesse = 1.0f){
             float height = 0.0f;
@@ -325,23 +310,179 @@ class GameObject{
             e->programID=this->programID;
             if(e->M){
                 e->mesh.programID=programID;
-                for(int i=0;i<e->mesh.indexed_vertices.size();i++){
-                    // std::cout<<e->mesh.vertices[i][0]<<" "<<e->mesh.vertices[i][1]<<" "<<e->mesh.vertices[i][2]<<std::endl;
-                }
             }
-            this->objetsOBJ.push_back(e);
             this->enfant.push_back(e);
+            e->hasMesh = true;
+            e->parent=this;
+            e->setGlobalTransform(this->globalTransform);
+            e->setLocalTransform(e->transform);
         }
 
-        void setTransform(Transform t){
-            this->transform = t;
-            this->mesh.setVerticesEspace(this->globalTransform.combine_with(this->transform));
-        }
-        void setEspace(Transform t){
-            this->globalTransform=t;
-            this->mesh.setVerticesEspace(this->globalTransform.combine_with(this->transform));
-            for(auto& i :this->enfant){
-                    i->setEspace(i->globalTransform.combine_with(this->globalTransform));
+        void rajouterOBJ() {
+            for (int i = 0; i < objetsOBJ.size(); i++) {
+                objetsOBJ[i].programID = this->programID;
+                objetsOBJ[i].mesh.programID = programID;
+                objetsOBJ[i].hasMesh = true;
+                objetsOBJ[i].M = true;
+                objetsOBJ[i].mesh.creerTextureOBJ(objetsOBJ[i].mesh.mtl.texture);
+                this->addEnfantOBJ(&objetsOBJ[i]);
             }
+            std::cout << "Nombre d'objets ajoutés : " << objetsOBJ.size() << std::endl;
         }
+        bool lireOBJ(const char* filename){
+            this->M = false; this->hasMesh = false; this->hasPlan = false;
+            printf("Loading OBJ file %s...\n", filename);
+            GameObject goa;goa.M=true;goa.programID=this->programID;
+            goa.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
+            goa.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
+            unsigned short nb=0;
+            std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
+            std::vector<glm::vec3> temp_vertices;
+            std::vector<glm::vec2> temp_uvs;
+            std::vector<glm::vec3> temp_normals;
+            bool Factuel=false;
+            int nbTriangles=0;
+            FILE * file = fopen(filename, "r");
+            if( file == NULL ){
+                printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
+                getchar();
+                return false;
+            }
+            while( 1 ){
+                char lineHeader[128];
+                // read the first word of the line
+                int res = fscanf(file, "%s", lineHeader);
+                if (res == EOF){
+                    if(Factuel){
+                        for( unsigned int i=nb; i<vertexIndices.size(); i++ ){
+                            unsigned int vertexIndex = vertexIndices[i];
+                            unsigned int uvIndex = uvIndices[i];
+                            unsigned int normalIndex = normalIndices[i];
+                            glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
+                            glm::vec2 uv = temp_uvs[ uvIndex-1 ];
+                            glm::vec3 normal = temp_normals[ normalIndex-1 ];
+                            goa.mesh.indexed_vertices.push_back(vertex);
+                            goa.mesh.texCoords     .push_back(uv);
+                            goa.mesh.normal .push_back(normal);
+                        }
+                        for( unsigned short i=nb; i<vertexIndices.size(); i+=3 ){
+                            unsigned short a=(unsigned short)(vertexIndices[i])-nb-1;
+                            unsigned short b=(unsigned short)(vertexIndices[i+1])-nb-1;
+                            unsigned short c=(unsigned short)(vertexIndices[i+2])-nb-1;
+                            std::vector<unsigned short> ind{a,b,c};
+                            goa.mesh.triangles.push_back(ind);
+                            nbTriangles++;
+                            goa.mesh.indices.push_back(a);
+                            goa.mesh.indices.push_back(b);
+                            goa.mesh.indices.push_back(c);
+                        }
+                        this->objetsOBJ.push_back(goa);
+                        nb=vertexIndices.size();
+                    }
+                    this->rajouterOBJ();
+                    break; // EOF = End Of File. Quit the loop.
+                }
+                else if(Factuel && strcmp(lineHeader, "f")!=0){
+                    Factuel=false;
+                    for( unsigned int i=nb; i<vertexIndices.size(); i++ ){
+                        unsigned int vertexIndex = vertexIndices[i];
+                        unsigned int uvIndex = uvIndices[i];
+                        unsigned int normalIndex = normalIndices[i];
+                        glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
+                        glm::vec2 uv = temp_uvs[ uvIndex-1 ];
+                        glm::vec3 normal = temp_normals[ normalIndex-1 ];
+                        goa.mesh.indexed_vertices.push_back(vertex);
+                        goa.mesh.texCoords     .push_back(uv);
+                        goa.mesh.normal .push_back(normal);
+                    }
+                    for( unsigned short i=nb; i<vertexIndices.size(); i+=3 ){
+                        unsigned short a=(unsigned short)(vertexIndices[i])-nb-1;
+                        unsigned short b=(unsigned short)(vertexIndices[i+1])-nb-1;
+                        unsigned short c=(unsigned short)(vertexIndices[i+2])-nb-1;
+                        std::vector<unsigned short> ind{a,b,c};
+                        goa.mesh.triangles.push_back(ind);
+                        nbTriangles++;
+                        goa.mesh.indices.push_back(a);
+                        goa.mesh.indices.push_back(b);
+                        goa.mesh.indices.push_back(c);
+                    }
+                    objetsOBJ.push_back(goa);
+                    nb=vertexIndices.size();
+                    goa.enfant.clear();
+                    goa.mesh.indexed_vertices.clear();
+                    goa.mesh.indices.clear();
+                    goa.mesh.triangles.clear();
+                    goa.mesh.normal.clear();
+                    goa.mesh.texCoords.clear();
+                }
+                // else : parse lineHeader
+                else if ( strcmp( lineHeader, "mtllib" ) == 0 ){
+                    char mtllib[100];
+                    fscanf(file, "%s\n", mtllib );
+                    std::string s="../meshes/";
+                    s+=mtllib;
+                    this->lireMTL(s.c_str());
+                }else if ( strcmp( lineHeader, "o" ) == 0 ){
+                    char nom[250];
+                    fscanf(file, "%s\n", nom );
+                    goa.nom=std::string(nom);
+                }else if ( strcmp( lineHeader, "usemtl" ) == 0 ){
+                    char usemtl[250];
+                    fscanf(file, "%s\n", usemtl );
+                    this->trouverMTL(usemtl, &goa);
+                }else if ( strcmp( lineHeader, "v" ) == 0 ){
+                    glm::vec3 vertex;
+                    fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
+                    temp_vertices.push_back(vertex);
+                }else if ( strcmp( lineHeader, "s" ) == 0 ){
+                    char s[250];
+                    fscanf(file, "%s\n", s );
+                }else if ( strcmp( lineHeader, "vt" ) == 0 ){
+                    glm::vec2 uv;
+                    fscanf(file, "%f %f\n", &uv.x, &uv.y );
+                    uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
+                    temp_uvs.push_back(uv);
+                }else if ( strcmp( lineHeader, "vn" ) == 0 ){
+                    glm::vec3 normal;
+                    fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
+                    temp_normals.push_back(normal);
+                }else if ( strcmp( lineHeader, "f" ) == 0 ){
+                    Factuel=true;
+                    std::string vertex1, vertex2, vertex3;
+                    unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+                    int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
+                    if (matches == 1){
+                        matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertexIndex[0], &normalIndex[0], &vertexIndex[1], &normalIndex[1], &vertexIndex[2], &normalIndex[2] );
+                        uvIndex[0]=1;
+                        uvIndex[1]=1;
+                        uvIndex[2]=1;
+                    }
+                    else if (matches != 9){
+                        printf("File can't be read by our simple parser :-( Try exporting with other options\n");
+                        fclose(file);
+                        return false;
+                    }
+                    vertexIndices.push_back(vertexIndex[0]);
+                    vertexIndices.push_back(vertexIndex[1]);
+                    vertexIndices.push_back(vertexIndex[2]);
+                    uvIndices    .push_back(uvIndex[0]);
+                    uvIndices    .push_back(uvIndex[1]);
+                    uvIndices    .push_back(uvIndex[2]);
+                    normalIndices.push_back(normalIndex[0]);
+                    normalIndices.push_back(normalIndex[1]);
+                    normalIndices.push_back(normalIndex[2]);
+                }else{
+                    // Probably a comment, eat up the rest of the line
+                    char stupidBuffer[10000];
+                    fgets(stupidBuffer, 1000, file);
+                }
+    
+            }
+            // For each vertex of each triangle
+            
+            fclose(file);
+            std::cout<<"fini de charger le fichier OBJ !"<<std::endl;
+            return true;
+        }
+    
 };
