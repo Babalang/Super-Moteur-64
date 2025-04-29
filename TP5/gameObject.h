@@ -348,8 +348,10 @@ class GameObject{
             std::vector<glm::vec3> temp_vertices;
             std::vector<glm::vec2> temp_uvs;
             std::vector<glm::vec3> temp_normals;
+            std::vector<unsigned short> nbTrianglesActu;
             bool Factuel=false;
             int nbTriangles=0;
+            nbTrianglesActu.push_back(nbTriangles);
             FILE * file = fopen(filename, "r");
             if( file == NULL ){
                 printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
@@ -362,7 +364,7 @@ class GameObject{
                 int res = fscanf(file, "%s", lineHeader);
                 if (res == EOF){
                     if(Factuel){
-                        for( unsigned int i=nb; i<vertexIndices.size(); i++ ){
+                        for( unsigned short i=nb; i<vertexIndices.size(); i++ ){
                             unsigned int vertexIndex = vertexIndices[i];
                             unsigned int uvIndex = uvIndices[i];
                             unsigned int normalIndex = normalIndices[i];
@@ -373,10 +375,10 @@ class GameObject{
                             goa.mesh.texCoords     .push_back(uv);
                             goa.mesh.normal .push_back(normal);
                         }
-                        for( unsigned short i=nb; i<vertexIndices.size(); i+=3 ){
-                            unsigned short a=(unsigned short)(vertexIndices[i])-nb-1;
-                            unsigned short b=(unsigned short)(vertexIndices[i+1])-nb-1;
-                            unsigned short c=(unsigned short)(vertexIndices[i+2])-nb-1;
+                        for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
+                            unsigned short a=(unsigned short)(i+2);
+                            unsigned short b=(unsigned short)(i+1);
+                            unsigned short c=(unsigned short)(i);
                             std::vector<unsigned short> ind{a,b,c};
                             goa.mesh.triangles.push_back(ind);
                             nbTriangles++;
@@ -384,7 +386,10 @@ class GameObject{
                             goa.mesh.indices.push_back(b);
                             goa.mesh.indices.push_back(c);
                         }
-                        this->objetsOBJ.push_back(goa);
+                        // this->objetsOBJ.push_back(goa);
+                        objetsOBJ.push_back(goa);
+                        std::cout<<"nombre de traingles : "<<goa.mesh.triangles.size()<<std::endl;
+                        std::cout<<"nombre de vertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
                         nb=vertexIndices.size();
                     }
                     this->rajouterOBJ();
@@ -392,8 +397,10 @@ class GameObject{
                 }
                 else if(Factuel && strcmp(lineHeader, "f")!=0){
                     Factuel=false;
-                    for( unsigned int i=nb; i<vertexIndices.size(); i++ ){
+                    unsigned short nba=0;
+                    for( unsigned short i=nb; i<vertexIndices.size(); i++ ){
                         unsigned int vertexIndex = vertexIndices[i];
+                        std::cout<<"i : "<<i<<std::endl;
                         unsigned int uvIndex = uvIndices[i];
                         unsigned int normalIndex = normalIndices[i];
                         glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
@@ -402,11 +409,21 @@ class GameObject{
                         goa.mesh.indexed_vertices.push_back(vertex);
                         goa.mesh.texCoords     .push_back(uv);
                         goa.mesh.normal .push_back(normal);
+                        if(vertexIndices[i]>temp_vertices.size()){
+                            std::cout<<"iiiiiiiiiiiiiiiiiiiiiiiiiiiii"<<std::endl;
+                        }
+                        // std::cout<<"vertex : "<<vertexIndices[i]<<std::endl;
+                        // std::cout<<"vertices : "<<vertex.x<<" "<<vertex.y<<" "<<vertex.z<<std::endl;
+                        nba++;
                     }
-                    for( unsigned short i=nb; i<vertexIndices.size(); i+=3 ){
-                        unsigned short a=(unsigned short)(vertexIndices[i])-nb-1;
-                        unsigned short b=(unsigned short)(vertexIndices[i+1])-nb-1;
-                        unsigned short c=(unsigned short)(vertexIndices[i+2])-nb-1;
+                    for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
+                        // unsigned short a=i+2;
+                        // unsigned short b=i+1;
+                        // unsigned short c=i;
+                        unsigned short a=(unsigned short)(vertexIndices[i+nb])-nb-1;
+                        unsigned short b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
+                        unsigned short c=(unsigned short)(vertexIndices[i+2+nb])-nb-1;
+                        std::cout<<"a : "<<a<<" b : "<<b<<" c : "<<c<<std::endl;
                         std::vector<unsigned short> ind{a,b,c};
                         goa.mesh.triangles.push_back(ind);
                         nbTriangles++;
@@ -415,7 +432,10 @@ class GameObject{
                         goa.mesh.indices.push_back(c);
                     }
                     objetsOBJ.push_back(goa);
-                    nb=vertexIndices.size();
+                    nb+=nba;
+                    std::cout<<"nbVertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
+                    std::cout<<"nb : "<<nb<<std::endl;
+                    nbTrianglesActu.push_back(nbTriangles*3);
                     goa.enfant.clear();
                     goa.mesh.indexed_vertices.clear();
                     goa.mesh.indices.clear();
