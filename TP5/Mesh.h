@@ -41,6 +41,12 @@ struct MTL{
     float d;
     int illum;
     char* texture;
+    std::string albedo;
+    std::string ao;
+    std::string roughness;
+    std::string normal;
+    std::string metallic;
+    bool pbr=false;
 };
 
 
@@ -118,6 +124,7 @@ class Mesh{
         }
 
         void loadPBR(const char* pathToAlbedo, const char* pathToNormal, const char* pathToRoughness, const char* pathToMetallic, const char* pathToAo){
+            this->isPBR=true;
             loadTexture(this->Text2DalbedoID,pathToAlbedo);
             loadTexture(this->Text2DnormalID,pathToNormal);
             loadTexture(this->Text2DroughnessID,pathToRoughness);
@@ -361,35 +368,39 @@ class Mesh{
         }
 
         void creerTextureOBJ(const char* f){
-            int width, height, numComponents;
-
-            unsigned char * data = stbi_load (f,
-                                            &width,
-                                            &height,
-                                            &numComponents, 
-                                            0);
-            if(data == NULL){
-                std::cout<<"Erreur de chargement de la texture : "<<f<<std::endl;
-                return;
+            if(mtl.pbr){
+                std::cout<<"pbr"<<std::endl;
+                loadPBR(mtl.albedo.c_str(),mtl.normal.c_str(),mtl.roughness.c_str(),mtl.metallic.c_str(),mtl.ao.c_str());
+            }else{
+                int width, height, numComponents;
+                unsigned char * data = stbi_load (f,
+                                                &width,
+                                                &height,
+                                                &numComponents, 
+                                                0);
+                if(data == NULL){
+                    std::cout<<"Erreur de chargement de la texture : "<<f<<std::endl;
+                    return;
+                }
+                glGenTextures (1, &this->Text2DalbedoID);
+                glBindTexture (GL_TEXTURE_2D, this->Text2DalbedoID);
+                glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                glTexImage2D (GL_TEXTURE_2D,
+                            0,
+                            (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
+                            width,
+                            height,
+                            0,
+                            (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
+                            GL_UNSIGNED_BYTE,
+                            data);
+                glGenerateMipmap(GL_TEXTURE_2D);
+                stbi_image_free(data);
+                glBindTexture (GL_TEXTURE_2D, 0); 
             }
-            glGenTextures (1, &this->Text2DalbedoID);
-            glBindTexture (GL_TEXTURE_2D, this->Text2DalbedoID);
-            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexImage2D (GL_TEXTURE_2D,
-                        0,
-                        (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
-                        width,
-                        height,
-                        0,
-                        (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
-                        GL_UNSIGNED_BYTE,
-                        data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-            stbi_image_free(data);
-            glBindTexture (GL_TEXTURE_2D, 0); 
         }
         
 };

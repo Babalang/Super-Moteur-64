@@ -232,6 +232,7 @@ int main( void )
     GameObject GOchateau;
     GOchateau.programID=programID;
     GOchateau.lireOBJ("../meshes/Peaches_Castle.obj");
+    GOchateau.rajouterOBJ();
     GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     scene.root.addChild(&GOchateau);
@@ -251,11 +252,21 @@ int main( void )
 
     GameObject GOmariometal;
     GOmariometal.programID=programID;
-    GOmariometal.lireOBJ("../meshes/Mario64.obj");
     GOmariometal.lireOBJ("../meshes/Mario64_Cap.obj");
+    GOmariometal.lireOBJ("../meshes/Mario64.obj");
+    std::cout<<"Chargement de l'objet"<<std::endl;
+    GOmariometal.rajouterOBJ();
+    std::cout<<"debut PBR metal mario"<<std::endl;
+    for(int i=0;i<GOmariometal.enfant.size();i++){
+        GOmariometal.enfant[i]->mesh.isPBR=true;
+    }
+    std::cout<<"fin PBR metal mario"<<std::endl;
+    Transform t2=Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0);
+    Transform t=Transform(glm::mat3x3(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0),glm::vec3(0.0,5.0,0.0),0.04);
+    Transform t3=t.combine_with(t2.rotation(glm::vec3(1.0,0.0,0.0),-90.0));
+    GOmariometal.setLocalTransform(t3.combine_with(t2.rotation(glm::vec3(0.0,0.0,1.0),-180.0)));
+    GOmariometal.setGlobalTransform(t3.combine_with(t2.rotation(glm::vec3(0.0,0.0,1.0),-180.0)));
     std::cout<<"pa"<<std::endl;
-    GOmariometal.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.001));
-    GOmariometal.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.001));
     GOchateau.addChild(&GOmariometal);
     std::cout<<"i"<<std::endl;
     
@@ -275,7 +286,7 @@ int main( void )
     std::cout<<"Chargement de la Caméra"<<std::endl;
     Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
     GOmariometal.addChild(&camera);
-    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,-1.0),1.0)));
+    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
     scene.camera = camera;
     scene.camera.lookAt(&GOmariometal);
     std::cout<<"i"<<std::endl;

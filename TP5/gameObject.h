@@ -35,6 +35,7 @@ class GameObject{
         std::vector<MTL> mtls;
         std::string nom;
         bool M=false;
+        int tailleObjetOBJ=0;
 
         // light
         int index = 0;
@@ -312,6 +313,47 @@ class GameObject{
                     char* cstr = new char[chemin.size() + 1];
                     std::copy(chemin.c_str(), chemin.c_str() + chemin.size() + 1, cstr);
                     mtl.texture=cstr;
+                }else if( strcmp( lineHeader, "albedo" ) == 0 ){
+                    mtl.pbr=true;
+                    char albedo[250];
+                    fscanf(file, "%s\n", albedo );
+                    std::string chemin="../textures/";
+                    chemin+=albedo;
+                    char* cstr = new char[chemin.size() + 1];
+                    std::copy(chemin.c_str(), chemin.c_str() + chemin.size() + 1, cstr);
+                    mtl.albedo=chemin;
+                }else if( strcmp( lineHeader, "ao" ) == 0 ){
+                    char ao[250];
+                    fscanf(file, "%s\n", ao );
+                    std::string chemin="../textures/";
+                    chemin+=ao;
+                    char* cstr = new char[chemin.size() + 1];
+                    std::copy(chemin.c_str(), chemin.c_str() + chemin.size() + 1, cstr);
+                    mtl.ao=chemin;
+                }else if( strcmp( lineHeader, "roughness" ) == 0 ){
+                    char roughness[250];
+                    fscanf(file, "%s\n", roughness );
+                    std::string chemin="../textures/";
+                    chemin+=roughness;
+                    char* cstr = new char[chemin.size() + 1];
+                    std::copy(chemin.c_str(), chemin.c_str() + chemin.size() + 1, cstr);
+                    mtl.roughness=chemin;
+                }else if( strcmp( lineHeader, "normal" ) == 0 ){
+                    char normal[250];
+                    fscanf(file, "%s\n", normal );
+                    std::string chemin="../textures/";
+                    chemin+=normal;
+                    char* cstr = new char[chemin.size() + 1];
+                    std::copy(chemin.c_str(), chemin.c_str() + chemin.size() + 1, cstr);
+                    mtl.normal=chemin;
+                }else if( strcmp( lineHeader, "metallic" ) == 0 ){
+                    char metallic[250];
+                    fscanf(file, "%s\n", metallic );
+                    std::string chemin="../textures/";
+                    chemin+=metallic;
+                    char* cstr = new char[chemin.size() + 1];
+                    std::copy(chemin.c_str(), chemin.c_str() + chemin.size() + 1, cstr);
+                    mtl.metallic=chemin;
                 }else{
                     // Probably a comment, eat up the rest of the line
                     char stupidBuffer[1000];
@@ -345,7 +387,8 @@ class GameObject{
         }
 
         void rajouterOBJ() {
-            for (int i = 0; i < objetsOBJ.size(); i++) {
+            // std::cout<<tailleObjetOBJ<<std::endl;
+            for (int i = tailleObjetOBJ; i < objetsOBJ.size(); i++) {
                 objetsOBJ[i].programID = this->programID;
                 objetsOBJ[i].mesh.programID = programID;
                 objetsOBJ[i].hasMesh = true;
@@ -354,6 +397,7 @@ class GameObject{
                 this->addEnfantOBJ(&objetsOBJ[i]);
                 // this->addEnfantOBJ2(&objetsOBJ[i]);
             }
+            tailleObjetOBJ=objetsOBJ.size();
             std::cout << "Nombre d'objets ajoutés : " << objetsOBJ.size() << std::endl;
         }
         bool lireOBJ(const char* filename){
@@ -412,7 +456,9 @@ class GameObject{
                         // std::cout<<"nombre de vertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
                         nb=vertexIndices.size();
                     }
-                    this->rajouterOBJ();
+                    // this->rajouterOBJ();
+                    // std::cout<<"taille objetOBJ : "<<objetsOBJ.size()<<std::endl;
+                    // std::cout<<"taille enfant : "<<enfant.size()<<std::endl;
                     break; // EOF = End Of File. Quit the loop.
                 }
                 else if(Factuel && strcmp(lineHeader, "f")!=0){
