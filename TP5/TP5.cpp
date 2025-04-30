@@ -232,8 +232,8 @@ int main( void )
     GameObject GOchateau;
     GOchateau.programID=programID;
     GOchateau.lireOBJ("../meshes/Peaches_Castle.obj");
-    GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
-    GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
+    GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
+    GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     scene.root.addChild(&GOchateau);
 
 
@@ -241,21 +241,23 @@ int main( void )
 
     //    // Affichage de l'objet :
 
-    GameObject GOmariometal;
-    std::cout<<"Chargement de l'objet"<<std::endl;
-    GOmariometal.setLODMeshes("../meshes/sphere.off",true, "../textures/assemblies/");
-    GOchateau.addChild(&GOmariometal);
-    GOmariometal.setLocalTransform(Transform().scale(0.3));
-    GOmariometal.setGlobalTransform(GOmariometal.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
-    GOmariometal.height2parent = 0.3f;   
-
     // GameObject GOmariometal;
-    // GOmariometal.programID=programID;
-    // GOmariometal.lireOBJ("../meshes/Metal_Mario.obj");
-    // GOmariometal.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
-    // GOmariometal.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
+    // std::cout<<"Chargement de l'objet"<<std::endl;
+    // GOmariometal.setLODMeshes("../meshes/sphere.off",true, "../textures/assemblies/");
     // GOchateau.addChild(&GOmariometal);
-    // std::cout<<"i"<<std::endl;
+    // GOmariometal.setLocalTransform(Transform().scale(0.3));
+    // GOmariometal.setGlobalTransform(GOmariometal.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
+    // GOmariometal.height2parent = 0.3f;   
+
+    GameObject GOmariometal;
+    GOmariometal.programID=programID;
+    GOmariometal.lireOBJ("../meshes/Mario64.obj");
+    GOmariometal.lireOBJ("../meshes/Mario64_Cap.obj");
+    std::cout<<"pa"<<std::endl;
+    GOmariometal.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.001));
+    GOmariometal.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.001));
+    GOchateau.addChild(&GOmariometal);
+    std::cout<<"i"<<std::endl;
     
     // Affichage de la lumière :
     std::cout<<"Chargement de la lumière"<<std::endl;
@@ -276,6 +278,7 @@ int main( void )
     camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,-1.0),1.0)));
     scene.camera = camera;
     scene.camera.lookAt(&GOmariometal);
+    std::cout<<"i"<<std::endl;
 
 
 

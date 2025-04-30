@@ -21,5 +21,4 @@ void main(){
         worldPos = vertexPosition;
         height = vertexPosition.y;
         Normal = Normal_modelspace;
-
 }

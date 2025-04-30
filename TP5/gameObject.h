@@ -94,7 +94,7 @@ class GameObject{
             }
             if(hasPlan) this->plan.setVerticesEspace(this->globalTransform.combine_with(this->transform));
             for(auto& i :this->enfant){
-                    i->setGlobalTransform(this->globalTransform);
+                i->setGlobalTransform(this->globalTransform);
             }
         }
 
@@ -107,6 +107,9 @@ class GameObject{
                 this->lowMesh.setVerticesEspace(tmp);
             }
             if(hasPlan) this->plan.setVerticesEspace(this->globalTransform.combine_with(this->transform));
+            for(auto& i :this->objetsOBJ){
+                i.setLocalTransform(this->transform);
+            }
         }
 
         void draw(const glm::vec3 cameraPosition, float deltaTime) {
@@ -141,6 +144,10 @@ class GameObject{
                 for (int i = 0; i < this->enfant.size(); i++) {
                     //std::cout << "Dessin de l'enfant : " << enfant[i]->nom << std::endl;
                     this->enfant[i]->draw(cameraPosition, deltaTime);
+                }
+                for (int i = 0; i < this->objetsOBJ.size(); i++) {
+                    //std::cout << "Dessin de l'enfant : " << enfant[i]->nom << std::endl;
+                    this->objetsOBJ[i].draw(cameraPosition, deltaTime);
                 }
             }
         }
@@ -325,6 +332,17 @@ class GameObject{
             e->setGlobalTransform(this->globalTransform);
             e->setLocalTransform(e->transform);
         }
+        void addEnfantOBJ2(GameObject* e){
+            e->programID=this->programID;
+            if(e->M){
+                e->mesh.programID=programID;
+            }
+            this->objetsOBJtmp.push_back(e);
+            e->hasMesh = true;
+            e->parent=this;
+            e->setGlobalTransform(this->globalTransform);
+            e->setLocalTransform(e->transform);
+        }
 
         void rajouterOBJ() {
             for (int i = 0; i < objetsOBJ.size(); i++) {
@@ -334,6 +352,7 @@ class GameObject{
                 objetsOBJ[i].M = true;
                 objetsOBJ[i].mesh.creerTextureOBJ(objetsOBJ[i].mesh.mtl.texture);
                 this->addEnfantOBJ(&objetsOBJ[i]);
+                // this->addEnfantOBJ2(&objetsOBJ[i]);
             }
             std::cout << "Nombre d'objets ajoutés : " << objetsOBJ.size() << std::endl;
         }
@@ -352,6 +371,7 @@ class GameObject{
             bool Factuel=false;
             int nbTriangles=0;
             nbTrianglesActu.push_back(nbTriangles);
+            std::string nomOBJ="";
             FILE * file = fopen(filename, "r");
             if( file == NULL ){
                 printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
@@ -388,8 +408,8 @@ class GameObject{
                         }
                         // this->objetsOBJ.push_back(goa);
                         objetsOBJ.push_back(goa);
-                        std::cout<<"nombre de traingles : "<<goa.mesh.triangles.size()<<std::endl;
-                        std::cout<<"nombre de vertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
+                        // std::cout<<"nombre de traingles : "<<goa.mesh.triangles.size()<<std::endl;
+                        // std::cout<<"nombre de vertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
                         nb=vertexIndices.size();
                     }
                     this->rajouterOBJ();
@@ -400,7 +420,7 @@ class GameObject{
                     unsigned short nba=0;
                     for( unsigned short i=nb; i<vertexIndices.size(); i++ ){
                         unsigned int vertexIndex = vertexIndices[i];
-                        std::cout<<"i : "<<i<<std::endl;
+                        // std::cout<<"i : "<<i<<std::endl;
                         unsigned int uvIndex = uvIndices[i];
                         unsigned int normalIndex = normalIndices[i];
                         glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
@@ -409,21 +429,25 @@ class GameObject{
                         goa.mesh.indexed_vertices.push_back(vertex);
                         goa.mesh.texCoords     .push_back(uv);
                         goa.mesh.normal .push_back(normal);
-                        if(vertexIndices[i]>temp_vertices.size()){
-                            std::cout<<"iiiiiiiiiiiiiiiiiiiiiiiiiiiii"<<std::endl;
-                        }
+                        // if(vertexIndices[i]>temp_vertices.size()){
+                        //     std::cout<<"iiiiiiiiiiiiiiiiiiiiiiiiiiiii"<<std::endl;
+                        // }
                         // std::cout<<"vertex : "<<vertexIndices[i]<<std::endl;
                         // std::cout<<"vertices : "<<vertex.x<<" "<<vertex.y<<" "<<vertex.z<<std::endl;
                         nba++;
                     }
                     for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
-                        // unsigned short a=i+2;
-                        // unsigned short b=i+1;
-                        // unsigned short c=i;
-                        unsigned short a=(unsigned short)(vertexIndices[i+nb])-nb-1;
-                        unsigned short b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
-                        unsigned short c=(unsigned short)(vertexIndices[i+2+nb])-nb-1;
-                        std::cout<<"a : "<<a<<" b : "<<b<<" c : "<<c<<std::endl;
+                        unsigned short a,b,c;
+                        if(nomOBJ=="Metal_Mario.mtl" || nomOBJ=="Mario64.mtl" || nomOBJ=="Mario64_Cap.mtl"){
+                            a=i;
+                            b=i+1;
+                            c=i+2;
+                        }else{
+                            a=(unsigned short)(vertexIndices[i+nb])-nb-1;
+                            b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
+                            c=(unsigned short)(vertexIndices[i+2+nb])-nb-1;
+                        }
+                        // std::cout<<"a : "<<a<<" b : "<<b<<" c : "<<c<<std::endl;
                         std::vector<unsigned short> ind{a,b,c};
                         goa.mesh.triangles.push_back(ind);
                         nbTriangles++;
@@ -433,8 +457,8 @@ class GameObject{
                     }
                     objetsOBJ.push_back(goa);
                     nb+=nba;
-                    std::cout<<"nbVertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
-                    std::cout<<"nb : "<<nb<<std::endl;
+                    // std::cout<<"nbVertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
+                    // std::cout<<"nb : "<<nb<<std::endl;
                     nbTrianglesActu.push_back(nbTriangles*3);
                     goa.enfant.clear();
                     goa.mesh.indexed_vertices.clear();
@@ -449,6 +473,7 @@ class GameObject{
                     fscanf(file, "%s\n", mtllib );
                     std::string s="../meshes/";
                     s+=mtllib;
+                    nomOBJ+=mtllib;
                     this->lireMTL(s.c_str());
                 }else if ( strcmp( lineHeader, "o" ) == 0 ){
                     char nom[250];
