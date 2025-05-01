@@ -55,6 +55,7 @@ int nbFrames = 0;
 
 // Scène 
 Scene scene;
+Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
 
 // Fonction pour afficher le compteur de FPS
 double affiche(GLFWwindow *window,double lastTime){
@@ -151,6 +152,170 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+GameObject GOchateau;GameObject GOmariometal;GameObject light;
+void sceneNiveau1(Scene *scene){
+    GLuint programID=scene->root.programID;
+    //Affichage de la Map :
+    // std::cout<<"Chargement de la Map"<<std::endl;
+    // GameObject GOchateau;
+    // Plane map(64);
+    // GOchateau.setPlan(map);
+    // scene.root.addChild(&GOchateau);
+    // GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
+    // GOchateau.setLocalTransform(Transform().scale(50));
+
+    
+    GOchateau.programID=programID;
+    GOchateau.lireOBJ("../meshes/Peaches_Castle.obj");
+    GOchateau.rajouterOBJ();
+    GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
+    GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
+    
+    // scene->root.addChild(&GOchateau);
+    
+    //    // Affichage de l'objet :
+    
+    // GameObject GOmariometal;
+    // std::cout<<"Chargement de l'objet"<<std::endl;
+    // GOmariometal.setLODMeshes("../meshes/sphere.off",true, "../textures/assemblies/");
+    // GOchateau.addChild(&GOmariometal);
+    // GOmariometal.setLocalTransform(Transform().scale(0.3));
+    // GOmariometal.setGlobalTransform(GOmariometal.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
+    // GOmariometal.height2parent = 0.3f;   
+    
+    
+    GOmariometal.programID=programID;
+    GOmariometal.lireOBJ("../meshes/Mario64_Cap.obj");
+    GOmariometal.lireOBJ("../meshes/Mario64.obj");
+    std::cout<<"Chargement de l'objet"<<std::endl;
+    GOmariometal.rajouterOBJ();
+    Transform scale      = Transform().scale(0.04f); // Réduction de taille
+    Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f); // Position
+    Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f); // Incliner
+    Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f); // Regarder opposé
+    
+    Transform finalTransform = translate
+        .combine_with(rotateY)
+        .combine_with(rotateX)
+        .combine_with(scale);
+    
+    GOmariometal.setLocalTransform(finalTransform); // SEULEMENT le local
+    
+    
+    // GOchateau.addChild(&GOmariometal);
+
+    // albedo silver_albedo.png
+    // roughness silver_height.png
+    // ao silver_ao.png
+    // metallic silver_metallic.png
+    // normal silver_normal-ogl.png
+    // albedo assemblies/albedo.png
+    // roughness assemblies/roughness.png
+    // ao assemblies/ao.png
+    // metallic assemblies/metallic.png
+    // normal assemblies/normal.png
+
+    GameObject GOetoile;
+    GOetoile.programID=programID;
+    GOetoile.lireOBJ("../meshes/PowerStar.obj");
+    GOetoile.rajouterOBJ();
+    Transform tetoile=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    GOetoile.setLocalTransform(tetoile);
+    GOetoile.setGlobalTransform(tetoile);
+    // GOchateau.addChild(&GOetoile);
+
+    GameObject GOgoomba;
+    GOgoomba.programID=programID;
+    GOgoomba.lireOBJ("../meshes/goomba.obj");
+    GOgoomba.rajouterOBJ();
+    GOgoomba.setLocalTransform(tetoile);
+    GOgoomba.setGlobalTransform(tetoile);
+    // GOchateau.addChild(&GOgoomba);
+
+    GameObject GObobomb;
+    GObobomb.programID=programID;
+    GObobomb.lireOBJ("../meshes/blakbobomb.obj");
+    GObobomb.rajouterOBJ();
+    GObobomb.setLocalTransform(tetoile);
+    GObobomb.setGlobalTransform(tetoile);
+    // GOchateau.addChild(&GObobomb);
+    
+    // Affichage de la lumière :
+    std::cout<<"Chargement de la lumière"<<std::endl;
+    
+    light.programID=programID;
+    light.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
+    light.setLocalTransform(Transform().scale(5.0f));
+    light.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(50.0,50.0,50.0),1.0));
+    light.lightIntensity = 100000.0f;
+    light.isLight = true;
+    light.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light.lightIntensity;
+    // scene->lights.push_back(&light);
+
+    // Ajout de la caméra :
+    std::cout<<"Chargement de la Caméra"<<std::endl;
+    // Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
+    GOmariometal.addChild(&camera);
+    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
+    scene->camera = camera;
+    scene->camera.lookAt(&GOmariometal);
+    
+    // objetsOBJ.push_back(GOchateau);
+    // scene->root.addChild(&objetsOBJ[0]);
+    // objetsOBJ.push_back(GOmariometal);
+    // std::cout<<"i"<<std::endl;
+    // objetsOBJ[0].addChild(&objetsOBJ[1]);
+    // std::cout<<GOchateau.enfant.size()<<std::endl;
+    // lights.push_back(light);
+    // scene->lights.push_back(&lights[0]);
+    scene->root.addChild(&GOchateau);
+    GOchateau.addChild(&GOmariometal);
+    scene->lights.push_back(&light);
+}
+
+GameObject GOlll,GOpeach,light2;
+void sceneNiveau2(Scene *scene){
+    GLuint programID=scene->root.programID;
+    
+    //Affichage de la Map :
+    GOlll.programID=programID;
+    GOlll.lireOBJ("../meshes/LLL.obj");
+    GOlll.rajouterOBJ();
+    GOlll.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.1));
+    GOlll.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.1));
+    
+    //Affichage de l'objet :
+    GOpeach.programID=programID;
+    GOpeach.lireOBJ("../meshes/Peach.obj");
+    GOpeach.rajouterOBJ();
+    Transform scale      = Transform().scale(0.04f);
+    Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f);
+    Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
+    Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
+    Transform finalTransform = translate
+        .combine_with(rotateY)
+        .combine_with(rotateX)
+        .combine_with(scale);
+    GOpeach.setLocalTransform(finalTransform);
+
+    light2.programID=programID;
+    light2.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
+    light2.setLocalTransform(Transform().scale(5.0f));
+    light2.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(50.0,50.0,50.0),1.0));
+    light2.lightIntensity = 100000.0f;
+    light2.isLight = true;
+    light2.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light2.lightIntensity;
+
+    GOpeach.addChild(&camera);
+    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
+    scene->camera = camera;
+    scene->camera.lookAt(&GOpeach);
+    
+    scene->root.addChild(&GOlll);
+    GOlll.addChild(&GOpeach);
+    scene->lights.push_back(&light2);
+}
+
 int main( void )
 {
     // Initialise GLFW
@@ -217,80 +382,10 @@ int main( void )
     GLuint programID = LoadShaders( "vertex_shader.glsl", "fragment_shader.glsl" );
         
     scene.root.programID=programID;
-    
-    //Affichage de la Map :
-
-
-    // std::cout<<"Chargement de la Map"<<std::endl;
-    // GameObject GOchateau;
-    // Plane map(64);
-    // GOchateau.setPlan(map);
-    // scene.root.addChild(&GOchateau);
-    // GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
-    // GOchateau.setLocalTransform(Transform().scale(50));
-
-    GameObject GOchateau;
-    GOchateau.programID=programID;
-    GOchateau.lireOBJ("../meshes/Peaches_Castle.obj");
-    GOchateau.rajouterOBJ();
-    GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
-    GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
-    scene.root.addChild(&GOchateau);
-    
-    
-    
-    
-    //    // Affichage de l'objet :
-    
-    // GameObject GOmariometal;
-    // std::cout<<"Chargement de l'objet"<<std::endl;
-    // GOmariometal.setLODMeshes("../meshes/sphere.off",true, "../textures/assemblies/");
-    // GOchateau.addChild(&GOmariometal);
-    // GOmariometal.setLocalTransform(Transform().scale(0.3));
-    // GOmariometal.setGlobalTransform(GOmariometal.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
-    // GOmariometal.height2parent = 0.3f;   
-    
-    GameObject GOmariometal;
-    GOmariometal.programID=programID;
-    GOmariometal.lireOBJ("../meshes/Mario64_Cap.obj");
-    GOmariometal.lireOBJ("../meshes/Mario64.obj");
-    std::cout<<"Chargement de l'objet"<<std::endl;
-    GOmariometal.rajouterOBJ();
-    Transform scale      = Transform().scale(0.04f); // Réduction de taille
-    Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f); // Position
-    Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f); // Incliner
-    Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f); // Regarder opposé
-    
-    Transform finalTransform = translate
-        .combine_with(rotateY)
-        .combine_with(rotateX)
-        .combine_with(scale);
-    
-    GOmariometal.setLocalTransform(finalTransform); // ⚠️ SEULEMENT le local
-    
-    
-    GOchateau.addChild(&GOmariometal);
-    
-    // Affichage de la lumière :
-    std::cout<<"Chargement de la lumière"<<std::endl;
-    GameObject light;
-    light.programID=programID;
-    light.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
-    light.setLocalTransform(Transform().scale(5.0f));
-    light.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(50.0,50.0,50.0),1.0));
-    light.lightIntensity = 100000.0f;
-    light.isLight = true;
-    light.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light.lightIntensity;
-    scene.lights.push_back(&light);
-
-    // Ajout de la caméra :
-    std::cout<<"Chargement de la Caméra"<<std::endl;
-    Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
-    GOmariometal.addChild(&camera);
-    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
-    scene.camera = camera;
-    scene.camera.lookAt(&GOmariometal);
-    std::cout<<"i"<<std::endl;
+    // Camera camera=
+    // sceneNiveau1(&scene);
+    sceneNiveau2(&scene);
+    std::cout<<"Niveau crée"<<std::endl;
 
 
 
@@ -349,18 +444,17 @@ int main( void )
             GLuint LightColorUniformID = glGetUniformLocation(programID,"lightColors[0]");
             glUniform3f(LightColorUniformID, i->lightColor[0], i->lightColor[1], i->lightColor[2]);
 
-            std::cout << "Light Position: " << i->globalTransform.t.x << ", "
-          << i->globalTransform.t.y << ", "
-          << i->globalTransform.t.z << std::endl;
+//             std::cout << "Light Position: " << i->globalTransform.t.x << ", "
+//           << i->globalTransform.t.y << ", "
+//           << i->globalTransform.t.z << std::endl;
 
-std::cout << "Light Color: " << i->lightColor.r << ", "
-          << i->lightColor.g << ", "
-          << i->lightColor.b << std::endl;
+//              std::cout << "Light Color: " << i->lightColor.r << ", "
+//           << i->lightColor.g << ", "
+//           << i->lightColor.b << std::endl;
 
         }
 
         scene.draw(deltaTime);
-        
 
 
         // Swap buffers

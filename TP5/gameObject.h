@@ -68,6 +68,7 @@ class GameObject{
                 child->plan.programID=this->programID;
             }
             child->setGlobalTransform(this->globalTransform);
+            // std::cout<<"m"<<std::endl;
             this->enfant.push_back(child);
             child->parent = this;
         }
@@ -440,9 +441,16 @@ class GameObject{
                             goa.mesh.normal .push_back(normal);
                         }
                         for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
-                            unsigned short a=(unsigned short)(i+2);
-                            unsigned short b=(unsigned short)(i+1);
-                            unsigned short c=(unsigned short)(i);
+                            unsigned short a,b,c;
+                            if(nomOBJ=="Metal_Mario.mtl" || nomOBJ=="Mario64.mtl" || nomOBJ=="Mario64_Cap.mtl" || nomOBJ=="star.mtl" || nomOBJ=="goomba.mtl" || nomOBJ=="PowerStar.mtl" || nomOBJ=="blakbobomb.mtl" || nomOBJ=="Peach.mtl" || nomOBJ=="LLL.mtl"){
+                                a=i;
+                                b=i+1;
+                                c=i+2;
+                            }else{
+                                a=(unsigned short)(vertexIndices[i+nb])-nb-1;
+                                b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
+                                c=(unsigned short)(vertexIndices[i+2+nb])-nb-1;
+                            }
                             std::vector<unsigned short> ind{a,b,c};
                             goa.mesh.triangles.push_back(ind);
                             nbTriangles++;
@@ -484,7 +492,7 @@ class GameObject{
                     }
                     for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
                         unsigned short a,b,c;
-                        if(nomOBJ=="Metal_Mario.mtl" || nomOBJ=="Mario64.mtl" || nomOBJ=="Mario64_Cap.mtl"){
+                        if(nomOBJ=="Metal_Mario.mtl" || nomOBJ=="Mario64.mtl" || nomOBJ=="Mario64_Cap.mtl" || nomOBJ=="star.mtl" || nomOBJ=="goomba.mtl" || nomOBJ=="PowerStar.mtl" || nomOBJ=="blakbobomb.mtl" || nomOBJ=="Peach.mtl" || nomOBJ=="LLL.mtl"){
                             a=i;
                             b=i+1;
                             c=i+2;
@@ -520,6 +528,9 @@ class GameObject{
                     std::string s="../meshes/";
                     s+=mtllib;
                     nomOBJ+=mtllib;
+                    if(nomOBJ=="goomba.mtl" || nomOBJ=="PowerStar.mtl" || nomOBJ=="blakbobomb.mtl"){
+                        temp_normals.push_back(glm::vec3(0.0,1.0,0.0));
+                    }
                     this->lireMTL(s.c_str());
                 }else if ( strcmp( lineHeader, "o" ) == 0 ){
                     char nom[250];
@@ -555,6 +566,11 @@ class GameObject{
                         uvIndex[0]=1;
                         uvIndex[1]=1;
                         uvIndex[2]=1;
+                    }else if(matches==2){std::cout<<"2"<<std::endl;
+                        matches = fscanf(file, "%d/%d %d/%d\n", &vertexIndex[1], &uvIndex[1], &vertexIndex[2], &uvIndex[2] );
+                        normalIndex[0]=1;
+                        normalIndex[1]=1;
+                        normalIndex[2]=1;
                     }
                     else if (matches != 9){
                         printf("File can't be read by our simple parser :-( Try exporting with other options\n");

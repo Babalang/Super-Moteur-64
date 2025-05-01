@@ -8,8 +8,8 @@ Ni 1.000000
 d 1.000000
 illum 2
 map_Kd metalmario_nrm.png
-albedo silver_albedo.png
-roughness silver_height.png
-ao silver_ao.png
-metallic silver_metallic.png
-normal silver_normal-ogl.png
+albedo assemblies/albedo.png
+roughness assemblies/roughness.png
+ao assemblies/ao.png
+metallic assemblies/metallic.png
+normal assemblies/normal.png
