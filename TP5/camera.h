@@ -26,7 +26,7 @@ class Camera : public GameObject {
 
         float orbitalRadius = 3.0f;
 
-        Camera(float fov = 45.0f, float aspectRatio = 4.0f / 3.0f, float nearPlane = 0.1f, float farPlane = 100.0f)
+        Camera(float fov = 45.0f, float aspectRatio = 4.0f / 3.0f, float nearPlane = 0.1f, float farPlane = 500.0f)
             : fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {
             updateProjectionMatrix();
         }
@@ -38,7 +38,7 @@ class Camera : public GameObject {
         void lookAt(GameObject* target) {
             if (target) {
                 glm::vec3 position = globalTransform.t;
-                glm::vec3 targetPosition = target->globalTransform.t;
+                glm::vec3 targetPosition = target->globalTransform.t + glm::vec3(0.0f, 10.0, 0.0f);
                 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
                 viewMatrix = glm::lookAt(position, targetPosition, up);
                 glm::vec3 forward = glm::normalize(targetPosition - position);

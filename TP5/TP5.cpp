@@ -236,12 +236,12 @@ int main( void )
     GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     scene.root.addChild(&GOchateau);
-
-
-
-
+    
+    
+    
+    
     //    // Affichage de l'objet :
-
+    
     // GameObject GOmariometal;
     // std::cout<<"Chargement de l'objet"<<std::endl;
     // GOmariometal.setLODMeshes("../meshes/sphere.off",true, "../textures/assemblies/");
@@ -249,26 +249,27 @@ int main( void )
     // GOmariometal.setLocalTransform(Transform().scale(0.3));
     // GOmariometal.setGlobalTransform(GOmariometal.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
     // GOmariometal.height2parent = 0.3f;   
-
+    
     GameObject GOmariometal;
     GOmariometal.programID=programID;
     GOmariometal.lireOBJ("../meshes/Mario64_Cap.obj");
     GOmariometal.lireOBJ("../meshes/Mario64.obj");
     std::cout<<"Chargement de l'objet"<<std::endl;
     GOmariometal.rajouterOBJ();
-    std::cout<<"debut PBR metal mario"<<std::endl;
-    for(int i=0;i<GOmariometal.enfant.size();i++){
-        GOmariometal.enfant[i]->mesh.isPBR=true;
-    }
-    std::cout<<"fin PBR metal mario"<<std::endl;
-    Transform t2=Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0);
-    Transform t=Transform(glm::mat3x3(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0),glm::vec3(0.0,5.0,0.0),0.04);
-    Transform t3=t.combine_with(t2.rotation(glm::vec3(1.0,0.0,0.0),-90.0));
-    GOmariometal.setLocalTransform(t3.combine_with(t2.rotation(glm::vec3(0.0,0.0,1.0),-180.0)));
-    GOmariometal.setGlobalTransform(t3.combine_with(t2.rotation(glm::vec3(0.0,0.0,1.0),-180.0)));
-    std::cout<<"pa"<<std::endl;
+    Transform scale      = Transform().scale(0.04f); // Réduction de taille
+    Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f); // Position
+    Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f); // Incliner
+    Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f); // Regarder opposé
+    
+    Transform finalTransform = translate
+        .combine_with(rotateY)
+        .combine_with(rotateX)
+        .combine_with(scale);
+    
+    GOmariometal.setLocalTransform(finalTransform); // ⚠️ SEULEMENT le local
+    
+    
     GOchateau.addChild(&GOmariometal);
-    std::cout<<"i"<<std::endl;
     
     // Affichage de la lumière :
     std::cout<<"Chargement de la lumière"<<std::endl;
@@ -347,6 +348,14 @@ int main( void )
 
             GLuint LightColorUniformID = glGetUniformLocation(programID,"lightColors[0]");
             glUniform3f(LightColorUniformID, i->lightColor[0], i->lightColor[1], i->lightColor[2]);
+
+            std::cout << "Light Position: " << i->globalTransform.t.x << ", "
+          << i->globalTransform.t.y << ", "
+          << i->globalTransform.t.z << std::endl;
+
+std::cout << "Light Color: " << i->lightColor.r << ", "
+          << i->lightColor.g << ", "
+          << i->lightColor.b << std::endl;
 
         }
 
