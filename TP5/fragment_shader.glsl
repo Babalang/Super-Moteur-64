@@ -91,6 +91,7 @@ vec3 getNormalFromNormalMap()
 
 
 void main(){
+        vec4 TexCoordout1=texture(albedoMap,TexCoordout);
         vec3 albedo =  pow(texture(albedoMap, TexCoordout).rgb, vec3(2.2));
         vec3 normal = normalize(Normal);
         float metallic = 0.4;
@@ -164,5 +165,5 @@ void main(){
         colortmp = colortmp / (colortmp + vec3(1.0));
         colortmp = pow(colortmp, vec3(1.0/2.2));  
         
-        color = vec4(colortmp, 1.0);
+        color = vec4(colortmp,TexCoordout1[3]);
 }

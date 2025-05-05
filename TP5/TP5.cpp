@@ -166,7 +166,7 @@ void sceneNiveau1(Scene *scene){
 
     
     GOchateau.programID=programID;
-    GOchateau.lireOBJ("../meshes/Peaches_Castle.obj");
+    GOchateau.lireOBJ("../meshes/chateau.obj");
     GOchateau.rajouterOBJ();
     GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
@@ -281,14 +281,15 @@ void sceneNiveau2(Scene *scene){
     GOlll.programID=programID;
     GOlll.lireOBJ("../meshes/LLL.obj");
     GOlll.rajouterOBJ();
-    GOlll.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.1));
-    GOlll.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.1));
+    GOlll.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
+    GOlll.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
     
     //Affichage de l'objet :
     GOpeach.programID=programID;
-    GOpeach.lireOBJ("../meshes/Peach.obj");
+    GOpeach.lireOBJ("../meshes/battan_king.obj");
     GOpeach.rajouterOBJ();
-    Transform scale      = Transform().scale(0.04f);
+    Transform scale      = Transform().scale(0.1f);
+    // Transform scale      = Transform().scale(0.04f);
     Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f);
     Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
     Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
@@ -413,6 +414,8 @@ int main( void )
 
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Use our shader
         glUseProgram(programID);

@@ -392,30 +392,42 @@ class Mesh{
                 loadPBR(mtl.albedo.c_str(),mtl.normal.c_str(),mtl.roughness.c_str(),mtl.metallic.c_str(),mtl.ao.c_str());
             }else{
                 int width, height, numComponents;
+                stbi_set_flip_vertically_on_load(true);
                 unsigned char * data = stbi_load (f,
                                                 &width,
                                                 &height,
                                                 &numComponents, 
-                                                0);
+                                                STBI_rgb_alpha);
+                                                // 0);
                 if(data == NULL){
                     std::cout<<"Erreur de chargement de la texture : "<<f<<std::endl;
                     return;
                 }
                 glGenTextures (1, &this->Text2DalbedoID);
                 glBindTexture (GL_TEXTURE_2D, this->Text2DalbedoID);
+                std::cout<<f<<std::endl;
+                std::string s(f);
+                if(s=="../textures/koopa_all.png" || s=="../textures/kuribo_cmp4.png" || s=="../textures/battan_king_face.png" || s=="../textures/battan_king_back_1.png" || s=="../textures/ookan.png"){
+                    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+                    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+                }else{
+                    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                }
                 glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-                glTexImage2D (GL_TEXTURE_2D,
-                            0,
-                            (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
-                            width,
-                            height,
-                            0,
-                            (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
-                            GL_UNSIGNED_BYTE,
-                            data);
+                // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                // glTexImage2D (GL_TEXTURE_2D,
+                //             0,
+                //             (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
+                //             width,
+                //             height,
+                //             0,
+                //             (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
+                //             GL_UNSIGNED_BYTE,
+                //             data);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
                 glGenerateMipmap(GL_TEXTURE_2D);
                 stbi_image_free(data);
                 glBindTexture (GL_TEXTURE_2D, 0); 

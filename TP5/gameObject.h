@@ -424,6 +424,7 @@ class GameObject{
                 return false;
             }
             while( 1 ){
+                long position = ftell(file);
                 char lineHeader[128];
                 // read the first word of the line
                 int res = fscanf(file, "%s", lineHeader);
@@ -442,14 +443,23 @@ class GameObject{
                         }
                         for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
                             unsigned short a,b,c;
-                            if(nomOBJ=="Metal_Mario.mtl" || nomOBJ=="Mario64.mtl" || nomOBJ=="Mario64_Cap.mtl" || nomOBJ=="star.mtl" || nomOBJ=="goomba.mtl" || nomOBJ=="PowerStar.mtl" || nomOBJ=="blakbobomb.mtl" || nomOBJ=="Peach.mtl" || nomOBJ=="LLL.mtl"){
-                                a=i;
-                                b=i+1;
-                                c=i+2;
-                            }else{
+                            // if(nomOBJ=="Metal_Mario.mtl" || nomOBJ=="Mario64.mtl" || nomOBJ=="Mario64_Cap.mtl" || nomOBJ=="star.mtl" || nomOBJ=="goomba.mtl" || nomOBJ=="PowerStar.mtl" || nomOBJ=="blakbobomb.mtl" || nomOBJ=="Peach.mtl" || nomOBJ=="LLL.mtl"){
+                            //     a=i;
+                            //     b=i+1;
+                            //     c=i+2;
+                            // }else{
+                            //     a=(unsigned short)(vertexIndices[i+nb])-nb-1;
+                            //     b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
+                            //     c=(unsigned short)(vertexIndices[i+2+nb])-nb-1;
+                            // }
+                            if(nomOBJ=="Peaches_Castale.mtl"){
                                 a=(unsigned short)(vertexIndices[i+nb])-nb-1;
                                 b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
                                 c=(unsigned short)(vertexIndices[i+2+nb])-nb-1;
+                            }else{
+                                a=i;
+                                b=i+1;
+                                c=i+2;
                             }
                             std::vector<unsigned short> ind{a,b,c};
                             goa.mesh.triangles.push_back(ind);
@@ -492,14 +502,14 @@ class GameObject{
                     }
                     for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
                         unsigned short a,b,c;
-                        if(nomOBJ=="Metal_Mario.mtl" || nomOBJ=="Mario64.mtl" || nomOBJ=="Mario64_Cap.mtl" || nomOBJ=="star.mtl" || nomOBJ=="goomba.mtl" || nomOBJ=="PowerStar.mtl" || nomOBJ=="blakbobomb.mtl" || nomOBJ=="Peach.mtl" || nomOBJ=="LLL.mtl"){
-                            a=i;
-                            b=i+1;
-                            c=i+2;
-                        }else{
+                        if(nomOBJ=="Peaches_Casatle.mtl"){
                             a=(unsigned short)(vertexIndices[i+nb])-nb-1;
                             b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
                             c=(unsigned short)(vertexIndices[i+2+nb])-nb-1;
+                        }else{
+                            a=i;
+                            b=i+1;
+                            c=i+2;
                         }
                         // std::cout<<"a : "<<a<<" b : "<<b<<" c : "<<c<<std::endl;
                         std::vector<unsigned short> ind{a,b,c};
@@ -520,6 +530,7 @@ class GameObject{
                     goa.mesh.triangles.clear();
                     goa.mesh.normal.clear();
                     goa.mesh.texCoords.clear();
+                    fseek(file, position, SEEK_SET);
                 }
                 // else : parse lineHeader
                 else if ( strcmp( lineHeader, "mtllib" ) == 0 ){
@@ -549,8 +560,9 @@ class GameObject{
                     fscanf(file, "%s\n", s );
                 }else if ( strcmp( lineHeader, "vt" ) == 0 ){
                     glm::vec2 uv;
-                    fscanf(file, "%f %f\n", &uv.x, &uv.y );
-                    uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
+                    fscanf(file, "%f %f\n", &uv.x, &uv.y);
+                    // uv.y = -uv.y;
+                    // std::cout<<"uv : "<<uv.x<<" "<<uv.y<<std::endl;
                     temp_uvs.push_back(uv);
                 }else if ( strcmp( lineHeader, "vn" ) == 0 ){
                     glm::vec3 normal;
@@ -558,15 +570,27 @@ class GameObject{
                     temp_normals.push_back(normal);
                 }else if ( strcmp( lineHeader, "f" ) == 0 ){
                     Factuel=true;
-                    std::string vertex1, vertex2, vertex3;
-                    unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-                    int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
-                    if (matches == 1){
-                        matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertexIndex[0], &normalIndex[0], &vertexIndex[1], &normalIndex[1], &vertexIndex[2], &normalIndex[2] );
+                    std::string vertex1, vertex2, vertex3, vertex4;
+                    unsigned int vertexIndex[4], uvIndex[4], normalIndex[4];
+                    int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2], &vertexIndex[3], &uvIndex[3], &normalIndex[3] );
+                    if (matches == 12){
+                        vertexIndices.push_back(vertexIndex[2]);
+                        vertexIndices.push_back(vertexIndex[3]);
+                        vertexIndices.push_back(vertexIndex[0]);
+                        uvIndices    .push_back(uvIndex[2]);
+                        uvIndices    .push_back(uvIndex[3]);
+                        uvIndices    .push_back(uvIndex[0]);
+                        normalIndices.push_back(normalIndex[2]);
+                        normalIndices.push_back(normalIndex[3]);
+                        normalIndices.push_back(normalIndex[0]);
+                    }else if (matches == 1){
+                        fseek(file, position, SEEK_SET);
+                        matches = fscanf(file, "f %d//%d %d//%d %d//%d\n", &vertexIndex[0], &normalIndex[0], &vertexIndex[1], &normalIndex[1], &vertexIndex[2], &normalIndex[2] );
                         uvIndex[0]=1;
                         uvIndex[1]=1;
                         uvIndex[2]=1;
-                    }else if(matches==2){std::cout<<"2"<<std::endl;
+                        std::cout<<"vertices : "<<vertexIndex[0]<<" "<<vertexIndex[1]<<" "<<vertexIndex[2]<<std::endl;
+                    }else if(matches==2){
                         matches = fscanf(file, "%d/%d %d/%d\n", &vertexIndex[1], &uvIndex[1], &vertexIndex[2], &uvIndex[2] );
                         normalIndex[0]=1;
                         normalIndex[1]=1;
