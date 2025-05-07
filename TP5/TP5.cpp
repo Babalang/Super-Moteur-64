@@ -152,7 +152,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-GameObject GOchateau;GameObject GOmariometal;GameObject light;
+GameObject GOchateau;GameObject GOmariometal;GameObject light, GOPeach;
 void sceneNiveau1(Scene *scene){
     GLuint programID=scene->root.programID;
     //Affichage de la Map :
@@ -215,30 +215,12 @@ void sceneNiveau1(Scene *scene){
     // metallic assemblies/metallic.png
     // normal assemblies/normal.png
 
-    GameObject GOetoile;
-    GOetoile.programID=programID;
-    GOetoile.lireOBJ("../meshes/PowerStar.obj");
-    GOetoile.rajouterOBJ();
-    Transform tetoile=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
-    GOetoile.setLocalTransform(tetoile);
-    GOetoile.setGlobalTransform(tetoile);
-    // GOchateau.addChild(&GOetoile);
-
-    GameObject GOgoomba;
-    GOgoomba.programID=programID;
-    GOgoomba.lireOBJ("../meshes/goomba.obj");
-    GOgoomba.rajouterOBJ();
-    GOgoomba.setLocalTransform(tetoile);
-    GOgoomba.setGlobalTransform(tetoile);
-    // GOchateau.addChild(&GOgoomba);
-
-    GameObject GObobomb;
-    GObobomb.programID=programID;
-    GObobomb.lireOBJ("../meshes/blakbobomb.obj");
-    GObobomb.rajouterOBJ();
-    GObobomb.setLocalTransform(tetoile);
-    GObobomb.setGlobalTransform(tetoile);
-    // GOchateau.addChild(&GObobomb);
+    GOPeach.programID=programID;
+    GOPeach.lireOBJ("../meshes/Peach.obj");
+    GOPeach.rajouterOBJ();
+    Transform tPeach=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    GOPeach.setLocalTransform(tPeach);
+    GOPeach.setGlobalTransform(tPeach);
     
     // Affichage de la lumière :
     std::cout<<"Chargement de la lumière"<<std::endl;
@@ -270,24 +252,25 @@ void sceneNiveau1(Scene *scene){
     // scene->lights.push_back(&lights[0]);
     scene->root.addChild(&GOchateau);
     GOchateau.addChild(&GOmariometal);
+    GOchateau.addChild(&GOPeach);
     scene->lights.push_back(&light);
 }
 
-GameObject GOlll,GOpeach,light2;
+GameObject GOBobombBattlefieldDS,GOBattanKing,light2,GOGoomba1,GOMetalMario2;
 void sceneNiveau2(Scene *scene){
     GLuint programID=scene->root.programID;
     
     //Affichage de la Map :
-    GOlll.programID=programID;
-    GOlll.lireOBJ("../meshes/LLL.obj");
-    GOlll.rajouterOBJ();
-    GOlll.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
-    GOlll.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
+    GOBobombBattlefieldDS.programID=programID;
+    GOBobombBattlefieldDS.lireOBJ("../meshes/SM64DS_Model.obj");
+    GOBobombBattlefieldDS.rajouterOBJ();
+    GOBobombBattlefieldDS.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
+    GOBobombBattlefieldDS.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
     
     //Affichage de l'objet :
-    GOpeach.programID=programID;
-    GOpeach.lireOBJ("../meshes/battan_king.obj");
-    GOpeach.rajouterOBJ();
+    GOMetalMario2.programID=programID;
+    GOMetalMario2.lireOBJ("../meshes/Metal_Mario.obj");
+    GOMetalMario2.rajouterOBJ();
     Transform scale      = Transform().scale(0.1f);
     // Transform scale      = Transform().scale(0.04f);
     Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f);
@@ -297,7 +280,7 @@ void sceneNiveau2(Scene *scene){
         .combine_with(rotateY)
         .combine_with(rotateX)
         .combine_with(scale);
-    GOpeach.setLocalTransform(finalTransform);
+    GOMetalMario2.setLocalTransform(finalTransform);
 
     light2.programID=programID;
     light2.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
@@ -307,13 +290,97 @@ void sceneNiveau2(Scene *scene){
     light2.isLight = true;
     light2.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light2.lightIntensity;
 
-    GOpeach.addChild(&camera);
+    GOMetalMario2.addChild(&camera);
     camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
     scene->camera = camera;
-    scene->camera.lookAt(&GOpeach);
+    scene->camera.lookAt(&GOMetalMario2);
+
+    GOGoomba1.programID=programID;
+    GOGoomba1.lireOBJ("../meshes/kuribo_model.obj");
+    GOGoomba1.rajouterOBJ();
+    Transform tGoomba1=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    GOGoomba1.setLocalTransform(tGoomba1);
+    GOGoomba1.setGlobalTransform(tGoomba1);
+
+    GOBattanKing.programID=programID;
+    GOBattanKing.lireOBJ("../meshes/battan_king.obj");
+    Transform tBattanKing=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    GOBattanKing.rajouterOBJ();
+    GOBattanKing.setLocalTransform(tBattanKing);
+    GOBattanKing.setGlobalTransform(tBattanKing);
     
-    scene->root.addChild(&GOlll);
-    GOlll.addChild(&GOpeach);
+    scene->root.addChild(&GOBobombBattlefieldDS);
+    GOBobombBattlefieldDS.addChild(&GOMetalMario2);
+    GOBobombBattlefieldDS.addChild(&GOGoomba1);
+    GOBobombBattlefieldDS.addChild(&GOBattanKing);
+    scene->lights.push_back(&light2);
+}
+
+GameObject GOkoopa1,GObowserStadium,GOMetalMario3,GOkoopa2,GOBowser,light3;
+void sceneNiveau3(Scene *scene){
+    GLuint programID=scene->root.programID;
+    
+    //Affichage de la Map :
+    GObowserStadium.programID=programID;
+    GObowserStadium.lireOBJ("../meshes/Bowser_Stadium.obj");
+    GObowserStadium.rajouterOBJ();
+    GObowserStadium.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
+    GObowserStadium.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
+    
+    //Affichage de l'objet :
+    GOMetalMario3.programID=programID;
+    GOMetalMario3.lireOBJ("../meshes/Metal_Mario.obj");
+    GOMetalMario3.rajouterOBJ();
+    Transform scale      = Transform().scale(0.1f);
+    // Transform scale      = Transform().scale(0.04f);
+    Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f);
+    Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
+    Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
+    Transform finalTransform = translate
+        .combine_with(rotateY)
+        .combine_with(rotateX)
+        .combine_with(scale);
+    GOMetalMario3.setLocalTransform(finalTransform);
+
+    light3.programID=programID;
+    light3.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
+    light3.setLocalTransform(Transform().scale(5.0f));
+    light3.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(50.0,50.0,50.0),1.0));
+    light3.lightIntensity = 100000.0f;
+    light3.isLight = true;
+    light3.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light3.lightIntensity;
+
+    GOMetalMario3.addChild(&camera);
+    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
+    scene->camera = camera;
+    scene->camera.lookAt(&GOMetalMario3);
+
+    GOkoopa1.programID=programID;
+    GOkoopa1.lireOBJ("../meshes/Koopa1.obj");
+    GOkoopa1.rajouterOBJ();
+    Transform tKoopa1=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    GOkoopa1.setLocalTransform(tKoopa1);
+    GOkoopa1.setGlobalTransform(tKoopa1);
+
+    GOkoopa2.programID=programID;
+    GOkoopa2.lireOBJ("../meshes/Koopa2.obj");
+    Transform tKoopa2=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    GOkoopa2.rajouterOBJ();
+    GOkoopa2.setLocalTransform(tKoopa2);
+    GOkoopa2.setGlobalTransform(tKoopa2);
+
+    GOBowser.programID=programID;
+    GOBowser.lireOBJ("../meshes/koopa_model.obj");
+    Transform tkoopa_model=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    GOBowser.rajouterOBJ();
+    GOBowser.setLocalTransform(tkoopa_model);
+    GOBowser.setGlobalTransform(tkoopa_model);
+    
+    scene->root.addChild(&GObowserStadium);
+    GObowserStadium.addChild(&GOMetalMario3);
+    GObowserStadium.addChild(&GOkoopa1);
+    GObowserStadium.addChild(&GOkoopa2);
+    GObowserStadium.addChild(&GOBowser);
     scene->lights.push_back(&light2);
 }
 
@@ -384,8 +451,9 @@ int main( void )
         
     scene.root.programID=programID;
     // Camera camera=
-    // sceneNiveau1(&scene);
-    sceneNiveau2(&scene);
+    sceneNiveau1(&scene);
+    // sceneNiveau2(&scene);
+    // sceneNiveau3(&scene);
     std::cout<<"Niveau crée"<<std::endl;
 
 
