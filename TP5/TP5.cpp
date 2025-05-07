@@ -189,8 +189,8 @@ void sceneNiveau1(Scene *scene){
     GOmariometal.lireOBJ("../meshes/Mario64.obj");
     std::cout<<"Chargement de l'objet"<<std::endl;
     GOmariometal.rajouterOBJ();
-    Transform scale      = Transform().scale(0.04f); // Réduction de taille
-    Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f); // Position
+    Transform scale      = Transform().scale(0.02f); // Réduction de taille
+    Transform translate  = Transform().translation(glm::vec3(2.0f, 1.0f, -7.5f), 5.0f); // Position
     Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f); // Incliner
     Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f); // Regarder opposé
     
@@ -218,9 +218,9 @@ void sceneNiveau1(Scene *scene){
     GOPeach.programID=programID;
     GOPeach.lireOBJ("../meshes/Peach.obj");
     GOPeach.rajouterOBJ();
-    Transform tPeach=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
-    GOPeach.setLocalTransform(tPeach);
-    GOPeach.setGlobalTransform(tPeach);
+    Transform tPeach=Transform(glm::mat3x3(1.0),glm::vec3(-3.0,5.0,20.0),0.02);
+    GOPeach.setLocalTransform(tPeach.combine_with(tPeach.rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f)));
+    GOPeach.setGlobalTransform(tPeach.combine_with(tPeach.rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f)));
     
     // Affichage de la lumière :
     std::cout<<"Chargement de la lumière"<<std::endl;
@@ -238,7 +238,8 @@ void sceneNiveau1(Scene *scene){
     std::cout<<"Chargement de la Caméra"<<std::endl;
     // Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
     GOmariometal.addChild(&camera);
-    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
+    // camera.globalTransform=translate;
+    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-100.0),1.0)));
     scene->camera = camera;
     scene->camera.lookAt(&GOmariometal);
     
@@ -264,8 +265,8 @@ void sceneNiveau2(Scene *scene){
     GOBobombBattlefieldDS.programID=programID;
     GOBobombBattlefieldDS.lireOBJ("../meshes/SM64DS_Model.obj");
     GOBobombBattlefieldDS.rajouterOBJ();
-    GOBobombBattlefieldDS.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
-    GOBobombBattlefieldDS.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.01));
+    GOBobombBattlefieldDS.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
+    GOBobombBattlefieldDS.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     
     //Affichage de l'objet :
     GOMetalMario2.programID=programID;
@@ -304,7 +305,7 @@ void sceneNiveau2(Scene *scene){
 
     GOBattanKing.programID=programID;
     GOBattanKing.lireOBJ("../meshes/battan_king.obj");
-    Transform tBattanKing=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    Transform tBattanKing=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),0.1);
     GOBattanKing.rajouterOBJ();
     GOBattanKing.setLocalTransform(tBattanKing);
     GOBattanKing.setGlobalTransform(tBattanKing);

@@ -88,7 +88,7 @@ class Mesh{
             }
             generateUVs();
             if(test){
-                std::cout<<"Calcul des normales"<<std::endl;
+                // std::cout<<"Calcul des normales"<<std::endl;
                 compute_Normals();
             }
         }
@@ -102,7 +102,7 @@ class Mesh{
         bool setMesh(const char* path) {
             bool test = loadOFF(path, indexed_vertices, this->indices, this->triangles );
             if(test){
-                std::cout<<"Calcul des normales"<<std::endl;
+                // std::cout<<"Calcul des normales"<<std::endl;
                 compute_Normals();
             }
             return test;
@@ -180,7 +180,7 @@ class Mesh{
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            std::cout<<"help me"<<std::endl;
+            // std::cout<<"help me"<<std::endl;
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             GLenum format = GL_RGB;
             if(numComponents == 2){
@@ -388,7 +388,7 @@ class Mesh{
 
         void creerTextureOBJ(const char* f){
             if(mtl.pbr){
-                std::cout<<"pbr"<<std::endl;
+                // std::cout<<"pbr"<<std::endl;
                 loadPBR(mtl.albedo.c_str(),mtl.normal.c_str(),mtl.roughness.c_str(),mtl.metallic.c_str(),mtl.ao.c_str());
             }else{
                 int width, height, numComponents;
@@ -405,7 +405,6 @@ class Mesh{
                 }
                 glGenTextures (1, &this->Text2DalbedoID);
                 glBindTexture (GL_TEXTURE_2D, this->Text2DalbedoID);
-                std::cout<<f<<std::endl;
                 std::string s(f);
                 if(s=="../textures/koopa_all.png" || s=="../textures/kuribo_cmp4.png" || s=="../textures/battan_king_face.png" || s=="../textures/battan_king_back_1.png" || s=="../textures/ookan.png"){
                     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);

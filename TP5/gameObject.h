@@ -236,7 +236,7 @@ class GameObject{
                 speed = glm::vec3(0.0f);
             }
             this->setGlobalTransform(Mov);
-            std::cout<<this->globalTransform.t[0]<<" "<<this->globalTransform.t[1]<<" "<<this->globalTransform.t[2]<<std::endl;
+            // std::cout<<this->globalTransform.t[0]<<" "<<this->globalTransform.t[1]<<" "<<this->globalTransform.t[2]<<std::endl;
             isMoving = true;
         }
 
@@ -399,7 +399,7 @@ class GameObject{
                 // this->addEnfantOBJ2(&objetsOBJ[i]);
             }
             tailleObjetOBJ=objetsOBJ.size();
-            std::cout << "Nombre d'objets ajoutés : " << objetsOBJ.size() << std::endl;
+            // std::cout << "Nombre d'objets ajoutés : " << objetsOBJ.size() << std::endl;
         }
         bool lireOBJ(const char* filename){
             this->M = false; this->hasMesh = false; this->hasPlan = false;
@@ -589,7 +589,6 @@ class GameObject{
                         uvIndex[0]=1;
                         uvIndex[1]=1;
                         uvIndex[2]=1;
-                        std::cout<<"vertices : "<<vertexIndex[0]<<" "<<vertexIndex[1]<<" "<<vertexIndex[2]<<std::endl;
                     }else if(matches==2){
                         matches = fscanf(file, "%d/%d %d/%d\n", &vertexIndex[1], &uvIndex[1], &vertexIndex[2], &uvIndex[2] );
                         normalIndex[0]=1;
