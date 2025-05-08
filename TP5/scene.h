@@ -28,10 +28,13 @@ class Scene{
     }
 
     void draw(float elapsedTime){
+        GameObject* Map = this->root.enfant[0];
+        GameObject* Obj = Map->enfant[Map->objetsOBJ.size()];
         for(auto& i : this->lights){ 
             i->draw(camera.globalTransform.t, elapsedTime);
         }
         this->animation(elapsedTime);
         this->root.draw(camera.globalTransform.t, elapsedTime);
+        this->root.testIA(Obj);
     }
 };

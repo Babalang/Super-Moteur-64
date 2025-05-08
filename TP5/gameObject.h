@@ -2,6 +2,8 @@
 #include <TP5/Plane.h>
 #include <TP5/Transform.h>
 
+
+
 class GameObject{
     public:
         // Construction de l'objet dans la scène : 
@@ -36,12 +38,20 @@ class GameObject{
         std::string nom;
         bool M=false;
         int tailleObjetOBJ=0;
+        Mesh boiteEnglobante;
+        bool isBoiteEnglobante=false;
+        glm::vec3 centre;
+        glm::vec3 centreEspace;
 
         // light
         int index = 0;
         bool isLight = false;
         float lightIntensity = 1.0f;
         glm::vec3 lightColor = glm::vec3(1.0f,1.0f,1.0f);
+        Ray visionIA;
+        bool isIA=false;
+        bool avancer=false;
+        glm::vec3 positionAvance;
         
         bool isMoving = true;
 
@@ -95,6 +105,10 @@ class GameObject{
                 }
             }
             if(hasPlan) this->plan.setVerticesEspace(this->globalTransform.combine_with(this->transform));
+            if(isBoiteEnglobante){
+                this->boiteEnglobante.setVerticesEspace(this->globalTransform.combine_with(this->transform));
+                this->centreEspace=this->globalTransform.combine_with(this->transform).applyToPoint(this->centre);
+            }
             for(auto& i :this->enfant){
                 i->setGlobalTransform(this->globalTransform);
             }
@@ -150,6 +164,31 @@ class GameObject{
                 for (int i = 0; i < this->objetsOBJ.size(); i++) {
                     //std::cout << "Dessin de l'enfant : " << enfant[i]->nom << std::endl;
                     this->objetsOBJ[i].draw(cameraPosition, deltaTime);
+                }
+                // if(isBoiteEnglobante){
+                //     this->boiteEnglobante.draw();
+                // }
+            }if(avancer){
+                this->moveToPosition(deltaTime);
+            }
+        }
+
+        void testIA(GameObject *obj){
+            if(this->isIA){
+                for(int i=0;i<this->boiteEnglobante.triangles.size();i++){
+                    RayTriangleIntersection intersection = obj->boiteEnglobante.getIntersection(this->visionIA,i);
+                    if(intersection.intersectionExists && intersection.t<20.0f && intersection.t>0.0f){
+                        // std::cout<<"Intersection !!"<<std::endl;
+                        std::cout<<this->nom<<std::endl;
+                        this->avancer=true;
+                        this->positionAvance=obj->centreEspace;
+                        // e.applyToPoint(this->indexed_vertices[i])
+                    }
+                }
+            }else{
+                for(int i=0;i<this->enfant.size();i++){
+                    // std::cout<<"testIA"<<std::endl;
+                    this->enfant[i]->testIA(obj);
                 }
             }
         }
@@ -417,6 +456,7 @@ class GameObject{
             int nbTriangles=0;
             nbTrianglesActu.push_back(nbTriangles);
             std::string nomOBJ="";
+            float minX=std::numeric_limits<float>::max(),minY=std::numeric_limits<float>::max(),minZ=std::numeric_limits<float>::max(),maxX=0.0,maxY=0.0,maxZ=0.0;
             FILE * file = fopen(filename, "r");
             if( file == NULL ){
                 printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
@@ -477,6 +517,85 @@ class GameObject{
                     // this->rajouterOBJ();
                     // std::cout<<"taille objetOBJ : "<<objetsOBJ.size()<<std::endl;
                     // std::cout<<"taille enfant : "<<enfant.size()<<std::endl;
+                    glm::vec3 centre = glm::vec3((minX+maxX)/2,(minY+maxY)/2,(minZ+maxZ)/2);
+                    this->centre=centre;
+                    glm::vec3 p1=glm::vec3(minX,minY,minZ);
+                    glm::vec3 p2=glm::vec3(maxX,minY,minZ);
+                    glm::vec3 p3=glm::vec3(maxX,minY,maxZ);
+                    glm::vec3 p4=glm::vec3(minX,minY,maxZ);
+                    glm::vec3 p5=glm::vec3(minX,maxY,minZ);
+                    glm::vec3 p6=glm::vec3(maxX,maxY,minZ);
+                    glm::vec3 p7=glm::vec3(maxX,maxY,maxZ);
+                    glm::vec3 p8=glm::vec3(minX,maxY,maxZ);
+                    // std::cout<<"p1 : "<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
+                    // std::cout<<"p2 : "<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
+                    // std::cout<<"p3 : "<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
+                    // std::cout<<"p4 : "<<p4.x<<" "<<p4.y<<" "<<p4.z<<std::endl;
+                    // std::cout<<"p5 : "<<p5.x<<" "<<p5.y<<" "<<p5.z<<std::endl;
+                    // std::cout<<"p6 : "<<p6.x<<" "<<p6.y<<" "<<p6.z<<std::endl;
+                    // std::cout<<"p7 : "<<p7.x<<" "<<p7.y<<" "<<p7.z<<std::endl;
+                    // std::cout<<"p8 : "<<p8.x<<" "<<p8.y<<" "<<p8.z<<std::endl;
+                    this->boiteEnglobante.indexed_vertices.push_back(p1);
+                    this->boiteEnglobante.indexed_vertices.push_back(p2);
+                    this->boiteEnglobante.indexed_vertices.push_back(p3);
+                    this->boiteEnglobante.indexed_vertices.push_back(p4);
+                    this->boiteEnglobante.indexed_vertices.push_back(p5);
+                    this->boiteEnglobante.indexed_vertices.push_back(p6);
+                    this->boiteEnglobante.indexed_vertices.push_back(p7);
+                    this->boiteEnglobante.indexed_vertices.push_back(p8);
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{0,1,2});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{2,3,0});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{0,1,5});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{5,4,0});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{1,2,6});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{6,5,1});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{2,3,7});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{7,6,2});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{3,0,4});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{4,7,3});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{4,5,6});
+                    this->boiteEnglobante.triangles.push_back(std::vector<unsigned short>{6,7,4});
+                    this->boiteEnglobante.indices.push_back(0);
+                    this->boiteEnglobante.indices.push_back(1);
+                    this->boiteEnglobante.indices.push_back(2);
+                    this->boiteEnglobante.indices.push_back(2);
+                    this->boiteEnglobante.indices.push_back(3);
+                    this->boiteEnglobante.indices.push_back(0);
+                    this->boiteEnglobante.indices.push_back(0);
+                    this->boiteEnglobante.indices.push_back(1);
+                    this->boiteEnglobante.indices.push_back(5);
+                    this->boiteEnglobante.indices.push_back(5);
+                    this->boiteEnglobante.indices.push_back(4);
+                    this->boiteEnglobante.indices.push_back(0);
+                    this->boiteEnglobante.indices.push_back(1);
+                    this->boiteEnglobante.indices.push_back(2);
+                    this->boiteEnglobante.indices.push_back(6);
+                    this->boiteEnglobante.indices.push_back(6);
+                    this->boiteEnglobante.indices.push_back(5);
+                    this->boiteEnglobante.indices.push_back(1);
+                    this->boiteEnglobante.indices.push_back(2);
+                    this->boiteEnglobante.indices.push_back(3);
+                    this->boiteEnglobante.indices.push_back(7);
+                    this->boiteEnglobante.indices.push_back(7);
+                    this->boiteEnglobante.indices.push_back(6);
+                    this->boiteEnglobante.indices.push_back(2);
+                    this->boiteEnglobante.indices.push_back(3);
+                    this->boiteEnglobante.indices.push_back(0);
+                    this->boiteEnglobante.indices.push_back(4);
+                    this->boiteEnglobante.indices.push_back(4);
+                    this->boiteEnglobante.indices.push_back(7);
+                    this->boiteEnglobante.indices.push_back(3);
+                    this->boiteEnglobante.indices.push_back(4);
+                    this->boiteEnglobante.indices.push_back(5);
+                    this->boiteEnglobante.indices.push_back(6);
+                    this->boiteEnglobante.indices.push_back(6);
+                    this->boiteEnglobante.indices.push_back(7);
+                    this->boiteEnglobante.indices.push_back(4);
+                    this->boiteEnglobante.compute_Normals();
+                    this->isBoiteEnglobante=true;
+                    this->boiteEnglobante.programID=this->programID;
+                    this->boiteEnglobante.filename="../textures/2k_moon.jpg";
+                    this->boiteEnglobante.loadTexture();
                     break; // EOF = End Of File. Quit the loop.
                 }
                 else if(Factuel && strcmp(lineHeader, "f")!=0){
@@ -555,6 +674,12 @@ class GameObject{
                     glm::vec3 vertex;
                     fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
                     temp_vertices.push_back(vertex);
+                    if(vertex.x<minX) minX=vertex.x;
+                    if(vertex.y<minY) minY=vertex.y;
+                    if(vertex.z<minZ) minZ=vertex.z;
+                    if(vertex.x>maxX) maxX=vertex.x;
+                    if(vertex.y>maxY) maxY=vertex.y;
+                    if(vertex.z>maxZ) maxZ=vertex.z;
                 }else if ( strcmp( lineHeader, "s" ) == 0 ){
                     char s[250];
                     fscanf(file, "%s\n", s );
@@ -622,5 +747,31 @@ class GameObject{
             std::cout<<"fini de charger le fichier OBJ !"<<std::endl;
             return true;
         }
-    
+
+        void creerIA(){
+            this->isIA=true;
+            this->visionIA.m_origin = this->centreEspace;
+            this->visionIA.m_direction = glm::normalize(this->globalTransform.m[2]);
+            std::cout<<"nouvelle IA cree !"<<std::endl;
+            std::cout<<"direction : "<<this->visionIA.m_direction.x<<" "<<this->visionIA.m_direction.y<<" "<<this->visionIA.m_direction.z<<std::endl;
+            std::cout<<"position : "<<this->visionIA.m_origin.x<<" "<<this->visionIA.m_origin.y<<" "<<this->visionIA.m_origin.z<<std::endl;
+        }
+
+        void moveToPosition(float deltaTime) {
+            if (glm::length(this->positionAvance - this->globalTransform.t) > 0.01f) {
+                // std::cout << "Moving to position: " << positionAvance.x << ", " << positionAvance.y << ", " << positionAvance.z << std::endl;
+                // std::cout<<"position : "<<this->globalTransform.t.x<<" "<<this->globalTransform.t.y<<" "<<this->globalTransform.t.z<<std::endl;
+                glm::vec3 direction = glm::normalize(this->positionAvance - this->globalTransform.t);
+                // std::cout << "Direction: " << direction.x << ", " << direction.y << ", " << direction.z << std::endl;
+                this->speed = speed + (acceleration*deltaTime);
+                glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
+                // std::cout<<"speed : "<<speed.x<<" "<<speed.y<<" "<<speed.z<<std::endl;
+                Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                this->setGlobalTransform(newTransform);
+            } else {
+                this->speed = glm::vec3(0.0f);
+                this->isMoving = false;
+                this->avancer=false;
+            }
+        }
 };

@@ -28,7 +28,46 @@ using namespace glm;
 #include<unordered_map>
 #include "Transform.h"
 
+class Line {
+    private:
+    public:
+        glm::vec3 m_origin , m_direction;
+        Line() {}
+        Line( glm::vec3  const & o , glm::vec3  const & d )  {
+            m_origin = o;
+            m_direction = d; m_direction=glm::normalize(m_direction);
+        }
+        glm::vec3  & origin() { return m_origin; }
+        glm::vec3  const & origin() const { return m_origin; }
+        glm::vec3  & direction() { return m_direction; }
+        glm::vec3  const & direction() const { return m_direction; }
+        glm::vec3  project( glm::vec3  const & p ) const {
+            glm::vec3  result;
+            return result;
+        }
+        float squareDistance( glm::vec3  const & p ) const {
+            float result;
+            return result;
+        }
+        float distance( glm::vec3  const & p ) const {
+            return sqrt( squareDistance(p) );
+        }
+    };
 
+class Ray : public Line {
+    public:
+        Ray() : Line() {}
+        Ray( glm::vec3  const & o , glm::vec3  const & d ) : Line(o,d) {}
+};
+
+struct RayTriangleIntersection{
+    bool intersectionExists;
+    float t;
+    float w0,w1,w2;
+    unsigned int tIndex;
+    glm::vec3 intersection;
+    glm::vec3 normal;
+};
 
 struct MTL{
     std::string nom;
@@ -59,6 +98,7 @@ class Mesh{
         std::vector<glm::vec3> vertices_Espace;
         std::vector<glm::vec2> texCoords;
         std::vector<glm::vec3> normal;
+        std::vector<float> areas;
         std::string filename;
         GLuint programID;
         GLuint vertexbuffer;
@@ -433,5 +473,95 @@ class Mesh{
             }
         }
         
+        void updateAreaAndNormal() {
+            for(int i=0;i<this->triangles.size();i++){
+                glm::vec3 nNotNormalized = glm::cross( this->indexed_vertices[this->triangles[i][1]] - this->indexed_vertices[this->triangles[i][0]] , this->indexed_vertices[this->triangles[i][2]] - this->indexed_vertices[this->triangles[i][0]] );
+                float norm = nNotNormalized.length();
+                this->normal.push_back(nNotNormalized / norm);
+                this->areas.push_back(norm / 2.f);
+            }
+        }
+        glm::vec3 projectOnSupportPlane( glm::vec3 const & p,int t) {
+            glm::vec3 result;glm::vec3 m_normal=this->normal[t];
+            glm::vec3 proj=p-this->vertices_Espace[this->triangles[t][0]];
+            float d=glm::dot(proj,m_normal);
+            result=p-d*m_normal;
+            return result;
+        }
+        float squareDistanceToSupportPlane( glm::vec3 const & p,int t) {
+            float result;
+            glm::vec3 proj=projectOnSupportPlane(p,t);
+            result=(proj[0]-p[0])*(proj[0]-p[0])*(proj[1]-p[1])*(proj[1]-p[1])*(proj[2]-p[2])*(proj[2]-p[2]);
+            return result;
+        }
+        float distanceToSupportPlane( glm::vec3 const & p,int t ) { return sqrt( squareDistanceToSupportPlane(p,t) ); }
+        bool isParallelTo( Line const & L,int t ) {
+            bool result=false;glm::vec3 m_normal=this->normal[t];
+            if(glm::dot(m_normal,L.direction())==0)result=true;
+            return result;
+        }
+        glm::vec3 getIntersectionPointWithSupportPlane( Line const & L,int t ) {
+            glm::vec3 result;glm::vec3 m_normal=this->normal[t];glm::vec3 m_c[3]{this->vertices_Espace[this->triangles[t][0]],this->vertices_Espace[this->triangles[t][1]],this->vertices_Espace[this->triangles[t][2]]};
+            if(isParallelTo(L,t)==false){
+                float denominator =glm::dot(L.direction(),m_normal);
+                float t = ((glm::dot(m_c[1]-m_c[0],m_normal)-(glm::dot(L.origin(),m_normal)))/denominator);
+                result=L.origin()+t*L.direction();
+            }
+            return result;
+        }
+        void computeBarycentricCoordinates( glm::vec3 const & p , float & u0 , float & u1 , float & u2, int t ) {
+            glm::vec3 m_normal=this->normal[t];glm::vec3 m_c[3]{this->vertices_Espace[this->triangles[t][0]],this->vertices_Espace[this->triangles[t][1]],this->vertices_Espace[this->triangles[t][2]]};
+            glm::vec3 v0 = m_c[1] - m_c[0];
+            glm::vec3 v1 = m_c[2] - m_c[0];
+            glm::vec3 v2 = p - m_c[0];
+            float d00 = glm::dot(v0, v0);
+            float d01 = glm::dot(v0, v1);
+            float d11 = glm::dot(v1, v1);
+            float d20 = glm::dot(v2, v0);
+            float d21 = glm::dot(v2, v1);
+            float denom = d00 * d11 - d01 * d01;
+            u1 = (d11 * d20 - d01 * d21) / denom;
+            u2 = (d00 * d21 - d01 * d20) / denom;
+            u0 = 1.0f - u1 - u2;
+        }
+
+        RayTriangleIntersection getIntersection( Ray const & ray, int t ) {
+            glm::vec3 m_normal=this->normal[t];
+            glm::vec3 m_c[3]{this->vertices_Espace[this->triangles[t][0]],this->vertices_Espace[this->triangles[t][1]],this->vertices_Espace[this->triangles[t][2]]};
+            // std::cout<<m_c[0][0]<<" "<<m_c[0][1]<<" "<<m_c[0][2]<<std::endl;
+            // std::cout<<m_c[1][0]<<" "<<m_c[1][1]<<" "<<m_c[1][2]<<std::endl;
+            // std::cout<<m_c[2][0]<<" "<<m_c[2][1]<<" "<<m_c[2][2]<<std::endl;
+            RayTriangleIntersection result;
+            bool parallel=isParallelTo(ray,t);
+            if(parallel){
+                result.t=FLT_MAX;
+                result.intersectionExists=false;
+                return result;
+            }
+            float denominator =glm::dot(ray.direction(),m_normal);
+            float ta = ((glm::dot(m_c[0] - ray.origin(),m_normal))/denominator);
+
+            glm::vec3 intersectionPoint = ray.origin()+(float)ta*ray.direction();
+            if(t<=0){
+                result.t = FLT_MAX;
+                result.intersectionExists = false;
+                return result;
+            }
+            float a,b,g;
+            computeBarycentricCoordinates(intersectionPoint, a, b, g,t);
+            if(a<0||b<0||g<0||a>1||b>1||g>1){
+                result.t=FLT_MAX;
+                result.intersectionExists = false;
+                return result;
+            }
+            result.intersectionExists=true;
+            result.intersection=intersectionPoint;
+            result.t = ta;     
+            result.w0=a;
+            result.w1=b;
+            result.w2=g;
+            result.normal=m_normal;
+            return result;
+        }
 };
 
