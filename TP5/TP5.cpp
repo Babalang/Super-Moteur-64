@@ -31,6 +31,7 @@ using namespace glm;
 #define STB_IMAGE_IMPLEMENTATION
 // #include "stb_image.h"
 #include <TP5/stb_image.h>
+// #include "../cegui-0-8-7/cegui/include/CEGUI/CEGUI.h"
 #endif
 
 void processInput(GLFWwindow *window);
@@ -56,6 +57,7 @@ int nbFrames = 0;
 // Scène 
 Scene scene;
 Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
+int niveau=0;
 
 // Fonction pour afficher le compteur de FPS
 double affiche(GLFWwindow *window,double lastTime){
@@ -337,7 +339,7 @@ void sceneNiveau3(Scene *scene){
     GOMetalMario3.rajouterOBJ();
     // Transform scale      = Transform().scale(0.1f);
     Transform scale      = Transform().scale(0.04f);
-    Transform translate  = Transform().translation(glm::vec3(-10.0f, 5.0f, 0.0f), 1.0f);
+    Transform translate  = Transform().translation(glm::vec3(-10.0f, 10.0f, 0.0f), 1.0f);
     Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
     Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 90.0f);
     Transform finalTransform = translate
@@ -347,6 +349,7 @@ void sceneNiveau3(Scene *scene){
     GOMetalMario3.setLocalTransform(finalTransform);
     GOMetalMario3.setGlobalTransform(finalTransform);
     GOMetalMario3.boiteEnglobante.setVerticesEspace(finalTransform);
+    GOMetalMario3.isGravite=true;
     // for(int i=0;i<8;i++){
     //     std::cout<<GOMetalMario3.boiteEnglobante.vertices_Espace[i][0]<<" "<<GOMetalMario3.boiteEnglobante.vertices_Espace[i][1]<<" "<<GOMetalMario3.boiteEnglobante.vertices_Espace[i][2]<<std::endl;
     // }
@@ -384,8 +387,10 @@ void sceneNiveau3(Scene *scene){
     GOBowser.lireOBJ("../meshes/koopa_model.obj");
     Transform tkoopa_model=Transform(glm::mat3x3(1.0),glm::vec3(10.0,5.0,0.0),0.1);
     GOBowser.rajouterOBJ();
-    GOBowser.setLocalTransform(tkoopa_model.combine_with(tkoopa_model.rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f)));
-    GOBowser.setGlobalTransform(tkoopa_model.combine_with(tkoopa_model.rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f)));
+    // GOBowser.setLocalTransform(tkoopa_model.combine_with(tkoopa_model.rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f)));
+    // GOBowser.setGlobalTransform(tkoopa_model.combine_with(tkoopa_model.rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f)));
+    GOBowser.setLocalTransform(tkoopa_model);
+    GOBowser.setGlobalTransform(tkoopa_model);
     GOBowser.nom="Bowser";
     // for(int i=0;i<8;i++){
     //     std::cout<<GOBowser.boiteEnglobante.vertices_Espace[i][0]<<" "<<GOBowser.boiteEnglobante.vertices_Espace[i][1]<<" "<<GOBowser.boiteEnglobante.vertices_Espace[i][2]<<std::endl;
@@ -403,6 +408,21 @@ void sceneNiveau3(Scene *scene){
     GOkoopa2.boiteEnglobante.setVerticesEspace(GOkoopa2.globalTransform);
     GOkoopa1.creerIA();
     GOkoopa1.boiteEnglobante.setVerticesEspace(GOkoopa1.globalTransform);
+}
+
+void changerNiveau(){
+    if(scene.niveau!=niveau){
+        scene.root.enfant.clear();
+        scene.lights.clear();
+        niveau=scene.niveau;
+        if(scene.niveau==1){
+            sceneNiveau1(&scene);
+        } else if(scene.niveau==2){
+            sceneNiveau2(&scene);
+        } else if(scene.niveau==3){
+            sceneNiveau3(&scene);
+        }
+    }
 }
 
 int main( void )
@@ -474,7 +494,7 @@ int main( void )
     // Camera camera=
     // sceneNiveau1(&scene);
     // sceneNiveau2(&scene);
-    sceneNiveau3(&scene);
+    // sceneNiveau3(&scene);
     std::cout<<"Niveau crée"<<std::endl;
 
 
@@ -482,12 +502,12 @@ int main( void )
 
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
-
     // For speed computation
     double lastTime = glfwGetTime();
     int nbFrames = 0;
 
     do{
+        changerNiveau();
         lastTime = affiche(window,lastTime);
         // Measure speed
         // per-frame time logic

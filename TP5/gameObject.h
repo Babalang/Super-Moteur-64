@@ -42,6 +42,12 @@ class GameObject{
         bool isBoiteEnglobante=false;
         glm::vec3 centre;
         glm::vec3 centreEspace;
+        glm::vec3 bas;
+        glm::vec3 basEspace;
+        glm::vec3 rayonDepart;
+        glm::mat3x3 rotationDepart;
+        bool isGravite=false;
+        bool aTerre=false;
 
         // light
         int index = 0;
@@ -108,6 +114,7 @@ class GameObject{
             if(isBoiteEnglobante){
                 this->boiteEnglobante.setVerticesEspace(this->globalTransform.combine_with(this->transform));
                 this->centreEspace=this->globalTransform.combine_with(this->transform).applyToPoint(this->centre);
+                this->basEspace=this->globalTransform.combine_with(this->transform).applyToPoint(this->bas);
             }
             for(auto& i :this->enfant){
                 i->setGlobalTransform(this->globalTransform);
@@ -179,7 +186,7 @@ class GameObject{
                     RayTriangleIntersection intersection = obj->boiteEnglobante.getIntersection(this->visionIA,i);
                     if(intersection.intersectionExists && intersection.t<20.0f && intersection.t>0.0f){
                         // std::cout<<"Intersection !!"<<std::endl;
-                        std::cout<<this->nom<<std::endl;
+                        // std::cout<<this->nom<<std::endl;
                         this->avancer=true;
                         this->positionAvance=obj->centreEspace;
                         // e.applyToPoint(this->indexed_vertices[i])
@@ -519,6 +526,9 @@ class GameObject{
                     // std::cout<<"taille enfant : "<<enfant.size()<<std::endl;
                     glm::vec3 centre = glm::vec3((minX+maxX)/2,(minY+maxY)/2,(minZ+maxZ)/2);
                     this->centre=centre;
+                    std::cout<<"centre : "<<centre.x<<" "<<centre.y<<" "<<centre.z<<std::endl;
+                    this->bas=glm::vec3(centre[0],minY,centre[2]);
+                    std::cout<<"bas : "<<this->bas.x<<" "<<this->bas.y<<" "<<this->bas.z<<std::endl;
                     glm::vec3 p1=glm::vec3(minX,minY,minZ);
                     glm::vec3 p2=glm::vec3(maxX,minY,minZ);
                     glm::vec3 p3=glm::vec3(maxX,minY,maxZ);
@@ -751,7 +761,10 @@ class GameObject{
         void creerIA(){
             this->isIA=true;
             this->visionIA.m_origin = this->centreEspace;
-            this->visionIA.m_direction = glm::normalize(this->globalTransform.m[2]);
+            // this->visionIA.m_direction = glm::normalize(this->globalTransform.m[2]);
+            this->visionIA.m_direction = glm::vec3(0.0,1.0,0.0);
+            this->rayonDepart=this->visionIA.m_direction;
+            this->rotationDepart = this->globalTransform.m;
             std::cout<<"nouvelle IA cree !"<<std::endl;
             std::cout<<"direction : "<<this->visionIA.m_direction.x<<" "<<this->visionIA.m_direction.y<<" "<<this->visionIA.m_direction.z<<std::endl;
             std::cout<<"position : "<<this->visionIA.m_origin.x<<" "<<this->visionIA.m_origin.y<<" "<<this->visionIA.m_origin.z<<std::endl;
@@ -761,17 +774,71 @@ class GameObject{
             if (glm::length(this->positionAvance - this->globalTransform.t) > 0.01f) {
                 // std::cout << "Moving to position: " << positionAvance.x << ", " << positionAvance.y << ", " << positionAvance.z << std::endl;
                 // std::cout<<"position : "<<this->globalTransform.t.x<<" "<<this->globalTransform.t.y<<" "<<this->globalTransform.t.z<<std::endl;
-                glm::vec3 direction = glm::normalize(this->positionAvance - this->globalTransform.t);
-                // std::cout << "Direction: " << direction.x << ", " << direction.y << ", " << direction.z << std::endl;
+                glm::vec3 direction = glm::normalize(this->positionAvance - this->centreEspace);
+                // float dotProduct = glm::dot(this->rayonDepart, direction);
+                float dotProduct = glm::dot(glm::vec3(0.0,0.0,-1.0), direction);
+                dotProduct = glm::clamp(dotProduct, -1.0f, 1.0f);
+                float angle = glm::degrees(glm::acos(dotProduct));
+                // float angle = glm::acos(dotProduct);
+                // std::cout<<"angle : "<<angle<<std::endl;
                 this->speed = speed + (acceleration*deltaTime);
                 glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
                 // std::cout<<"speed : "<<speed.x<<" "<<speed.y<<" "<<speed.z<<std::endl;
+                Transform rotateY;
+                if(this->nom=="koopa1" || this->nom=="koopa2"){
+                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle-90);
+                }if(this->nom=="Bowser"){
+                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle+180);
+                }
+                Transform a=Transform(rotationDepart, this->transform.t, this->transform.s);
                 Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                // newTransform=newTransform.combine_with(newTransform.rotation(glm::vec3(0.0f,1.0f,0.0f), angle));
+                // this->setGlobalTransform(Transform());
+                this->setLocalTransform(a.combine_with(rotateY));
                 this->setGlobalTransform(newTransform);
+                // this->setGlobalTransform(this->globalTransform.combine_with(rotateY));
+                this->visionIA.m_direction = direction;
             } else {
                 this->speed = glm::vec3(0.0f);
                 this->isMoving = false;
                 this->avancer=false;
+            }
+        }
+
+        void gravite(GameObject* obj, float deltaTime){
+            if(isGravite && aTerre==false){
+                Ray ray1 = Ray(boiteEnglobante.vertices_Espace[0], glm::vec3(0.0,-1.0,0.0));
+                Ray ray2 = Ray(boiteEnglobante.vertices_Espace[1], glm::vec3(0.0,-1.0,0.0));
+                Ray ray3 = Ray(boiteEnglobante.vertices_Espace[2], glm::vec3(0.0,-1.0,0.0));
+                Ray ray4 = Ray(boiteEnglobante.vertices_Espace[3], glm::vec3(0.0,-1.0,0.0));
+                RayTriangleIntersection intersection1;
+                RayTriangleIntersection intersection2;
+                RayTriangleIntersection intersection3;
+                RayTriangleIntersection intersection4;
+                for(int i=0;i<obj->objetsOBJ.size();i++){
+                    for(int j=0;j<obj->objetsOBJ[i].mesh.triangles.size();j++){
+                        if(!intersection1.intersectionExists)intersection1=obj->objetsOBJ[i].mesh.getIntersection(ray1,j);
+                        if(!intersection2.intersectionExists)intersection2=obj->objetsOBJ[i].mesh.getIntersection(ray2,j);
+                        if(!intersection3.intersectionExists)intersection3=obj->objetsOBJ[i].mesh.getIntersection(ray3,j);
+                        if(!intersection4.intersectionExists)intersection4=obj->objetsOBJ[i].mesh.getIntersection(ray4,j);
+                        if(intersection1.intersectionExists && intersection1.t>0.01f && intersection2.intersectionExists && intersection2.t>0.01f && intersection3.intersectionExists && intersection3.t>0.01f && intersection4.intersectionExists && intersection4.t>0.01f){
+                            std::cout<<"gravite !"<<std::endl;
+                            glm::vec3 direction = glm::vec3(0.0,-1.0,0.0);
+                            glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
+                            Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                            this->setGlobalTransform(newTransform);
+                            break;
+                        }else if(intersection1.intersectionExists && intersection1.t<=0.01f && intersection2.intersectionExists && intersection2.t<=0.01f && intersection3.intersectionExists && intersection3.t<=0.01f && intersection4.intersectionExists && intersection4.t<=0.01f){
+                            std::cout<<"aTerre !"<<std::endl;
+                            this->aTerre=true;
+                            break;
+                        }
+                    }
+                }
+            }else{
+                for(int i=0;i<this->enfant.size();i++){
+                    this->enfant[i]->gravite(obj,deltaTime);
+                }
             }
         }
 };
