@@ -38,8 +38,7 @@ class GameObject{
         std::string nom;
         bool M=false;
         int tailleObjetOBJ=0;
-        Mesh boiteEnglobante;
-        bool isBoiteEnglobante=false;
+        bool isBoiteEnglobante=true;
         glm::vec3 centre;
         glm::vec3 centreEspace;
         glm::vec3 bas;
@@ -48,6 +47,11 @@ class GameObject{
         glm::mat3x3 rotationDepart;
         bool isGravite=false;
         bool aTerre=false;
+        // Collision
+        bool isCollision=false;
+        Mesh boiteEnglobante;
+        Mesh collisionMesh;
+        bool isGround = false;
 
         // light
         int index = 0;
@@ -83,7 +87,7 @@ class GameObject{
             if(child->hasPlan){
                 child->plan.programID=this->programID;
             }
-            child->setGlobalTransform(this->globalTransform);
+            child->setGlobalTransform(this->globalTransform.combine_with(child->globalTransform));
             // std::cout<<"m"<<std::endl;
             this->enfant.push_back(child);
             child->parent = this;
@@ -100,6 +104,42 @@ class GameObject{
 
         void setGlobalTransform(Transform t){
             this->globalTransform=t;
+            Transform worldTransform = this->globalTransform.combine_with(this->transform);
+            // std::cout <<" World Transform: " << worldTransform.t.x << ", "
+            // << worldTransform.t.y << ", "
+            // << worldTransform.t.z << std::endl;
+            if(hasMesh) {
+                if(hasLOD){
+                    this->highMesh.setVerticesEspace(worldTransform);
+                    this->medMesh.setVerticesEspace(worldTransform);
+                    this->lowMesh.setVerticesEspace(worldTransform);
+                } else {
+                    this->mesh.setVerticesEspace(worldTransform);
+                }
+            }
+            if(hasPlan) this->plan.setVerticesEspace(worldTransform);
+            if(isBoiteEnglobante){
+                this->boiteEnglobante.setVerticesEspace(worldTransform);
+                this->centreEspace=worldTransform.applyToPoint(this->centre);
+                this->basEspace=worldTransform.applyToPoint(this->bas);
+            }
+            int index = 0;
+            for(auto& i :this->enfant){
+                if(index <this->objetsOBJ.size()){
+                    // std::cout << "Global Transform: " << this->globalTransform.t.x << ", "
+                    // << this->globalTransform.t.y << ", "
+                    // << this->globalTransform.t.z << std::endl;
+                    i->setGlobalTransform(this->globalTransform);
+                } else {
+                    Transform combinedTransform = this->globalTransform.combine_with(i->transform);
+                    i->setGlobalTransform(combinedTransform);
+                }
+                index++;
+            }
+        }
+
+        void setLocalTransform(Transform t){
+            this->transform = t;
             if(hasMesh) {
                 Transform tmp = this->globalTransform.combine_with(this->transform);
                 if(hasLOD){
@@ -109,30 +149,18 @@ class GameObject{
                 } else {
                     this->mesh.setVerticesEspace(tmp);
                 }
+                if(isBoiteEnglobante){
+                    this->boiteEnglobante.setVerticesEspace(tmp);
+                    this->centreEspace=tmp.applyToPoint(this->centre);
+                    this->basEspace=tmp.applyToPoint(this->bas);
+                }
             }
             if(hasPlan) this->plan.setVerticesEspace(this->globalTransform.combine_with(this->transform));
-            if(isBoiteEnglobante){
-                this->boiteEnglobante.setVerticesEspace(this->globalTransform.combine_with(this->transform));
-                this->centreEspace=this->globalTransform.combine_with(this->transform).applyToPoint(this->centre);
-                this->basEspace=this->globalTransform.combine_with(this->transform).applyToPoint(this->bas);
+            for(int i = 0; i < this->objetsOBJ.size(); i++){
+                    Transform childWorld = this->transform;
+                    this->enfant[i]->setLocalTransform(childWorld); // mettre à jour leur position dans le monde
             }
-            for(auto& i :this->enfant){
-                i->setGlobalTransform(this->globalTransform);
-            }
-        }
-
-        void setLocalTransform(Transform t){
-            this->transform = t;
-            if(hasMesh) {
-                Transform tmp = this->globalTransform.combine_with(this->transform);
-                this->highMesh.setVerticesEspace(tmp);
-                this->medMesh.setVerticesEspace(tmp);
-                this->lowMesh.setVerticesEspace(tmp);
-            }
-            if(hasPlan) this->plan.setVerticesEspace(this->globalTransform.combine_with(this->transform));
-            for(auto& i :this->objetsOBJ){
-                i.setLocalTransform(this->transform);
-            }
+                            
         }
 
         void draw(const glm::vec3 cameraPosition, float deltaTime) {
@@ -172,11 +200,9 @@ class GameObject{
                     //std::cout << "Dessin de l'enfant : " << enfant[i]->nom << std::endl;
                     this->objetsOBJ[i].draw(cameraPosition, deltaTime);
                 }
-                // if(isBoiteEnglobante){
+                // if(isBoiteEnglobante && hasMesh){
                 //     this->boiteEnglobante.draw();
                 // }
-            }if(avancer){
-                this->moveToPosition(deltaTime);
             }
         }
 
@@ -256,21 +282,37 @@ class GameObject{
         }
 
         void Move(float deltaTime, glm::vec3 axe, float vitesse = 1.0f){
+            //std::cout<<"deltaTime : "<<deltaTime<<std::endl;
             float height = 0.0f;
-            if(this->parent->hasPlan){
+            if(this->parent && this->parent->hasPlan){
                 glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
                 height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
             }
-            Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + axe*(vitesse*deltaTime), this->globalTransform.s);
-            if(Mov.t[1]<this->height2parent+height){
-                Mov.t[1] = this->height2parent+height;
-            } else if(speed == glm::vec3(0.0)) speed = glm::vec3(0.0,-1.0,0.0);
+            
+            // Ajuster la vitesse en fonction de deltaTime et de l'échelle
+            glm::vec3 movement = axe * (vitesse * this->globalTransform.s * deltaTime); // Appliquer l'échelle à la vitesse
+            Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);
+            
+            // Empêcher les mouvements sous le plan (collisions)
+            if(Mov.t[1] < this->height2parent + height){
+                Mov.t[1] = this->height2parent + height;
+            }
+
+            //std::cout << "Mouvement : " << movement.x << ", "
+            //     << movement.y << ", "
+            //     << movement.z << std::endl;
+            // std::cout << "Position : " << Mov.t.x << ", "
+            //     << Mov.t.y << ", "
+            //     << Mov.t.z << std::endl;
+            
             this->setGlobalTransform(Mov);
             isMoving = true;
         }
+        
 
         void PhysicMove(float deltaTime){
-            float height=0.0f;
+            float height=-10.0f;
+            this->isGravite=true;
             if(this->parent && this->parent->hasPlan){
                 glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
                 height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
@@ -281,6 +323,7 @@ class GameObject{
                 Mov.t[1] = this->height2parent+height;
                 speed = glm::vec3(0.0f);
             }
+            this->collisions();
             this->setGlobalTransform(Mov);
             // std::cout<<this->globalTransform.t[0]<<" "<<this->globalTransform.t[1]<<" "<<this->globalTransform.t[2]<<std::endl;
             isMoving = true;
@@ -420,9 +463,12 @@ class GameObject{
             e->parent=this;
             e->setGlobalTransform(this->globalTransform);
             e->setLocalTransform(e->transform);
+            e->programID=this->programID;
+            e->calculerBoiteEnglobante();
         }
         void addEnfantOBJ2(GameObject* e){
             e->programID=this->programID;
+            e->boiteEnglobante.programID=this->programID;
             if(e->M){
                 e->mesh.programID=programID;
             }
@@ -647,6 +693,13 @@ class GameObject{
                         goa.mesh.indices.push_back(a);
                         goa.mesh.indices.push_back(b);
                         goa.mesh.indices.push_back(c);
+
+                    }
+                    if(goa.hasMesh){
+                        goa.calculerBoiteEnglobante();
+                        goa.boiteEnglobante.programID=this->programID;
+                        goa.boiteEnglobante.filename="../textures/2k_moon.jpg";
+                        goa.boiteEnglobante.loadTexture();
                     }
                     objetsOBJ.push_back(goa);
                     nb+=nba;
@@ -770,75 +823,203 @@ class GameObject{
             std::cout<<"position : "<<this->visionIA.m_origin.x<<" "<<this->visionIA.m_origin.y<<" "<<this->visionIA.m_origin.z<<std::endl;
         }
 
-        void moveToPosition(float deltaTime) {
-            if (glm::length(this->positionAvance - this->globalTransform.t) > 0.01f) {
-                // std::cout << "Moving to position: " << positionAvance.x << ", " << positionAvance.y << ", " << positionAvance.z << std::endl;
-                // std::cout<<"position : "<<this->globalTransform.t.x<<" "<<this->globalTransform.t.y<<" "<<this->globalTransform.t.z<<std::endl;
-                glm::vec3 direction = glm::normalize(this->positionAvance - this->centreEspace);
-                // float dotProduct = glm::dot(this->rayonDepart, direction);
-                float dotProduct = glm::dot(glm::vec3(0.0,0.0,-1.0), direction);
-                dotProduct = glm::clamp(dotProduct, -1.0f, 1.0f);
-                float angle = glm::degrees(glm::acos(dotProduct));
-                // float angle = glm::acos(dotProduct);
-                // std::cout<<"angle : "<<angle<<std::endl;
-                this->speed = speed + (acceleration*deltaTime);
-                glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
-                // std::cout<<"speed : "<<speed.x<<" "<<speed.y<<" "<<speed.z<<std::endl;
-                Transform rotateY;
-                if(this->nom=="koopa1" || this->nom=="koopa2"){
-                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle-90);
-                }if(this->nom=="Bowser"){
-                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle+180);
-                }
-                Transform a=Transform(rotationDepart, this->transform.t, this->transform.s);
-                Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
-                // newTransform=newTransform.combine_with(newTransform.rotation(glm::vec3(0.0f,1.0f,0.0f), angle));
-                // this->setGlobalTransform(Transform());
-                this->setLocalTransform(a.combine_with(rotateY));
-                this->setGlobalTransform(newTransform);
-                // this->setGlobalTransform(this->globalTransform.combine_with(rotateY));
-                this->visionIA.m_direction = direction;
-            } else {
-                this->speed = glm::vec3(0.0f);
-                this->isMoving = false;
-                this->avancer=false;
+        void calculerBoiteEnglobante() {
+            if (!hasMesh) {
+                std::cerr << "Aucun mesh disponible pour calculer la boîte englobante." << std::endl;
+                return;
+            }
+
+            if (isGround) {
+                std::cout << "Cet objet est marqué comme sol, pas de boîte englobante générée." << std::endl;
+                return;
+            }
+        
+            // Initialiser les valeurs min et max
+            glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
+            glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
+        
+            // Parcourir les vertices du mesh
+            for (const auto& vertex : mesh.indexed_vertices) {
+                if (vertex.x < min.x) min.x = vertex.x;
+                if (vertex.y < min.y) min.y = vertex.y;
+                if (vertex.z < min.z) min.z = vertex.z;
+        
+                if (vertex.x > max.x) max.x = vertex.x;
+                if (vertex.y > max.y) max.y = vertex.y;
+                if (vertex.z > max.z) max.z = vertex.z;
+            }
+        
+            // Calculer le centre et les dimensions de la boîte englobante
+            this->centre = (min + max) / 2.0f;
+            this->bas = glm::vec3(centre.x, min.y, centre.z);
+        
+            // Créer les 8 points de la boîte englobante
+            glm::vec3 p1 = glm::vec3(min.x, min.y, min.z);
+            glm::vec3 p2 = glm::vec3(max.x, min.y, min.z);
+            glm::vec3 p3 = glm::vec3(max.x, min.y, max.z);
+            glm::vec3 p4 = glm::vec3(min.x, min.y, max.z);
+            glm::vec3 p5 = glm::vec3(min.x, max.y, min.z);
+            glm::vec3 p6 = glm::vec3(max.x, max.y, min.z);
+            glm::vec3 p7 = glm::vec3(max.x, max.y, max.z);
+            glm::vec3 p8 = glm::vec3(min.x, max.y, max.z);
+        
+            // Ajouter les points à la boîte englobante
+            boiteEnglobante.indexed_vertices = {p1, p2, p3, p4, p5, p6, p7, p8};
+        
+            // Ajouter les triangles pour former la boîte
+            boiteEnglobante.triangles = {
+                {0, 1, 2}, {2, 3, 0}, // Face inférieure
+                {4, 5, 6}, {6, 7, 4}, // Face supérieure
+                {0, 1, 5}, {5, 4, 0}, // Face avant
+                {1, 2, 6}, {6, 5, 1}, // Face droite
+                {2, 3, 7}, {7, 6, 2}, // Face arrière
+                {3, 0, 4}, {4, 7, 3}  // Face gauche
+            };
+        
+            // Ajouter les indices pour le rendu
+            boiteEnglobante.indices.clear();
+            for (const auto& triangle : boiteEnglobante.triangles) {
+                boiteEnglobante.indices.insert(boiteEnglobante.indices.end(), triangle.begin(), triangle.end());
+            }
+        
+            // Calculer les normales pour le rendu
+            boiteEnglobante.compute_Normals();
+
+            boiteEnglobante.programID = this->programID;
+            boiteEnglobante.filename = "../textures/2k_moon.jpg";
+        
+            // Marquer la boîte englobante comme active
+            isBoiteEnglobante = true;
+        }
+
+        void setIsGround(){
+            this->isGround=true;
+            this->mesh.programID=this->programID;
+            this->boiteEnglobante = this->mesh;
+            for(int i=0;i<this->objetsOBJ.size();i++){
+                this->enfant[i]->isGround=true;
+                this->enfant[i]->mesh.programID=this->programID;
+                this->enfant[i]->boiteEnglobante = this->enfant[i]->mesh;
             }
         }
 
-        void gravite(GameObject* obj, float deltaTime){
-            if(isGravite && aTerre==false){
-                Ray ray1 = Ray(boiteEnglobante.vertices_Espace[0], glm::vec3(0.0,-1.0,0.0));
-                Ray ray2 = Ray(boiteEnglobante.vertices_Espace[1], glm::vec3(0.0,-1.0,0.0));
-                Ray ray3 = Ray(boiteEnglobante.vertices_Espace[2], glm::vec3(0.0,-1.0,0.0));
-                Ray ray4 = Ray(boiteEnglobante.vertices_Espace[3], glm::vec3(0.0,-1.0,0.0));
-                RayTriangleIntersection intersection1;
-                RayTriangleIntersection intersection2;
-                RayTriangleIntersection intersection3;
-                RayTriangleIntersection intersection4;
-                for(int i=0;i<obj->objetsOBJ.size();i++){
-                    for(int j=0;j<obj->objetsOBJ[i].mesh.triangles.size();j++){
-                        if(!intersection1.intersectionExists)intersection1=obj->objetsOBJ[i].mesh.getIntersection(ray1,j);
-                        if(!intersection2.intersectionExists)intersection2=obj->objetsOBJ[i].mesh.getIntersection(ray2,j);
-                        if(!intersection3.intersectionExists)intersection3=obj->objetsOBJ[i].mesh.getIntersection(ray3,j);
-                        if(!intersection4.intersectionExists)intersection4=obj->objetsOBJ[i].mesh.getIntersection(ray4,j);
-                        if(intersection1.intersectionExists && intersection1.t>0.01f && intersection2.intersectionExists && intersection2.t>0.01f && intersection3.intersectionExists && intersection3.t>0.01f && intersection4.intersectionExists && intersection4.t>0.01f){
-                            std::cout<<"gravite !"<<std::endl;
-                            glm::vec3 direction = glm::vec3(0.0,-1.0,0.0);
-                            glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
-                            Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
-                            this->setGlobalTransform(newTransform);
-                            break;
-                        }else if(intersection1.intersectionExists && intersection1.t<=0.01f && intersection2.intersectionExists && intersection2.t<=0.01f && intersection3.intersectionExists && intersection3.t<=0.01f && intersection4.intersectionExists && intersection4.t<=0.01f){
-                            std::cout<<"aTerre !"<<std::endl;
-                            this->aTerre=true;
-                            break;
+        void collisions(){
+            if(isGravite){
+                vec3 dir = vec3(0.0);
+
+                if(objetsOBJ.size()>0){
+                    for(int i=0;i<this->objetsOBJ.size();i++){
+                        dir = this->collisionWithChild(this->enfant[i],this);
+                        dir = this->collisionWithAcestor(this->enfant[i],this);
+                        if(dir != vec3(0.0)) {
+                            this->handleCollision(dir);
+                        }
+                    }
+                }else{
+                    dir = this->collisionWithChild(this,this);
+                    dir = this->collisionWithAcestor(this,this);
+                    if(dir != vec3(0.0)) {
+                        this->handleCollision(dir);
+                    }
+                }
+            }
+        }
+
+        vec3 collisionWithAcestor(GameObject* go, GameObject* toAvoid) {
+            if (this->parent) {
+                for (int i = 0; i < this->parent->enfant.size(); i++) {
+                    GameObject* go2 = this->parent->enfant[i];
+
+                    if (go2 != go && go2 != this && go2!=toAvoid) { // Exclure l'objet lui-même
+                        if (go2->collisionCheck(go)) {
+                            std::cout << go2->globalTransform.t.x << " " << go2->globalTransform.t.y << " " << go2->globalTransform.t.z << std::endl;
+                            std::cout << go->globalTransform.t.x << " " << go->globalTransform.t.y << " " << go->globalTransform.t.z << std::endl;
+                            std::cout << "Collision avec acestor : " << go2->nom <<" id : "<<i<< std::endl;
+                            return (go2->globalTransform.t) - (go->globalTransform.t);
+                        }
+                        if(go2->enfant.size()>0){
+                            return go2->collisionWithChild(go, toAvoid);
+
                         }
                     }
                 }
-            }else{
-                for(int i=0;i<this->enfant.size();i++){
-                    this->enfant[i]->gravite(obj,deltaTime);
+                if (this->collisionCheck(go) && this != toAvoid) {
+                    std::cout << "Collision avec parent : " << this->parent->nom << std::endl;
+                    std::cout << this->parent->globalTransform.t.x << " " << this->parent->globalTransform.t.y << " " << this->parent->globalTransform.t.z << std::endl;
+                    std::cout << go->globalTransform.t.x << " " << go->globalTransform.t.y << " " << go->globalTransform.t.z << std::endl;
+                    return (this->parent->globalTransform.t) - (go->globalTransform.t);
+                }
+                return this->parent->collisionWithAcestor(go, toAvoid);
+            }
+            return vec3(0.0); // Aucune collision détectée
+        }
+
+        vec3 collisionWithChild(GameObject* go, GameObject* toAvoid) {
+            vec3 result = vec3(0.0);
+            if(this != toAvoid){
+                for (int i = 0; i < this->enfant.size(); i++) {
+                    GameObject* go2 = this->enfant[i];
+                    if (go2 != go && go2 != this && go2->nom !="Camera" && go2 != toAvoid) { // Exclure l'objet lui-même
+                        if (go2->collisionCheck(go)  && !go2->M) {
+                            std::cout << "Collision avec enfant : " << go2->nom <<" id : "<<i<< std::endl;
+                            return (go2->globalTransform.t) - (go->globalTransform.t);
+                        }
+                        result = go2->collisionWithChild(go,toAvoid)==vec3(0.0)?vec3(0.0):go2->collisionWithChild(go,toAvoid);
+                    }
+                }
+            } else {
+                for (int i = this->objetsOBJ.size(); i < this->enfant.size(); i++) {
+                    GameObject* go2 = this->enfant[i];
+                    if (go2 != go && go2 != this && go2->nom !="Camera") { // Exclure l'objet lui-même
+                        if (go2->collisionCheck(go)) {
+                            std::cout << "Collisionfidufilfhiuh avec enfant : " << go2->nom <<" id : "<<i<< std::endl;
+                            return ((go2->globalTransform.t) - (go->globalTransform.t));
+                        }
+                        result = go2->collisionWithChild(go,toAvoid)==vec3(0.0)?vec3(0.0):go2->collisionWithChild(go,toAvoid);
+                    }
                 }
             }
+            return result; // Aucune collision détectée
+           
+        }
+
+        bool collisionCheck(GameObject* go) {
+            if (this == go) {
+                return false; // Ne pas tester la collision avec soi-même
+            }
+        
+            float collisionTolerance = 0.1f; // Tolérance pour éviter les fausses collisions
+        
+            // Vérifier si les objets sont proches avant de tester la collision
+            if (glm::length(this->globalTransform.t - go->globalTransform.t) < 5.0f) {
+                return false; // Ignorer si les objets sont trop éloignés
+            }
+
+        
+            bool result = this->boiteEnglobante.collisionCheck(go->boiteEnglobante, collisionTolerance);
+        
+            if (result) {
+                std::cout << "Collision détectée entre " << this->nom << " et " << go->nom << std::endl;
+            } else {
+            }
+        
+            return result;
+        }
+
+
+        void handleCollision(glm::vec3 dir) {
+            if (glm::length(dir) < 0.3f) { // Si la direction est proche de zéro, ignorer
+                std::cout << "Collision ignorée : direction nulle." << std::endl;
+                std::cout << "Position actuelle : " << this->globalTransform.t.x << ", " << this->globalTransform.t.y << ", " << this->globalTransform.t.z << std::endl;
+                return;
+            }
+
+            this->globalTransform.t += glm::normalize(dir) * 0.1f;
+        
+            this->speed = glm::vec3(0.0, 0.0, 0.0);
+            this->acceleration = glm::vec3(0.0, 0.0, 0.0);
+        
+            std::cout << "collision !" << std::endl;
+            std::cout << "dir : " << dir.x << " " << dir.y << " " << dir.z << std::endl;
         }
 };

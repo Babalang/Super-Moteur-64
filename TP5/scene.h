@@ -12,7 +12,7 @@ class Scene{
     GameObject root;
     Camera camera;
     GLuint programID;
-    int niveau=3;
+    int niveau=1;
     std::vector<GameObject*> lights;
         Scene(){}
 
@@ -28,6 +28,7 @@ class Scene{
     }
 
     void draw(float elapsedTime){
+        root.nom="root";
         GameObject* Map = this->root.enfant[0];
         GameObject* Obj = Map->enfant[Map->objetsOBJ.size()];
         for(auto& i : this->lights){ 
@@ -35,7 +36,6 @@ class Scene{
         }
         this->animation(elapsedTime);
         this->root.testIA(Obj);
-        this->root.gravite(Map,elapsedTime);
         this->root.draw(camera.globalTransform.t, elapsedTime);
         this->testChangementNiveau(Map,Obj);
     }

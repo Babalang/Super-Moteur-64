@@ -25,18 +25,20 @@ class Transform{
         glm::vec3 applyToVersor(glm::vec3 p){
             return glm::normalize(m*p);
         }
-
         Transform combine_with(Transform t) const {
-            auto combined_m = this->m * t.m;        
-            auto combined_t = this->t + (this->m * (t.t * this->s));        
-            auto combined_s = this->s * t.s;        
+            glm::mat3 combined_m = this->m * t.m; // Combine les rotations
+            glm::vec3 combined_t = this->t + (this->m * t.t); // Combine les translations sans appliquer l'échelle
+            float combined_s = this->s * t.s; // Combine les échelles
             return Transform(combined_m, combined_t, combined_s);
-        }        
-        Transform inverse(){
-            glm::mat3x3 invM = glm::inverse(this->m);
-            float invS = (s != 0) ? 1.0f/this->s : 1.0f;
-            return Transform(invM, -invM * (t*invS), invS);
         }
+        
+             
+        Transform inverse() {
+            glm::mat3x3 invM = glm::inverse(this->m);
+            float invS = (s != 0) ? 1.0f / this->s : 1.0f;
+            return Transform(invM, -invM * t * invS, invS);
+        }
+        
         Transform interpolate_with(Transform t, float k){
             float interpS = (1-k) *this->s +k * t.s;
             glm::mat3x3 interpM = glm::mix(this->m,t.m,k);
@@ -47,9 +49,10 @@ class Transform{
         Transform rotation(glm::vec3 axe, float angle) {
             glm::vec3 normalizedAxe = glm::normalize(axe);
             float angleRadians = glm::radians(angle);
-            glm::mat3 rotationMatrix = glm::mat3(glm::rotate(glm::mat4(1.0f), angleRadians, normalizedAxe));
+            glm::mat3 rotationMatrix = cleanMatrix(glm::mat3(glm::rotate(glm::mat4(1.0f), angleRadians, normalizedAxe)));
             return Transform(rotationMatrix, glm::vec3(0.0f), 1.0f);
         }
+
 
         Transform translation(glm::vec3 axe, float distance) {
             glm::vec3 translationVector = axe * distance;
@@ -58,6 +61,17 @@ class Transform{
 
         Transform scale(float size) {
             return Transform(glm::mat3x3(1.0), glm::vec3(0.0f), size);
+        }
+
+        glm::mat3 cleanMatrix(glm::mat3 matrix) {
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 0; j < 3; ++j) {
+                    if (glm::abs(matrix[i][j]) < 1e-6) {
+                        matrix[i][j] = 0.0f;
+                    }
+                }
+            }
+            return matrix;
         }
 };
 

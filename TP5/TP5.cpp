@@ -10,7 +10,9 @@
 // Include GLEW
 
 // Include GLFW
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
 GLFWwindow* window;
 
 // Include GLM
@@ -56,7 +58,7 @@ int nbFrames = 0;
 
 // Scène 
 Scene scene;
-Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
+Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 1000.0f);
 int niveau=0;
 
 // Fonction pour afficher le compteur de FPS
@@ -65,7 +67,7 @@ double affiche(GLFWwindow *window,double lastTime){
     nbFrames++;
     if ( currentTime - lastTime >= 1.0 ){ 
         double fps = double(nbFrames);
-        std::string title = "TP3 - FPS : " + std::to_string(fps);
+        std::string title = "Super Mario - FPS : " + std::to_string(fps);
         glfwSetWindowTitle(window, title.c_str());
         nbFrames = 0;
         lastTime += 1.0;
@@ -78,6 +80,7 @@ double affiche(GLFWwindow *window,double lastTime){
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
@@ -90,6 +93,7 @@ void processInput(GLFWwindow *window)
     glm::vec3 cameraTarget = -cameraRotation[2];               // Axe Z local (direction vers l'avant)
     glm::vec3 cameraRight = cameraRotation[0];                 // Axe X local (direction droite)
     glm::vec3 cameraUp = cameraRotation[1];                    // Axe Y local (direction vers le haut)
+
 
     if (scene.camera.mode == CAMERA_MODE::ORBITAL) {
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
@@ -170,8 +174,8 @@ void sceneNiveau1(Scene *scene){
     GOchateau.programID=programID;
     GOchateau.lireOBJ("../meshes/chateau.obj");
     GOchateau.rajouterOBJ();
+    GOchateau.setIsGround();
     GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
-    GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     
     // scene->root.addChild(&GOchateau);
     
@@ -187,21 +191,25 @@ void sceneNiveau1(Scene *scene){
     
     
     GOmariometal.programID=programID;
-    GOmariometal.lireOBJ("../meshes/Mario64_Cap.obj");
-    GOmariometal.lireOBJ("../meshes/Mario64.obj");
+    GOmariometal.lireOBJ("../meshes/Mario.obj");
     std::cout<<"Chargement de l'objet"<<std::endl;
     GOmariometal.rajouterOBJ();
-    Transform scale      = Transform().scale(0.02f); // Réduction de taille
-    Transform translate  = Transform().translation(glm::vec3(2.0f, 1.0f, -7.5f), 5.0f); // Position
-    Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f); // Incliner
-    Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f); // Regarder opposé
+    GOmariometal.isGround = true;
+    Transform scale = Transform().scale(0.020f);
+    Transform roll = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f); // Roll (90° autour de Z)
+    Transform yaw = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f); // Yaw (180° autour de Y)
+    Transform combined = yaw.combine_with(roll); // Combinaison des transformations
+
+    // std::cout<<combined.m[0][0]<<" "<<combined.m[1][1]<<" "<<combined.m[2][2]<<std::endl;
+    // std::cout<<combined.m[0][1]<<" "<<combined.m[1][0]<<" "<<combined.m[2][1]<<std::endl;
+    // std::cout<<combined.m[0][2]<<" "<<combined.m[1][2]<<" "<<combined.m[2][0]<<std::endl;
+    GOmariometal.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,0.0),1.0).combine_with(scale).combine_with(roll));
+
     
-    Transform finalTransform = translate
-        .combine_with(rotateY)
-        .combine_with(rotateX)
-        .combine_with(scale);
-    
-    GOmariometal.setLocalTransform(finalTransform); // SEULEMENT le local
+    // Parent = translation uniquement
+    Transform translation =Transform(glm::mat3(1.0f), glm::vec3(20.0f, 10.0f, -70.5f), 1.0f);
+    std::cout<<GOmariometal.globalTransform.t[0]<<" "<<GOmariometal.globalTransform.t[1]<<" "<<GOmariometal.globalTransform.t[2]<<std::endl;
+    GOmariometal.setGlobalTransform(translation);
     
     
     // GOchateau.addChild(&GOmariometal);
@@ -222,7 +230,6 @@ void sceneNiveau1(Scene *scene){
     GOPeach.rajouterOBJ();
     Transform tPeach=Transform(glm::mat3x3(1.0),glm::vec3(-3.0,5.0,20.0),0.02);
     GOPeach.setLocalTransform(tPeach.combine_with(tPeach.rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f)));
-    GOPeach.setGlobalTransform(tPeach.combine_with(tPeach.rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f)));
     
     // Affichage de la lumière :
     std::cout<<"Chargement de la lumière"<<std::endl;
@@ -241,7 +248,6 @@ void sceneNiveau1(Scene *scene){
     // Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
     GOmariometal.addChild(&camera);
     // camera.globalTransform=translate;
-    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-100.0),1.0)));
     scene->camera = camera;
     scene->camera.lookAt(&GOmariometal);
     
@@ -434,9 +440,8 @@ int main( void )
         getchar();
         return -1;
     }
-    if (!glewIsSupported("GL_ARB_texture_non_power_of_two")) {
-        std::cerr << "Your hardware does not support Non-Power-Of-Two textures." << std::endl;
-    }
+    
+
 
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);

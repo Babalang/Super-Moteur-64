@@ -563,5 +563,66 @@ class Mesh{
             result.normal=m_normal;
             return result;
         }
+
+        bool triangleIntersection(const glm::vec3& A1, const glm::vec3& B1, const glm::vec3& C1,
+                        const glm::vec3& A2, const glm::vec3& B2, const glm::vec3& C2) {
+            // Exemple simplifié : vérifier si les triangles se chevauchent
+            // Vous pouvez utiliser un algorithme plus précis ici
+            glm::vec3 normal1 = glm::normalize(glm::cross(B1 - A1, C1 - A1));
+            glm::vec3 normal2 = glm::normalize(glm::cross(B2 - A2, C2 - A2));
+
+            // Vérifier si les sommets du triangle 2 sont du même côté du plan du triangle 1
+            float d1 = glm::dot(normal1, A1);
+            bool allOutside1 = (glm::dot(normal1, A2) - d1 > 0) &&
+                    (glm::dot(normal1, B2) - d1 > 0) &&
+                    (glm::dot(normal1, C2) - d1 > 0);
+
+            // Vérifier si les sommets du triangle 1 sont du même côté du plan du triangle 2
+            float d2 = glm::dot(normal2, A2);
+            bool allOutside2 = (glm::dot(normal2, A1) - d2 > 0) &&
+                    (glm::dot(normal2, B1) - d2 > 0) &&
+                    (glm::dot(normal2, C1) - d2 > 0);
+
+            // Si les triangles ne sont pas complètement en dehors l'un de l'autre, ils s'intersectent
+            return !(allOutside1 || allOutside2);
+            }
+            glm::vec3 getMin() const {
+                glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
+                for (const auto& vertex : this->vertices_Espace) {
+                    min.x = std::min(min.x, vertex.x);
+                    min.y = std::min(min.y, vertex.y);
+                    min.z = std::min(min.z, vertex.z);
+                }
+                return min;
+            }
+            
+            glm::vec3 getMax() const {
+                glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
+                for (const auto& vertex : this->vertices_Espace) {
+                    max.x = std::max(max.x, vertex.x);
+                    max.y = std::max(max.y, vertex.y);
+                    max.z = std::max(max.z, vertex.z);
+                }
+                return max;
+            }
+
+        bool collisionCheck(const Mesh& other, float tolerance = 0.0f) {
+            for (int i = 0; i < this->triangles.size(); ++i) {
+                for (int j = 0; j < other.triangles.size(); ++j) {
+                    // On vérifie l'intersection de chaque paire de triangles
+                    if (triangleIntersection(this->vertices_Espace[this->triangles[i][0]],
+                                            this->vertices_Espace[this->triangles[i][1]],
+                                            this->vertices_Espace[this->triangles[i][2]],
+                                            other.vertices_Espace[other.triangles[j][0]],
+                                            other.vertices_Espace[other.triangles[j][1]],
+                                            other.vertices_Espace[other.triangles[j][2]])) {
+                        return true;  // Si les triangles s'intersectent, collision détectée
+                    }
+                }
+            }
+
+            return false;  // Si aucune intersection n'est trouvée, il n'y a pas de collision
+        }
+
 };
 

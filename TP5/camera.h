@@ -29,6 +29,7 @@ class Camera : public GameObject {
         Camera(float fov = 45.0f, float aspectRatio = 4.0f / 3.0f, float nearPlane = 0.1f, float farPlane = 500.0f)
             : fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {
             updateProjectionMatrix();
+            nom = "Camera";
         }
 
         void updateProjectionMatrix() {
