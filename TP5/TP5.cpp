@@ -50,6 +50,7 @@ bool toggleInput3 = false;
 bool toggleInput5 = false;
 bool toggleInput8 = false;
 bool toggleInputSpace = false;
+bool toggleInputTab = false;
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -60,6 +61,8 @@ int nbFrames = 0;
 Scene scene;
 Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 1000.0f);
 int niveau=0;
+bool carte=false;
+GLuint programID;
 
 // Fonction pour afficher le compteur de FPS
 double affiche(GLFWwindow *window,double lastTime){
@@ -132,6 +135,10 @@ void processInput(GLFWwindow *window)
             toggleInputSpace = true;
             if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,4.0f,0.0f);
         }
+        if(glfwGetKey(window, GLFW_KEY_TAB) && toggleInputTab == false){
+            toggleInputTab = true;
+            carte=!carte;
+        }
 
     if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS && toggleInputC == false){
         toggleInputC = true;
@@ -148,6 +155,9 @@ void processInput(GLFWwindow *window)
     }
         if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE && toggleInputSpace == true){
         toggleInputSpace = false;
+    }
+    if(glfwGetKey(window, GLFW_KEY_TAB) == GLFW_RELEASE && toggleInputTab == true){
+        toggleInputTab = false;
     }
 }
 
@@ -174,7 +184,7 @@ void sceneNiveau1(Scene *scene){
     GOchateau.programID=programID;
     GOchateau.lireOBJ("../meshes/chateau.obj");
     GOchateau.rajouterOBJ();
-    GOchateau.setIsGround();
+    // GOchateau.setIsGround();
     GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
     
     // scene->root.addChild(&GOchateau);
@@ -263,6 +273,12 @@ void sceneNiveau1(Scene *scene){
     GOchateau.addChild(&GOmariometal);
     GOchateau.addChild(&GOPeach);
     scene->lights.push_back(&light);
+    GOchateau.map=true;
+    GOmariometal.collisions.push_back(&GOchateau);
+    GOmariometal.collisions.push_back(&GOPeach);
+    GOmariometal.nom="mario";
+    GOPeach.nom="peach";
+    GOchateau.nom="chateau";
 }
 
 GameObject GOBobombBattlefieldDS,GOBattanKing,light2,GOGoomba1,GOMetalMario2;
@@ -431,6 +447,41 @@ void changerNiveau(){
     }
 }
 
+std::vector<glm::vec2> verticesCarte{glm::vec2{-0.5f,0.5f},glm::vec2{-0.5f,-0.5f},glm::vec2{0.5f,-0.5f},glm::vec2{0.5f,-0.5f},glm::vec2{0.5f,0.5f},glm::vec2{-0.5f,0.5f}};
+std::vector<glm::vec2> uvCarte{glm::vec2{0.0f,1.0f},glm::vec2{0.0f,0.0f},glm::vec2{1.0f,0.0f},glm::vec2{0.0f,0.1f},glm::vec2{1.0f,0.0f},glm::vec2{1.0f,1.0f}};
+std::vector<unsigned short> indicesCarte{0,1,2,3,4,5};
+GLuint hudVBuffer, hudIBuffer, hudUVBuffer, textureCarte;
+void afficherCarte(){
+    glGenBuffers(1, &hudVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, hudVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, verticesCarte.size()*sizeof(glm::vec2), &verticesCarte[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &hudIBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hudIBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesCarte), &indicesCarte[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &hudUVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, hudUVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, uvCarte.size()*sizeof(glm::vec2), &uvCarte[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, hudVBuffer);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(4);
+    glBindBuffer(GL_ARRAY_BUFFER, hudUVBuffer);
+    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hudIBuffer);
+    glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_TRUE);
+    glUniform4f(glGetUniformLocation(programID, "hudColor"), 0.0f, 0.0f, 0.0f, 1.0f);
+    glDisable(GL_DEPTH_TEST);
+    // sendTexture(textureCarte);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+    glEnable(GL_DEPTH_TEST);
+}
+void sendTexture(GLuint text){
+    GLuint Text2DUniformID = glGetUniformLocation(programID, "albedoMap");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,text);
+    glUniform1i(Text2DUniformID,0);
+}
+
 int main( void )
 {
     // Initialise GLFW
@@ -571,7 +622,11 @@ int main( void )
 
         }
 
+        glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_FALSE);
         scene.draw(deltaTime);
+        if(carte){
+            afficherCarte();
+        }
 
 
         // Swap buffers

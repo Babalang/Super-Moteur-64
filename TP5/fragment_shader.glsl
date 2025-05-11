@@ -16,6 +16,8 @@ uniform sampler2D normalMap;
 uniform sampler2D metallicMap;
 uniform sampler2D roughnessMap;
 uniform sampler2D aoMap;
+uniform bool isHUD;
+uniform vec4 hudColor;
 // Ouput data
 out vec4 color;
 const float PI = 3.14159265359;
@@ -91,6 +93,9 @@ vec3 getNormalFromNormalMap()
 
 
 void main(){
+        if(isHUD){
+                color=hudColor;
+        }else{
         vec4 TexCoordout1=texture(albedoMap,TexCoordout);
         vec3 albedo =  pow(texture(albedoMap, TexCoordout).rgb, vec3(2.2));
         vec3 normal = normalize(Normal);
@@ -166,4 +171,6 @@ void main(){
         colortmp = pow(colortmp, vec3(1.0/2.2));  
         
         color = vec4(colortmp,TexCoordout1[3]);
+        }
+        
 }

@@ -52,6 +52,8 @@ class GameObject{
         Mesh boiteEnglobante;
         Mesh collisionMesh;
         bool isGround = false;
+        std::vector<GameObject*> collisions;
+        bool map=false;
 
         // light
         int index = 0;
@@ -203,6 +205,8 @@ class GameObject{
                 // if(isBoiteEnglobante && hasMesh){
                 //     this->boiteEnglobante.draw();
                 // }
+            }if(avancer){
+                this->moveToPosition(deltaTime);
             }
         }
 
@@ -323,10 +327,219 @@ class GameObject{
                 Mov.t[1] = this->height2parent+height;
                 speed = glm::vec3(0.0f);
             }
-            this->collisions();
+            // this->collisions();
+            int col=this->getCollision();
+            if(col>=0){
+                std::cout<<this->collisions[col]->nom<<std::endl;
+            }
             this->setGlobalTransform(Mov);
             // std::cout<<this->globalTransform.t[0]<<" "<<this->globalTransform.t[1]<<" "<<this->globalTransform.t[2]<<std::endl;
             isMoving = true;
+        }
+
+        // bool collision(glm::vec3 axe){
+        //     std::cout<<"axe : "<<axe[0]<<" "<<axe[1]<<" "<<axe[2]<<std::endl;
+        //     std::cout<<this->nom<<std::endl;
+        //     Ray ray;
+        //     if(glm::vec3(1.0,0.0,0.0)==axe){
+        //         ray.m_direction=axe;
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[2];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[3];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[6];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[7];
+        //         if(getCollision(ray)){return true;}
+        //         return false;
+        //     }else if(glm::vec3(-1.0,0.0,0.0)==axe){
+        //         ray.m_direction=axe;
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[0];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[1];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[4];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[5];
+        //         if(getCollision(ray)){return true;}
+        //         return false;
+        //     }else if(glm::vec3(0.0,1.0,0.0)==axe){
+        //         ray.m_direction=axe;
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[4];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[5];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[6];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[7];
+        //         if(getCollision(ray)){return true;}
+        //         return false;
+        //     }else if(glm::vec3(0.0,-1.0,0.0)==axe){
+        //         ray.m_direction=axe;
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[0];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[1];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[2];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[3];
+        //         if(getCollision(ray)){return true;}
+        //         return false;
+        //     }else if(glm::vec3(0.0,0.0,1.0)==axe){
+        //         ray.m_direction=axe;
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[1];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[2];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[5];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[6];
+        //         if(getCollision(ray)){return true;}
+        //         return false;
+        //     }else if(glm::vec3(0.0,0.0,-1.0)==axe){
+        //         ray.m_direction=axe;
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[0];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[3];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[4];
+        //         if(getCollision(ray)){return true;}
+        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[7];
+        //         if(getCollision(ray)){return true;}
+        //         return false;
+        //     }
+        //     return false;
+        // }
+
+        int getCollision(){
+            for(int i=0;i<collisions.size();i++){
+                if(collisions[i]->map){
+                    for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
+                        for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
+                            // Ray ray1,ray2,ray3;
+                            // ray1.m_origin=collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]];
+                            // ray2.m_origin=collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]];
+                            // ray3.m_origin=collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]];
+                            // ray1.m_direction=ray2.m_origin-ray1.m_origin;
+                            // ray2.m_direction=ray3.m_origin-ray2.m_origin;
+                            // ray3.m_direction=ray1.m_origin-ray3.m_origin;
+                            // ray1.m_direction=glm::normalize(ray1.m_direction);
+                            // ray2.m_direction=glm::normalize(ray2.m_direction);
+                            // ray3.m_direction=glm::normalize(ray3.m_direction);
+                            // for(int l=0;l<this->boiteEnglobante.triangles.size();l++){
+                            //     RayTriangleIntersection intersection = this->boiteEnglobante.getIntersection(ray1,l);
+                            //     if(intersection.intersectionExists && intersection.t<glm::length(ray1.m_direction) && intersection.t>0.0f){
+                            //         return i;
+                            //     }
+                            //     intersection = this->boiteEnglobante.getIntersection(ray2,l);
+                            //     if(intersection.intersectionExists && intersection.t<glm::length(ray2.m_direction) && intersection.t>0.0f){
+                            //         return i;
+                            //     }
+                            //     intersection = this->boiteEnglobante.getIntersection(ray3,l);
+                            //     if(intersection.intersectionExists && intersection.t<glm::length(ray3.m_direction) && intersection.t>0.0f){
+                            //         return i;
+                            //     }
+                            // }
+                            for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
+                                if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
+                                    return i;
+                                }
+                            }
+                            // RayTriangleIntersection intersection = collisions[i]->objetsOBJ[j].mesh.getIntersection(ray,k);
+                            // if(intersection.intersectionExists && intersection.t<0.01f && intersection.t>0.0f){
+                            //     return true;
+                            // }
+                        }
+                    }
+                }else{
+                    for(int j=0;j<collisions[i]->boiteEnglobante.triangles.size();j++){
+                        Ray ray1,ray2,ray3,ray4,ray5,ray6;
+                        // ray1.m_origin=collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][0]];
+                        // ray2.m_origin=collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][1]];
+                        // ray3.m_origin=collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][2]];
+                        // ray1.m_direction=ray2.m_origin-ray1.m_origin;
+                        // ray2.m_direction=ray3.m_origin-ray2.m_origin;
+                        // ray3.m_direction=ray1.m_origin-ray3.m_origin;
+                        // // ray1.m_direction=glm::normalize(ray1.m_direction);
+                        // // ray2.m_direction=glm::normalize(ray2.m_direction);
+                        // // ray3.m_direction=glm::normalize(ray3.m_direction);
+                        // for(int l=0;l<this->boiteEnglobante.triangles.size();l++){
+                        //     RayTriangleIntersection intersection = this->boiteEnglobante.getIntersection(ray1,l);
+                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray1.m_direction) && intersection.t>0.0f){
+                        //         std::cout<<"1"<<std::endl;
+                        //         std::cout<<"intersection"<<intersection.intersection[0]<<" "<<intersection.intersection[1]<<" "<<intersection.intersection[2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][2]<<std::endl;
+                        //         return i;
+                        //     }
+                        //     intersection = this->boiteEnglobante.getIntersection(ray2,l);
+                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray2.m_direction) && intersection.t>0.0f){
+                        //         std::cout<<"2"<<std::endl;
+                        //         std::cout<<intersection.t<<std::endl;
+                        //         std::cout<<"directioin : "<<ray2.m_direction[0]<<" "<<ray2.m_direction[1]<<" "<<ray2.m_direction[2]<<std::endl;
+                        //         std::cout<<"origine : "<<ray2.m_origin[0]<<" "<<ray2.m_origin[1]<<" "<<ray2.m_origin[2]<<std::endl;
+                        //         std::cout<<"intersection"<<intersection.intersection[0]<<" "<<intersection.intersection[1]<<" "<<intersection.intersection[2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][2]<<std::endl;
+                        //         return i;
+                        //     }
+                        //     intersection = this->boiteEnglobante.getIntersection(ray3,l);
+                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray3.m_direction) && intersection.t>0.0f){
+                        //         std::cout<<"3"<<std::endl;
+                        //         std::cout<<intersection.t<<std::endl;
+                        //         std::cout<<"directioin : "<<ray2.m_direction[0]<<" "<<ray2.m_direction[1]<<" "<<ray2.m_direction[2]<<std::endl;
+                        //         std::cout<<"origine : "<<ray2.m_origin[0]<<" "<<ray2.m_origin[1]<<" "<<ray2.m_origin[2]<<std::endl;
+                        //         std::cout<<"intersection"<<intersection.intersection[0]<<" "<<intersection.intersection[1]<<" "<<intersection.intersection[2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][2]<<std::endl;
+                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][2]<<std::endl;
+                        //         return i;
+                        //     }
+                        // }
+                        // ray4.m_origin=this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[j][0]];
+                        // ray5.m_origin=this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[j][1]];
+                        // ray6.m_origin=this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[j][2]];
+                        // ray4.m_direction=ray5.m_origin-ray4.m_origin;
+                        // ray5.m_direction=ray6.m_origin-ray5.m_origin;
+                        // ray6.m_direction=ray4.m_origin-ray6.m_origin;
+                        // for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
+                        //     RayTriangleIntersection intersection = collisions[i]->boiteEnglobante.getIntersection(ray4,l);
+                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray4.m_direction) && intersection.t>0.0f){
+                        //         return i;
+                        //     }
+                        //     intersection = collisions[i]->boiteEnglobante.getIntersection(ray5,l);
+                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray5.m_direction) && intersection.t>0.0f){
+                        //         return i;
+                        //     }
+                        //     intersection = collisions[i]->boiteEnglobante.getIntersection(ray6,l);
+                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray6.m_direction) && intersection.t>0.0f){
+                        //         return i;
+                        //     }
+                        // }
+                        // RayTriangleIntersection intersection = collisions[i]->boiteEnglobante.getIntersection(ray,j);
+                        // if(intersection.intersectionExists && intersection.t<0.01f && intersection.t>0.0f){
+                        //     return true;
+                        // }
+                        for(int k=0;k<this->boiteEnglobante.triangles.size();k++){
+                            if(trianglesIntersect(collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][0]],collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][1]],collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[k][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[k][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[k][2]])){
+                                return i;
+                            }
+                        }
+                    }
+                }
+            }
+            return -1;
         }
 
 
@@ -892,134 +1105,258 @@ class GameObject{
             isBoiteEnglobante = true;
         }
 
-        void setIsGround(){
-            this->isGround=true;
-            this->mesh.programID=this->programID;
-            this->boiteEnglobante = this->mesh;
-            for(int i=0;i<this->objetsOBJ.size();i++){
-                this->enfant[i]->isGround=true;
-                this->enfant[i]->mesh.programID=this->programID;
-                this->enfant[i]->boiteEnglobante = this->enfant[i]->mesh;
-            }
-        }
+        // void setIsGround(){
+        //     this->isGround=true;
+        //     this->mesh.programID=this->programID;
+        //     this->boiteEnglobante = this->mesh;
+        //     for(int i=0;i<this->objetsOBJ.size();i++){
+        //         this->enfant[i]->isGround=true;
+        //         this->enfant[i]->mesh.programID=this->programID;
+        //         this->enfant[i]->boiteEnglobante = this->enfant[i]->mesh;
+        //     }
+        // }
 
-        void collisions(){
-            if(isGravite){
-                vec3 dir = vec3(0.0);
+        // void collisions(){
+        //     if(isGravite){
+        //         vec3 dir = vec3(0.0);
 
-                if(objetsOBJ.size()>0){
-                    for(int i=0;i<this->objetsOBJ.size();i++){
-                        dir = this->collisionWithChild(this->enfant[i],this);
-                        dir = this->collisionWithAcestor(this->enfant[i],this);
-                        if(dir != vec3(0.0)) {
-                            this->handleCollision(dir);
-                        }
-                    }
-                }else{
-                    dir = this->collisionWithChild(this,this);
-                    dir = this->collisionWithAcestor(this,this);
-                    if(dir != vec3(0.0)) {
-                        this->handleCollision(dir);
-                    }
-                }
-            }
-        }
+        //         if(objetsOBJ.size()>0){
+        //             for(int i=0;i<this->objetsOBJ.size();i++){
+        //                 dir = this->collisionWithChild(this->enfant[i],this);
+        //                 dir = this->collisionWithAcestor(this->enfant[i],this);
+        //                 if(dir != vec3(0.0)) {
+        //                     this->handleCollision(dir);
+        //                 }
+        //             }
+        //         }else{
+        //             dir = this->collisionWithChild(this,this);
+        //             dir = this->collisionWithAcestor(this,this);
+        //             if(dir != vec3(0.0)) {
+        //                 this->handleCollision(dir);
+        //             }
+        //         }
+        //     }
+        // }
 
-        vec3 collisionWithAcestor(GameObject* go, GameObject* toAvoid) {
-            if (this->parent) {
-                for (int i = 0; i < this->parent->enfant.size(); i++) {
-                    GameObject* go2 = this->parent->enfant[i];
+        // vec3 collisionWithAcestor(GameObject* go, GameObject* toAvoid) {
+        //     if (this->parent) {
+        //         for (int i = 0; i < this->parent->enfant.size(); i++) {
+        //             GameObject* go2 = this->parent->enfant[i];
 
-                    if (go2 != go && go2 != this && go2!=toAvoid) { // Exclure l'objet lui-même
-                        if (go2->collisionCheck(go)) {
-                            std::cout << go2->globalTransform.t.x << " " << go2->globalTransform.t.y << " " << go2->globalTransform.t.z << std::endl;
-                            std::cout << go->globalTransform.t.x << " " << go->globalTransform.t.y << " " << go->globalTransform.t.z << std::endl;
-                            std::cout << "Collision avec acestor : " << go2->nom <<" id : "<<i<< std::endl;
-                            return (go2->globalTransform.t) - (go->globalTransform.t);
-                        }
-                        if(go2->enfant.size()>0){
-                            return go2->collisionWithChild(go, toAvoid);
+        //             if (go2 != go && go2 != this && go2!=toAvoid) { // Exclure l'objet lui-même
+        //                 if (go2->collisionCheck(go)) {
+        //                     std::cout << go2->globalTransform.t.x << " " << go2->globalTransform.t.y << " " << go2->globalTransform.t.z << std::endl;
+        //                     std::cout << go->globalTransform.t.x << " " << go->globalTransform.t.y << " " << go->globalTransform.t.z << std::endl;
+        //                     std::cout << "Collision avec acestor : " << go2->nom <<" id : "<<i<< std::endl;
+        //                     return (go2->globalTransform.t) - (go->globalTransform.t);
+        //                 }
+        //                 if(go2->enfant.size()>0){
+        //                     return go2->collisionWithChild(go, toAvoid);
 
-                        }
-                    }
-                }
-                if (this->collisionCheck(go) && this != toAvoid) {
-                    std::cout << "Collision avec parent : " << this->parent->nom << std::endl;
-                    std::cout << this->parent->globalTransform.t.x << " " << this->parent->globalTransform.t.y << " " << this->parent->globalTransform.t.z << std::endl;
-                    std::cout << go->globalTransform.t.x << " " << go->globalTransform.t.y << " " << go->globalTransform.t.z << std::endl;
-                    return (this->parent->globalTransform.t) - (go->globalTransform.t);
-                }
-                return this->parent->collisionWithAcestor(go, toAvoid);
-            }
-            return vec3(0.0); // Aucune collision détectée
-        }
+        //                 }
+        //             }
+        //         }
+        //         if (this->collisionCheck(go) && this != toAvoid) {
+        //             std::cout << "Collision avec parent : " << this->parent->nom << std::endl;
+        //             std::cout << this->parent->globalTransform.t.x << " " << this->parent->globalTransform.t.y << " " << this->parent->globalTransform.t.z << std::endl;
+        //             std::cout << go->globalTransform.t.x << " " << go->globalTransform.t.y << " " << go->globalTransform.t.z << std::endl;
+        //             return (this->parent->globalTransform.t) - (go->globalTransform.t);
+        //         }
+        //         return this->parent->collisionWithAcestor(go, toAvoid);
+        //     }
+        //     return vec3(0.0); // Aucune collision détectée
+        // }
 
-        vec3 collisionWithChild(GameObject* go, GameObject* toAvoid) {
-            vec3 result = vec3(0.0);
-            if(this != toAvoid){
-                for (int i = 0; i < this->enfant.size(); i++) {
-                    GameObject* go2 = this->enfant[i];
-                    if (go2 != go && go2 != this && go2->nom !="Camera" && go2 != toAvoid) { // Exclure l'objet lui-même
-                        if (go2->collisionCheck(go)  && !go2->M) {
-                            std::cout << "Collision avec enfant : " << go2->nom <<" id : "<<i<< std::endl;
-                            return (go2->globalTransform.t) - (go->globalTransform.t);
-                        }
-                        result = go2->collisionWithChild(go,toAvoid)==vec3(0.0)?vec3(0.0):go2->collisionWithChild(go,toAvoid);
-                    }
-                }
-            } else {
-                for (int i = this->objetsOBJ.size(); i < this->enfant.size(); i++) {
-                    GameObject* go2 = this->enfant[i];
-                    if (go2 != go && go2 != this && go2->nom !="Camera") { // Exclure l'objet lui-même
-                        if (go2->collisionCheck(go)) {
-                            std::cout << "Collisionfidufilfhiuh avec enfant : " << go2->nom <<" id : "<<i<< std::endl;
-                            return ((go2->globalTransform.t) - (go->globalTransform.t));
-                        }
-                        result = go2->collisionWithChild(go,toAvoid)==vec3(0.0)?vec3(0.0):go2->collisionWithChild(go,toAvoid);
-                    }
-                }
-            }
-            return result; // Aucune collision détectée
+        // vec3 collisionWithChild(GameObject* go, GameObject* toAvoid) {
+        //     vec3 result = vec3(0.0);
+        //     if(this != toAvoid){
+        //         for (int i = 0; i < this->enfant.size(); i++) {
+        //             GameObject* go2 = this->enfant[i];
+        //             if (go2 != go && go2 != this && go2->nom !="Camera" && go2 != toAvoid) { // Exclure l'objet lui-même
+        //                 if (go2->collisionCheck(go)  && !go2->M) {
+        //                     std::cout << "Collision avec enfant : " << go2->nom <<" id : "<<i<< std::endl;
+        //                     return (go2->globalTransform.t) - (go->globalTransform.t);
+        //                 }
+        //                 result = go2->collisionWithChild(go,toAvoid)==vec3(0.0)?vec3(0.0):go2->collisionWithChild(go,toAvoid);
+        //             }
+        //         }
+        //     } else {
+        //         for (int i = this->objetsOBJ.size(); i < this->enfant.size(); i++) {
+        //             GameObject* go2 = this->enfant[i];
+        //             if (go2 != go && go2 != this && go2->nom !="Camera") { // Exclure l'objet lui-même
+        //                 if (go2->collisionCheck(go)) {
+        //                     std::cout << "Collisionfidufilfhiuh avec enfant : " << go2->nom <<" id : "<<i<< std::endl;
+        //                     return ((go2->globalTransform.t) - (go->globalTransform.t));
+        //                 }
+        //                 result = go2->collisionWithChild(go,toAvoid)==vec3(0.0)?vec3(0.0):go2->collisionWithChild(go,toAvoid);
+        //             }
+        //         }
+        //     }
+        //     return result; // Aucune collision détectée
            
-        }
+        // }
 
-        bool collisionCheck(GameObject* go) {
-            if (this == go) {
-                return false; // Ne pas tester la collision avec soi-même
-            }
+        // bool collisionCheck(GameObject* go) {
+        //     if (this == go) {
+        //         return false; // Ne pas tester la collision avec soi-même
+        //     }
         
-            float collisionTolerance = 0.1f; // Tolérance pour éviter les fausses collisions
+        //     float collisionTolerance = 0.1f; // Tolérance pour éviter les fausses collisions
         
-            // Vérifier si les objets sont proches avant de tester la collision
-            if (glm::length(this->globalTransform.t - go->globalTransform.t) < 5.0f) {
-                return false; // Ignorer si les objets sont trop éloignés
-            }
+        //     // Vérifier si les objets sont proches avant de tester la collision
+        //     if (glm::length(this->globalTransform.t - go->globalTransform.t) < 5.0f) {
+        //         return false; // Ignorer si les objets sont trop éloignés
+        //     }
 
         
-            bool result = this->boiteEnglobante.collisionCheck(go->boiteEnglobante, collisionTolerance);
+        //     bool result = this->boiteEnglobante.collisionCheck(go->boiteEnglobante, collisionTolerance);
         
-            if (result) {
-                std::cout << "Collision détectée entre " << this->nom << " et " << go->nom << std::endl;
+        //     if (result) {
+        //         std::cout << "Collision détectée entre " << this->nom << " et " << go->nom << std::endl;
+        //     } else {
+        //     }
+        
+        //     return result;
+        // }
+
+
+        // void handleCollision(glm::vec3 dir) {
+        //     if (glm::length(dir) < 0.3f) { // Si la direction est proche de zéro, ignorer
+        //         std::cout << "Collision ignorée : direction nulle." << std::endl;
+        //         std::cout << "Position actuelle : " << this->globalTransform.t.x << ", " << this->globalTransform.t.y << ", " << this->globalTransform.t.z << std::endl;
+        //         return;
+        //     }
+
+        //     this->globalTransform.t += glm::normalize(dir) * 0.1f;
+        
+        //     this->speed = glm::vec3(0.0, 0.0, 0.0);
+        //     this->acceleration = glm::vec3(0.0, 0.0, 0.0);
+        
+        //     std::cout << "collision !" << std::endl;
+        //     std::cout << "dir : " << dir.x << " " << dir.y << " " << dir.z << std::endl;
+        // }
+
+        void moveToPosition(float deltaTime) {
+            if (glm::length(this->positionAvance - this->globalTransform.t) > 0.01f) {
+                // std::cout << "Moving to position: " << positionAvance.x << ", " << positionAvance.y << ", " << positionAvance.z << std::endl;
+                // std::cout<<"position : "<<this->globalTransform.t.x<<" "<<this->globalTransform.t.y<<" "<<this->globalTransform.t.z<<std::endl;
+                glm::vec3 direction = glm::normalize(this->positionAvance - this->centreEspace);
+                // float dotProduct = glm::dot(this->rayonDepart, direction);
+                float dotProduct = glm::dot(glm::vec3(0.0,0.0,-1.0), direction);
+                dotProduct = glm::clamp(dotProduct, -1.0f, 1.0f);
+                float angle = glm::degrees(glm::acos(dotProduct));
+                // float angle = glm::acos(dotProduct);
+                // std::cout<<"angle : "<<angle<<std::endl;
+                this->speed = speed + (acceleration*deltaTime);
+                glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
+                // std::cout<<"speed : "<<speed.x<<" "<<speed.y<<" "<<speed.z<<std::endl;
+                Transform rotateY;
+                if(this->nom=="koopa1" || this->nom=="koopa2"){
+                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle-90);
+                }if(this->nom=="Bowser"){
+                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle+180);
+                }
+                Transform a=Transform(rotationDepart, this->transform.t, this->transform.s);
+                Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                // newTransform=newTransform.combine_with(newTransform.rotation(glm::vec3(0.0f,1.0f,0.0f), angle));
+                // this->setGlobalTransform(Transform());
+                this->setLocalTransform(a.combine_with(rotateY));
+                this->setGlobalTransform(newTransform);
+                // this->setGlobalTransform(this->globalTransform.combine_with(rotateY));
+                this->visionIA.m_direction = direction;
             } else {
+                this->speed = glm::vec3(0.0f);
+                this->isMoving = false;
+                this->avancer=false;
             }
-        
-            return result;
         }
 
-
-        void handleCollision(glm::vec3 dir) {
-            if (glm::length(dir) < 0.3f) { // Si la direction est proche de zéro, ignorer
-                std::cout << "Collision ignorée : direction nulle." << std::endl;
-                std::cout << "Position actuelle : " << this->globalTransform.t.x << ", " << this->globalTransform.t.y << ", " << this->globalTransform.t.z << std::endl;
-                return;
+        void gravite(GameObject* obj, float deltaTime){
+            if(isGravite && aTerre==false){
+                Ray ray1 = Ray(boiteEnglobante.vertices_Espace[0], glm::vec3(0.0,-1.0,0.0));
+                Ray ray2 = Ray(boiteEnglobante.vertices_Espace[1], glm::vec3(0.0,-1.0,0.0));
+                Ray ray3 = Ray(boiteEnglobante.vertices_Espace[2], glm::vec3(0.0,-1.0,0.0));
+                Ray ray4 = Ray(boiteEnglobante.vertices_Espace[3], glm::vec3(0.0,-1.0,0.0));
+                RayTriangleIntersection intersection1;
+                RayTriangleIntersection intersection2;
+                RayTriangleIntersection intersection3;
+                RayTriangleIntersection intersection4;
+                for(int i=0;i<obj->objetsOBJ.size();i++){
+                    for(int j=0;j<obj->objetsOBJ[i].mesh.triangles.size();j++){
+                        if(!intersection1.intersectionExists)intersection1=obj->objetsOBJ[i].mesh.getIntersection(ray1,j);
+                        if(!intersection2.intersectionExists)intersection2=obj->objetsOBJ[i].mesh.getIntersection(ray2,j);
+                        if(!intersection3.intersectionExists)intersection3=obj->objetsOBJ[i].mesh.getIntersection(ray3,j);
+                        if(!intersection4.intersectionExists)intersection4=obj->objetsOBJ[i].mesh.getIntersection(ray4,j);
+                        if(intersection1.intersectionExists && intersection1.t>0.01f && intersection2.intersectionExists && intersection2.t>0.01f && intersection3.intersectionExists && intersection3.t>0.01f && intersection4.intersectionExists && intersection4.t>0.01f){
+                            // std::cout<<"gravite !"<<std::endl;
+                            glm::vec3 direction = glm::vec3(0.0,-1.0,0.0);
+                            glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
+                            Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                            this->setGlobalTransform(newTransform);
+                            break;
+                        }else if(intersection1.intersectionExists && intersection1.t<=0.01f && intersection2.intersectionExists && intersection2.t<=0.01f && intersection3.intersectionExists && intersection3.t<=0.01f && intersection4.intersectionExists && intersection4.t<=0.01f){
+                            // std::cout<<"aTerre !"<<std::endl;
+                            this->aTerre=true;
+                            break;
+                        }
+                    }
+                }
+            }else{
+                for(int i=0;i<this->enfant.size();i++){
+                    this->enfant[i]->gravite(obj,deltaTime);
+                }
             }
+        }
 
-            this->globalTransform.t += glm::normalize(dir) * 0.1f;
+        bool isPointInTriangle(const glm::vec3& point, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2) {
+            glm::vec3 u = v1 - v0;
+            glm::vec3 v = v2 - v0;
+            glm::vec3 w = point - v0;
+            float uu = glm::dot(u, u);
+            float uv = glm::dot(u, v);
+            float vv = glm::dot(v, v);
+            float wu = glm::dot(w, u);
+            float wv = glm::dot(w, v);
+            float denominator = uv * uv - uu * vv;
+            float s = (uv * wv - vv * wu) / denominator;
+            float t = (uv * wu - uu * wv) / denominator;
+            return (s >= 0.0f && t >= 0.0f && (s + t) <= 1.0f);
+        }
         
-            this->speed = glm::vec3(0.0, 0.0, 0.0);
-            this->acceleration = glm::vec3(0.0, 0.0, 0.0);
+        bool edgeIntersectsTriangle(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2) {
+            glm::vec3 edgeDir = p2 - p1;
+            glm::vec3 normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+            float d = glm::dot(normal, v0);
+            float t = (d - glm::dot(normal, p1)) / glm::dot(normal, edgeDir);
+            if (t < 0.0f || t > 1.0f) {
+                return false;
+            }
+            glm::vec3 intersectionPoint = p1 + t * edgeDir;
+            return isPointInTriangle(intersectionPoint, v0, v1, v2);
+        }
         
-            std::cout << "collision !" << std::endl;
-            std::cout << "dir : " << dir.x << " " << dir.y << " " << dir.z << std::endl;
+        bool trianglesIntersect(const glm::vec3& t1_v0, const glm::vec3& t1_v1, const glm::vec3& t1_v2,
+                                const glm::vec3& t2_v0, const glm::vec3& t2_v1, const glm::vec3& t2_v2) {
+            if (edgeIntersectsTriangle(t1_v0, t1_v1, t2_v0, t2_v1, t2_v2) ||
+                edgeIntersectsTriangle(t1_v1, t1_v2, t2_v0, t2_v1, t2_v2) ||
+                edgeIntersectsTriangle(t1_v2, t1_v0, t2_v0, t2_v1, t2_v2)) {
+                return true;
+            }
+            if (edgeIntersectsTriangle(t2_v0, t2_v1, t1_v0, t1_v1, t1_v2) ||
+                edgeIntersectsTriangle(t2_v1, t2_v2, t1_v0, t1_v1, t1_v2) ||
+                edgeIntersectsTriangle(t2_v2, t2_v0, t1_v0, t1_v1, t1_v2)) {
+                return true;
+            }
+            // if (isPointInTriangle(t1_v0, t2_v0, t2_v1, t2_v2) ||
+            //     isPointInTriangle(t1_v1, t2_v0, t2_v1, t2_v2) ||
+            //     isPointInTriangle(t1_v2, t2_v0, t2_v1, t2_v2)) {
+            //     return true;
+            // }
+            // if (isPointInTriangle(t2_v0, t1_v0, t1_v1, t1_v2) ||
+            //     isPointInTriangle(t2_v1, t1_v0, t1_v1, t1_v2) ||
+            //     isPointInTriangle(t2_v2, t1_v0, t1_v1, t1_v2)) {
+            //     return true;
+            // }
+            return false;
         }
 };
