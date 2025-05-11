@@ -8,7 +8,8 @@
 struct CAMERA_MODE{
     enum{
         CLASSIC,
-        ORBITAL
+        ORBITAL,
+        FIRST_PERSON,
     };
 };
 
@@ -22,9 +23,14 @@ class Camera : public GameObject {
         float aspectRatio;
         float nearPlane;
         float farPlane;
+
+        glm::vec3 targetPosition;
         int mode = CAMERA_MODE::CLASSIC;
 
-        float orbitalRadius = 3.0f;
+        float orbitalRadius = 10.0f;
+        float theta = 0.0f;     // angle horizontal en radians
+        float phi = glm::radians(45.0f); // angle vertical (évite de passer par les pôles)
+
 
         Camera(float fov = 45.0f, float aspectRatio = 4.0f / 3.0f, float nearPlane = 0.1f, float farPlane = 500.0f)
             : fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {
@@ -37,17 +43,43 @@ class Camera : public GameObject {
         }
 
         void lookAt(GameObject* target) {
-            if (target) {
+            if (this->parent) {
+
                 glm::vec3 position = globalTransform.t;
-                glm::vec3 targetPosition = target->globalTransform.t + glm::vec3(0.0f, 10.0, 0.0f);
-                glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-                viewMatrix = glm::lookAt(position, targetPosition, up);
                 glm::vec3 forward = glm::normalize(targetPosition - position);
+                glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+                if(glm::dot(forward, up)<0.1f && mode != CAMERA_MODE::FIRST_PERSON && mode != CAMERA_MODE::ORBITAL){
+                    up = glm::vec3(0.0f, 0.0f, 1.0f);
+                }
+                viewMatrix = glm::lookAt(position, targetPosition, up);
                 glm::vec3 right = glm::normalize(glm::cross(up, forward));
                 glm::vec3 correctedUp = glm::cross(forward, right);
 
-                globalTransform.m = glm::mat3(right, correctedUp, -forward);
+                globalTransform.m = glm::mat3(right, correctedUp, forward);
                 
+            }
+        }
+
+        void animation(float deltaTime) {
+            if(this->mode == CAMERA_MODE::CLASSIC){
+                this->setGlobalTransform(this->parent->globalTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0,this->parent->globalTransform.t[1]*3.0f,0.0),1.0)));
+                targetPosition = this->parent->globalTransform.t + glm::vec3(0.0f, 10.0, 0.0f);
+            }
+            else if(this->mode == CAMERA_MODE::FIRST_PERSON){
+                glm::vec3 parentFront = glm::vec3(this->parent->transform.m[1].x, -1.0f, this->parent->transform.m[1].z)*1.0f;
+                this->setGlobalTransform(Transform(this->parent->transform.m,this->parent->globalTransform.t + glm::vec3(-0.5,-2.0f,-0.5f)*parentFront,1.0));
+                targetPosition = this->globalTransform.t - parentFront - glm::vec3(0.0,1.2f,0.0f);
+            }
+            else if (this->mode == CAMERA_MODE::ORBITAL) {
+                this->targetPosition = this->parent->globalTransform.t + glm::vec3(0.0f, 3.0f, 0.0f);
+                float adjustedPhi = phi + glm::radians(0.0f);
+                float adjustedTheta = theta + glm::radians(-90.0f);
+                adjustedPhi = glm::clamp(adjustedPhi, glm::radians(1.0f), glm::radians(90.0f));
+                float x = targetPosition.x + orbitalRadius * sin(adjustedPhi) * cos(adjustedTheta);
+                float y = targetPosition.y + orbitalRadius * cos(adjustedPhi);
+                float z = targetPosition.z + orbitalRadius * sin(adjustedPhi) * sin(adjustedTheta);
+                glm::vec3 cameraPosition = glm::vec3(x, y, z);
+                this->setGlobalTransform(Transform(this->transform.m, cameraPosition, 1.0));
             }
         }
 };

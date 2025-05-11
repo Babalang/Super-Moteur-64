@@ -34,6 +34,8 @@ class GameObject{
         float poids = 1.0f;
         glm::vec3 Force = glm::vec3(0.0,poids * -9.83,0.0);
         glm::vec3 acceleration =Force/poids;
+        Transform initialTransform = Transform(glm::mat3(1.0f), glm::vec3(0.0f), 1.0f);
+        glm::vec3 axe;
         std::vector<MTL> mtls;
         std::string nom;
         bool M=false;
@@ -285,21 +287,37 @@ class GameObject{
             }
         }
 
-        void Move(float deltaTime, glm::vec3 axe, float vitesse = 1.0f){
+        void Move(float deltaTime, float vitesse = 5.0f){
             //std::cout<<"deltaTime : "<<deltaTime<<std::endl;
             float height = 0.0f;
             if(this->parent && this->parent->hasPlan){
                 glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
                 height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
             }
+
+            glm::vec3 NormalizedAxe = glm::length(axe) > 0.0f ? glm::normalize(axe) : axe;
             
             // Ajuster la vitesse en fonction de deltaTime et de l'échelle
-            glm::vec3 movement = axe * (vitesse * this->globalTransform.s * deltaTime); // Appliquer l'échelle à la vitesse
-            Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);
-            
+            glm::vec3 movement = NormalizedAxe * (vitesse * this->globalTransform.s * deltaTime); // Appliquer l'échelle à la vitesse
+            Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);        
             // Empêcher les mouvements sous le plan (collisions)
             if(Mov.t[1] < this->height2parent + height){
                 Mov.t[1] = this->height2parent + height;
+            }
+
+            if (glm::length(axe) > 0.0f) {
+                glm::vec3 projectedAxe = glm::normalize(glm::vec3(axe.x, 0.0f, axe.z));
+                glm::vec3 reference = glm::vec3(0.0f, 0.0f, 1.0f);
+                float dotProduct = glm::dot(projectedAxe, reference);
+                float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f)); // Clamp pour éviter les erreurs numériques
+                float angleSignedRadians = glm::atan(projectedAxe.x, projectedAxe.z);
+                float angleDegrees = glm::degrees(angleSignedRadians);
+                Transform rotation = Transform();
+
+                rotation = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angleDegrees);
+
+                Transform transformTmp = Transform(rotation.m*initialTransform.m, transform.t, transform.s);
+                setLocalTransform(transformTmp);
             }
 
             //std::cout << "Mouvement : " << movement.x << ", "

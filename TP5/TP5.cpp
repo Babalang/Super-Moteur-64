@@ -51,6 +51,12 @@ bool toggleInput5 = false;
 bool toggleInput8 = false;
 bool toggleInputSpace = false;
 bool toggleInputTab = false;
+bool toggleInputI = false;
+bool toggleInputK = false;
+bool toggleInputL = false;
+bool toggleInputJ = false;
+bool toggleInputQ = false;
+bool toggleInputZ = false;
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -89,6 +95,8 @@ void processInput(GLFWwindow *window)
 
 
     float cameraSpeed = 5.f * deltaTime; // Ajuster la vitesse en fonction du temps écoulé
+    float cameraZoomSpeed = 0.1f; // Vitesse de zoom de la caméra
+
 
     // Récupérer les vecteurs de direction de la caméra
     glm::vec3 cameraPosition = scene.camera.globalTransform.t; // Position actuelle de la caméra
@@ -100,36 +108,62 @@ void processInput(GLFWwindow *window)
 
     if (scene.camera.mode == CAMERA_MODE::ORBITAL) {
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-            cameraPosition += cameraSpeed * cameraTarget; // Avancer
+            scene.camera.phi = glm::clamp(scene.camera.phi + cameraSpeed, glm::radians(-89.0f), glm::radians(89.0f)); // Reculer
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-            cameraPosition -= cameraSpeed * cameraTarget; // Reculer
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            cameraPosition += cameraRight * cameraSpeed;  // Déplacer à gauche
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            cameraPosition -= cameraRight * cameraSpeed;  // Déplacer à droite
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            cameraPosition += cameraUp * cameraSpeed;     // Monter
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            cameraPosition -= cameraUp * cameraSpeed;     // Descendre
-        scene.camera.globalTransform.t = cameraPosition;
+            scene.camera.phi = glm::clamp(scene.camera.phi - cameraSpeed, glm::radians(-89.0f), glm::radians(89.0f)); // Reculer
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+            scene.camera.theta -= cameraSpeed;
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+            scene.camera.theta += cameraSpeed;
+        if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS){
+            scene.camera.orbitalRadius = glm::max(10.0f, scene.camera.orbitalRadius - cameraZoomSpeed);
+            std::cout<<"Camera distance : "<<scene.camera.orbitalRadius<<std::endl;
+
+        }
+        if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS){
+            scene.camera.orbitalRadius = glm::min(100.0f, scene.camera.orbitalRadius + cameraZoomSpeed);
+            std::cout<<"Camera distance : "<<scene.camera.orbitalRadius<<std::endl;
+        }
     }
-        if(glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS){
-            scene.camera.parent->Move(deltaTime,glm::vec3(0.0f,0.0,1.0f));
+        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+            if(!toggleInputI){
+                scene.camera.parent->axe += glm::vec3(0.0f,0.0,1.0f);
+                toggleInputI = true;
+            }
+        } 
+        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE && toggleInputI == true){
+            toggleInputI = false;
+            scene.camera.parent->axe -= glm::vec3(0.0f,0.0,1.0f);
         }
-        if(glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS){
-            scene.camera.parent->Move(deltaTime,glm::vec3(0.0f,0.0,-1.0f));
+        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+            if(!toggleInputK){
+                scene.camera.parent->axe -= glm::vec3(0.0f,0.0,1.0f);
+                toggleInputK = true;
+            }
         }
-        if(glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS){
-            scene.camera.parent->Move(deltaTime,glm::vec3(-1.0f,0.0,0.0f));
+        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE && toggleInputK == true){
+            toggleInputK = false;
+            scene.camera.parent->axe += glm::vec3(0.0f,0.0,1.0f);
         }
-        if(glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS){
-            scene.camera.parent->Move(deltaTime,glm::vec3(1.0f,0.0,0.0f));
+        if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+            if(!toggleInputL){
+                scene.camera.parent->axe += glm::vec3(-1.0f,0.0,0.0f);
+                toggleInputL = true;
+            }
         }
-        if(glfwGetKey(window, GLFW_KEY_Q)){
-            scene.camera.parent->Move(deltaTime,glm::vec3(0.0f,1.0,0.0f));
+        if(glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE && toggleInputL == true){
+            toggleInputL = false;
+            scene.camera.parent->axe -= glm::vec3(-1.0f,0.0,0.0f);
         }
-        if(glfwGetKey(window, GLFW_KEY_Z)){
-            scene.camera.parent->Move(deltaTime,glm::vec3(0.0f,-1.0,0.0f));
+        if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+            if(!toggleInputJ){
+                scene.camera.parent->axe += glm::vec3(1.0f,0.0,0.0f);
+                toggleInputJ = true;
+            }
+        }
+        if(glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE && toggleInputJ == true){
+            toggleInputJ = false;
+            scene.camera.parent->axe -= glm::vec3(1.0f,0.0,0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_SPACE) && toggleInputSpace == false){
             toggleInputSpace = true;
@@ -145,9 +179,12 @@ void processInput(GLFWwindow *window)
         if(scene.camera.mode == CAMERA_MODE::CLASSIC){
             scene.camera.mode = CAMERA_MODE::ORBITAL;
             std::cout<<"Mode camera : orbital"<<std::endl;
-        } else{
+        } else if(scene.camera.mode == CAMERA_MODE::ORBITAL){
+            scene.camera.mode = CAMERA_MODE::FIRST_PERSON;
+            std::cout<<"Mode camera : up"<<std::endl;
+        } else if(scene.camera.mode == CAMERA_MODE::FIRST_PERSON){
             scene.camera.mode = CAMERA_MODE::CLASSIC;
-            std::cout<<"Mode camera : classique"<<std::endl;
+            std::cout<<"Mode camera : classic"<<std::endl;
         }
     }
     if(glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE && toggleInputC == true){
@@ -214,6 +251,7 @@ void sceneNiveau1(Scene *scene){
     // std::cout<<combined.m[0][1]<<" "<<combined.m[1][0]<<" "<<combined.m[2][1]<<std::endl;
     // std::cout<<combined.m[0][2]<<" "<<combined.m[1][2]<<" "<<combined.m[2][0]<<std::endl;
     GOmariometal.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,0.0),1.0).combine_with(scale).combine_with(roll));
+    GOmariometal.initialTransform = GOmariometal.transform;
 
     
     // Parent = translation uniquement

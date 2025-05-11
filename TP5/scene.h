@@ -18,12 +18,8 @@ class Scene{
 
     void animation(float deltaTime){
 
-        GameObject* Map = this->root.enfant[0];
-        GameObject* Obj = Map->enfant[Map->objetsOBJ.size()];
-
-        if(camera.mode == CAMERA_MODE::CLASSIC){
-            camera.setGlobalTransform(Obj->globalTransform.combine_with(Transform(camera.transform.m,glm::vec3(0.0,Obj->transform.t[1]*8+Map->transform.s,-Map->transform.s*2),1.0)));
-        }
+        camera.animation(deltaTime);
+        this->camera.parent->Move(deltaTime);
 
     }
 

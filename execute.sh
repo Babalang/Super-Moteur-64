@@ -22,7 +22,7 @@ else
 fi
 
 echo "Building the project with make..."
-make -j || error_exit "Failed to build project."
+make -j VERBOSE=1 || error_exit "Failed to build project."
 echo "Project built."
 
 ./launch-TP5.sh || error_exit "Failed to launch the project."
