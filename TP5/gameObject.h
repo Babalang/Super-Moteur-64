@@ -52,10 +52,19 @@ class GameObject{
         // Collision
         bool isCollision=false;
         Mesh boiteEnglobante;
-        Mesh collisionMesh;
         bool isGround = false;
         std::vector<GameObject*> collisions;
         bool map=false;
+        bool auSol=true;
+        int pv;
+        std::string collisionChateau;
+        Transform transformSol;
+        int nbCollision=-1;
+        std::vector<GameObject> koopaOBJ;
+        std::vector<GameObject> shellOBJ;
+        glm::vec3 directionCarapace;
+        bool carapaceRespawn=false;
+        std::vector<GameObject*> stars;
 
         // light
         int index = 0;
@@ -92,7 +101,6 @@ class GameObject{
                 child->plan.programID=this->programID;
             }
             child->setGlobalTransform(this->globalTransform.combine_with(child->globalTransform));
-            // std::cout<<"m"<<std::endl;
             this->enfant.push_back(child);
             child->parent = this;
         }
@@ -109,9 +117,6 @@ class GameObject{
         void setGlobalTransform(Transform t){
             this->globalTransform=t;
             Transform worldTransform = this->globalTransform.combine_with(this->transform);
-            // std::cout <<" World Transform: " << worldTransform.t.x << ", "
-            // << worldTransform.t.y << ", "
-            // << worldTransform.t.z << std::endl;
             if(hasMesh) {
                 if(hasLOD){
                     this->highMesh.setVerticesEspace(worldTransform);
@@ -130,9 +135,6 @@ class GameObject{
             int index = 0;
             for(auto& i :this->enfant){
                 if(index <this->objetsOBJ.size()){
-                    // std::cout << "Global Transform: " << this->globalTransform.t.x << ", "
-                    // << this->globalTransform.t.y << ", "
-                    // << this->globalTransform.t.z << std::endl;
                     i->setGlobalTransform(this->globalTransform);
                 } else {
                     Transform combinedTransform = this->globalTransform.combine_with(i->transform);
@@ -162,7 +164,7 @@ class GameObject{
             if(hasPlan) this->plan.setVerticesEspace(this->globalTransform.combine_with(this->transform));
             for(int i = 0; i < this->objetsOBJ.size(); i++){
                     Transform childWorld = this->transform;
-                    this->enfant[i]->setLocalTransform(childWorld); // mettre à jour leur position dans le monde
+                    this->enfant[i]->setLocalTransform(childWorld);
             }
                             
         }
@@ -170,15 +172,14 @@ class GameObject{
         void draw(const glm::vec3 cameraPosition, float deltaTime) {
             GLuint scaleUniformID = glGetUniformLocation(programID, "scale");
             if (isMoving) {
-                if (speed != glm::vec3(0.0, 0.0, 0.0))
-                    PhysicMove(deltaTime);
-        
+                if (speed != glm::vec3(0.0, 0.0, 0.0)){
+                    if(!isCollision)PhysicMove(deltaTime);
+                }
                 if (hasMesh || M) {
                     if (hasLOD) {
                         updateLOD(cameraPosition);
                     }
                     this->mesh.draw();
-                    //std::cout << "Dessin de l'objet : " << nom << std::endl;
                 } else if (hasPlan) {
                     glUniform1f(scaleUniformID, this->transform.s);
         
@@ -197,37 +198,81 @@ class GameObject{
                     glUniform3f(LightColorUniformID, this->lightColor[0], this->lightColor[1], this->lightColor[2]);
                 }
                 for (int i = 0; i < this->enfant.size(); i++) {
-                    //std::cout << "Dessin de l'enfant : " << enfant[i]->nom << std::endl;
                     this->enfant[i]->draw(cameraPosition, deltaTime);
+                    this->enfant[i]->isCollision=this->isCollision;
                 }
                 for (int i = 0; i < this->objetsOBJ.size(); i++) {
-                    //std::cout << "Dessin de l'enfant : " << enfant[i]->nom << std::endl;
                     this->objetsOBJ[i].draw(cameraPosition, deltaTime);
+                    this->objetsOBJ[i].isCollision=this->isCollision;
                 }
-                // if(isBoiteEnglobante && hasMesh){
-                //     this->boiteEnglobante.draw();
-                // }
-            }if(avancer){
+            }
+            if(avancer){
                 this->moveToPosition(deltaTime);
             }
         }
 
-        void testIA(GameObject *obj){
+        void testIA(GameObject *obj, float deltaTime){
             if(this->isIA){
-                for(int i=0;i<this->boiteEnglobante.triangles.size();i++){
-                    RayTriangleIntersection intersection = obj->boiteEnglobante.getIntersection(this->visionIA,i);
-                    if(intersection.intersectionExists && intersection.t<20.0f && intersection.t>0.0f){
-                        // std::cout<<"Intersection !!"<<std::endl;
-                        // std::cout<<this->nom<<std::endl;
-                        this->avancer=true;
-                        this->positionAvance=obj->centreEspace;
-                        // e.applyToPoint(this->indexed_vertices[i])
+                if(this->pv<=0){
+                    if(this->nom=="koopa"){
+                        this->avancer=false;
+                        this->clearGameObject();
+                        this->nom="shell";
+                        this->isIA=true;
+                        this->globalTransform=this->globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),4.0));
+                        this->lireOBJ("../meshes/Shell.obj");
+                        this->rajouterOBJ();
+                        this->setGlobalTransform(this->globalTransform);
+                        this->pv=1;
+                    }else if(this->nom=="shell"){
+                        this->bougeCarapace(deltaTime);
+                        if(this->carapaceRespawn){
+                            std::cout<<this->carapaceRespawn<<std::endl;
+                            this->clearGameObject();
+                            this->nom="koopa";
+                            this->isIA=true;
+                            this->globalTransform=this->globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),0.25));
+                            this->lireOBJ("../meshes/Koopa.obj");
+                            this->rajouterOBJ();
+                            this->globalTransform.t[1]+=0.1;
+                            this->setGlobalTransform(this->globalTransform);
+                            this->pv=1;
+                            this->creerIA();
+                            this->carapaceRespawn=false;
+                            this->nbCollision=-1;
+                        }
+                    }else if(this->nom=="Bowser"){
+                        std::cout<<"i"<<std::endl;
+                        obj->collisions[0]->enfant.pop_back();
+                        obj->collisions[0]->enfant.pop_back();
+                        obj->collisions[0]->enfant.pop_back();
+                        obj->collisions.pop_back();
+                        obj->collisions.pop_back();
+                        obj->collisions.pop_back();
+                        obj->collisions[0]->stars[0]->programID=this->programID;
+                        std::cout<<"star"<<std::endl;
+                        obj->collisions[0]->stars[0]->lireOBJ("../meshes/star.OBJ");
+                        obj->collisions[0]->stars[0]->rajouterOBJ();
+                        obj->collisions[0]->stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,120.0,0.0),1.0));
+                        obj->collisions[0]->stars[0]->nom="star";
+                        obj->collisions[0]->stars[0]->collisions.push_back(obj->collisions[0]);
+                        obj->collisions[0]->stars[0]->collisions.push_back(obj);
+                        obj->collisions[0]->addChild(obj->collisions[0]->stars[0]);
+                        obj->collisions.push_back(obj->collisions[0]->stars[0]);
+                    }
+                }else{
+                    if(this->nom!="shell"){
+                        for(int i=0;i<this->boiteEnglobante.triangles.size();i++){
+                            RayTriangleIntersection intersection = obj->boiteEnglobante.getIntersection(this->visionIA,i);
+                            if(intersection.intersectionExists && intersection.t<500.0f && intersection.t>0.0f){
+                                this->avancer=true;
+                            }
+                        }
                     }
                 }
             }else{
                 for(int i=0;i<this->enfant.size();i++){
-                    // std::cout<<"testIA"<<std::endl;
-                    this->enfant[i]->testIA(obj);
+                    this->enfant[i]->testIA(obj,deltaTime);
                 }
             }
         }
@@ -288,47 +333,51 @@ class GameObject{
         }
 
         void Move(float deltaTime, float vitesse = 5.0f){
-            //std::cout<<"deltaTime : "<<deltaTime<<std::endl;
             float height = 0.0f;
             if(this->parent && this->parent->hasPlan){
                 glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
                 height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
             }
-
             glm::vec3 NormalizedAxe = glm::length(axe) > 0.0f ? glm::normalize(axe) : axe;
-            
-            // Ajuster la vitesse en fonction de deltaTime et de l'échelle
-            glm::vec3 movement = NormalizedAxe * (vitesse * this->globalTransform.s * deltaTime); // Appliquer l'échelle à la vitesse
-            Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);        
-            // Empêcher les mouvements sous le plan (collisions)
-            if(Mov.t[1] < this->height2parent + height){
-                Mov.t[1] = this->height2parent + height;
-            }
-
+            glm::vec3 movement = NormalizedAxe * (vitesse * this->globalTransform.s * deltaTime);
+            Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);
             if (glm::length(axe) > 0.0f) {
                 glm::vec3 projectedAxe = glm::normalize(glm::vec3(axe.x, 0.0f, axe.z));
                 glm::vec3 reference = glm::vec3(0.0f, 0.0f, 1.0f);
                 float dotProduct = glm::dot(projectedAxe, reference);
-                float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f)); // Clamp pour éviter les erreurs numériques
+                float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f));
                 float angleSignedRadians = glm::atan(projectedAxe.x, projectedAxe.z);
                 float angleDegrees = glm::degrees(angleSignedRadians);
                 Transform rotation = Transform();
-
                 rotation = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angleDegrees);
-
                 Transform transformTmp = Transform(rotation.m*initialTransform.m, transform.t, transform.s);
                 setLocalTransform(transformTmp);
             }
-
-            //std::cout << "Mouvement : " << movement.x << ", "
-            //     << movement.y << ", "
-            //     << movement.z << std::endl;
-            // std::cout << "Position : " << Mov.t.x << ", "
-            //     << Mov.t.y << ", "
-            //     << Mov.t.z << std::endl;
-            
+            Transform ancien=this->globalTransform;
             this->setGlobalTransform(Mov);
-            isMoving = true;
+            int col=this->getCollision();
+            if(col>=0){
+                axe=glm::vec3(axe[0],1.0,axe[2]);
+                glm::vec3 NormalizedAxe = glm::length(axe) > 0.0f ? glm::normalize(axe) : axe;
+                glm::vec3 movement = axe * (vitesse * this->globalTransform.s * deltaTime);
+                Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);   
+                this->setGlobalTransform(Mov);
+                col=this->getCollision();
+                if(col>=0){
+                    this->setGlobalTransform(ancien);
+                    isCollision=true;
+                }
+                isCollision=false;
+                axe=glm::vec3(axe[0],0.0,axe[2]);
+            }else{
+                isMoving = true;
+            }
+            if(ancien.t[0]!=this->globalTransform.t[0] || ancien.t[1]!=this->globalTransform.t[1] || ancien.t[2]!=this->globalTransform.t[2]){
+                this->auSol=false;
+            }
+            if(this->getCollision()==-1 && !this->auSol){
+                this->PhysicMove(deltaTime);
+            }
         }
         
 
@@ -341,214 +390,37 @@ class GameObject{
             }
             Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + (speed * deltaTime), this->globalTransform.s);
             speed = speed + (acceleration*deltaTime);
-            if(Mov.t[1]<this->height2parent+height){
-                Mov.t[1] = this->height2parent+height;
-                speed = glm::vec3(0.0f);
-            }
-            // this->collisions();
-            int col=this->getCollision();
-            if(col>=0){
-                std::cout<<this->collisions[col]->nom<<std::endl;
-            }
+            Transform ancien=this->globalTransform;
             this->setGlobalTransform(Mov);
-            // std::cout<<this->globalTransform.t[0]<<" "<<this->globalTransform.t[1]<<" "<<this->globalTransform.t[2]<<std::endl;
-            isMoving = true;
+            int col=this->getCollision();
+            this->nbCollision=col;
+            if(col>=0){
+                this->setGlobalTransform(ancien);
+                isCollision=true;
+                this->auSol=true;
+                speed = glm::vec3(0.0f);
+            }else{
+                isMoving = true;
+                isCollision=false;
+            }
         }
 
-        // bool collision(glm::vec3 axe){
-        //     std::cout<<"axe : "<<axe[0]<<" "<<axe[1]<<" "<<axe[2]<<std::endl;
-        //     std::cout<<this->nom<<std::endl;
-        //     Ray ray;
-        //     if(glm::vec3(1.0,0.0,0.0)==axe){
-        //         ray.m_direction=axe;
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[2];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[3];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[6];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[7];
-        //         if(getCollision(ray)){return true;}
-        //         return false;
-        //     }else if(glm::vec3(-1.0,0.0,0.0)==axe){
-        //         ray.m_direction=axe;
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[0];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[1];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[4];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[5];
-        //         if(getCollision(ray)){return true;}
-        //         return false;
-        //     }else if(glm::vec3(0.0,1.0,0.0)==axe){
-        //         ray.m_direction=axe;
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[4];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[5];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[6];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[7];
-        //         if(getCollision(ray)){return true;}
-        //         return false;
-        //     }else if(glm::vec3(0.0,-1.0,0.0)==axe){
-        //         ray.m_direction=axe;
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[0];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[1];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[2];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[3];
-        //         if(getCollision(ray)){return true;}
-        //         return false;
-        //     }else if(glm::vec3(0.0,0.0,1.0)==axe){
-        //         ray.m_direction=axe;
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[1];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[2];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[5];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[6];
-        //         if(getCollision(ray)){return true;}
-        //         return false;
-        //     }else if(glm::vec3(0.0,0.0,-1.0)==axe){
-        //         ray.m_direction=axe;
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[0];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[3];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[4];
-        //         if(getCollision(ray)){return true;}
-        //         ray.m_origin=this->boiteEnglobante.vertices_Espace[7];
-        //         if(getCollision(ray)){return true;}
-        //         return false;
-        //     }
-        //     return false;
-        // }
-
         int getCollision(){
-            for(int i=0;i<collisions.size();i++){
+            for(int i=0;i<this->collisions.size();i++){
                 if(collisions[i]->map){
                     for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
                         for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
-                            // Ray ray1,ray2,ray3;
-                            // ray1.m_origin=collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]];
-                            // ray2.m_origin=collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]];
-                            // ray3.m_origin=collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]];
-                            // ray1.m_direction=ray2.m_origin-ray1.m_origin;
-                            // ray2.m_direction=ray3.m_origin-ray2.m_origin;
-                            // ray3.m_direction=ray1.m_origin-ray3.m_origin;
-                            // ray1.m_direction=glm::normalize(ray1.m_direction);
-                            // ray2.m_direction=glm::normalize(ray2.m_direction);
-                            // ray3.m_direction=glm::normalize(ray3.m_direction);
-                            // for(int l=0;l<this->boiteEnglobante.triangles.size();l++){
-                            //     RayTriangleIntersection intersection = this->boiteEnglobante.getIntersection(ray1,l);
-                            //     if(intersection.intersectionExists && intersection.t<glm::length(ray1.m_direction) && intersection.t>0.0f){
-                            //         return i;
-                            //     }
-                            //     intersection = this->boiteEnglobante.getIntersection(ray2,l);
-                            //     if(intersection.intersectionExists && intersection.t<glm::length(ray2.m_direction) && intersection.t>0.0f){
-                            //         return i;
-                            //     }
-                            //     intersection = this->boiteEnglobante.getIntersection(ray3,l);
-                            //     if(intersection.intersectionExists && intersection.t<glm::length(ray3.m_direction) && intersection.t>0.0f){
-                            //         return i;
-                            //     }
-                            // }
                             for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
                                 if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
+                                    this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
                                     return i;
                                 }
                             }
-                            // RayTriangleIntersection intersection = collisions[i]->objetsOBJ[j].mesh.getIntersection(ray,k);
-                            // if(intersection.intersectionExists && intersection.t<0.01f && intersection.t>0.0f){
-                            //     return true;
-                            // }
                         }
                     }
                 }else{
                     for(int j=0;j<collisions[i]->boiteEnglobante.triangles.size();j++){
                         Ray ray1,ray2,ray3,ray4,ray5,ray6;
-                        // ray1.m_origin=collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][0]];
-                        // ray2.m_origin=collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][1]];
-                        // ray3.m_origin=collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][2]];
-                        // ray1.m_direction=ray2.m_origin-ray1.m_origin;
-                        // ray2.m_direction=ray3.m_origin-ray2.m_origin;
-                        // ray3.m_direction=ray1.m_origin-ray3.m_origin;
-                        // // ray1.m_direction=glm::normalize(ray1.m_direction);
-                        // // ray2.m_direction=glm::normalize(ray2.m_direction);
-                        // // ray3.m_direction=glm::normalize(ray3.m_direction);
-                        // for(int l=0;l<this->boiteEnglobante.triangles.size();l++){
-                        //     RayTriangleIntersection intersection = this->boiteEnglobante.getIntersection(ray1,l);
-                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray1.m_direction) && intersection.t>0.0f){
-                        //         std::cout<<"1"<<std::endl;
-                        //         std::cout<<"intersection"<<intersection.intersection[0]<<" "<<intersection.intersection[1]<<" "<<intersection.intersection[2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][2]<<std::endl;
-                        //         return i;
-                        //     }
-                        //     intersection = this->boiteEnglobante.getIntersection(ray2,l);
-                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray2.m_direction) && intersection.t>0.0f){
-                        //         std::cout<<"2"<<std::endl;
-                        //         std::cout<<intersection.t<<std::endl;
-                        //         std::cout<<"directioin : "<<ray2.m_direction[0]<<" "<<ray2.m_direction[1]<<" "<<ray2.m_direction[2]<<std::endl;
-                        //         std::cout<<"origine : "<<ray2.m_origin[0]<<" "<<ray2.m_origin[1]<<" "<<ray2.m_origin[2]<<std::endl;
-                        //         std::cout<<"intersection"<<intersection.intersection[0]<<" "<<intersection.intersection[1]<<" "<<intersection.intersection[2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][2]<<std::endl;
-                        //         return i;
-                        //     }
-                        //     intersection = this->boiteEnglobante.getIntersection(ray3,l);
-                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray3.m_direction) && intersection.t>0.0f){
-                        //         std::cout<<"3"<<std::endl;
-                        //         std::cout<<intersection.t<<std::endl;
-                        //         std::cout<<"directioin : "<<ray2.m_direction[0]<<" "<<ray2.m_direction[1]<<" "<<ray2.m_direction[2]<<std::endl;
-                        //         std::cout<<"origine : "<<ray2.m_origin[0]<<" "<<ray2.m_origin[1]<<" "<<ray2.m_origin[2]<<std::endl;
-                        //         std::cout<<"intersection"<<intersection.intersection[0]<<" "<<intersection.intersection[1]<<" "<<intersection.intersection[2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][0]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][1]<<" "<<this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][0]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][1]][2]<<std::endl;
-                        //         std::cout<<"boite englobante : "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][0]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][1]<<" "<<collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[l][2]][2]<<std::endl;
-                        //         return i;
-                        //     }
-                        // }
-                        // ray4.m_origin=this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[j][0]];
-                        // ray5.m_origin=this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[j][1]];
-                        // ray6.m_origin=this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[j][2]];
-                        // ray4.m_direction=ray5.m_origin-ray4.m_origin;
-                        // ray5.m_direction=ray6.m_origin-ray5.m_origin;
-                        // ray6.m_direction=ray4.m_origin-ray6.m_origin;
-                        // for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
-                        //     RayTriangleIntersection intersection = collisions[i]->boiteEnglobante.getIntersection(ray4,l);
-                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray4.m_direction) && intersection.t>0.0f){
-                        //         return i;
-                        //     }
-                        //     intersection = collisions[i]->boiteEnglobante.getIntersection(ray5,l);
-                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray5.m_direction) && intersection.t>0.0f){
-                        //         return i;
-                        //     }
-                        //     intersection = collisions[i]->boiteEnglobante.getIntersection(ray6,l);
-                        //     if(intersection.intersectionExists && intersection.t<glm::length(ray6.m_direction) && intersection.t>0.0f){
-                        //         return i;
-                        //     }
-                        // }
-                        // RayTriangleIntersection intersection = collisions[i]->boiteEnglobante.getIntersection(ray,j);
-                        // if(intersection.intersectionExists && intersection.t<0.01f && intersection.t>0.0f){
-                        //     return true;
-                        // }
                         for(int k=0;k<this->boiteEnglobante.triangles.size();k++){
                             if(trianglesIntersect(collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][0]],collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][1]],collisions[i]->boiteEnglobante.vertices_Espace[collisions[i]->boiteEnglobante.triangles[j][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[k][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[k][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[k][2]])){
                                 return i;
@@ -562,12 +434,8 @@ class GameObject{
 
 
         void trouverMTL(const char* mat, GameObject *go){
-            // std::cout<<"taille des mtls : "<<this->mtls.size()<<std::endl;
-            // std::cout<<"mat : "<<mat<<std::endl;
             for(int i=0;i<mtls.size();i++){
-                // std::cout<<"nom : "<<this->mtls[i].nom<<std::endl;
                 if(this->mtls[i].nom==mat){
-                    // std::cout<<"trouve !"<<std::endl;
                     go->mesh.mtl=mtls[i];
                 }
             }
@@ -676,7 +544,6 @@ class GameObject{
                     std::copy(chemin.c_str(), chemin.c_str() + chemin.size() + 1, cstr);
                     mtl.metallic=chemin;
                 }else{
-                    // Probably a comment, eat up the rest of the line
                     char stupidBuffer[1000];
                     fgets(stupidBuffer, 1000, file);
                 }
@@ -711,7 +578,6 @@ class GameObject{
         }
 
         void rajouterOBJ() {
-            // std::cout<<tailleObjetOBJ<<std::endl;
             for (int i = tailleObjetOBJ; i < objetsOBJ.size(); i++) {
                 objetsOBJ[i].programID = this->programID;
                 objetsOBJ[i].mesh.programID = programID;
@@ -719,10 +585,27 @@ class GameObject{
                 objetsOBJ[i].M = true;
                 objetsOBJ[i].mesh.creerTextureOBJ(objetsOBJ[i].mesh.mtl.texture);
                 this->addEnfantOBJ(&objetsOBJ[i]);
-                // this->addEnfantOBJ2(&objetsOBJ[i]);
             }
             tailleObjetOBJ=objetsOBJ.size();
-            // std::cout << "Nombre d'objets ajoutés : " << objetsOBJ.size() << std::endl;
+        }
+        void rajouterKoopaOBJ() {
+            for (int i = 0; i < koopaOBJ.size(); i++) {
+                koopaOBJ[i].programID = this->programID;
+                koopaOBJ[i].mesh.programID = programID;
+                koopaOBJ[i].hasMesh = true;
+                koopaOBJ[i].M = true;
+                koopaOBJ[i].mesh.creerTextureOBJ(koopaOBJ[i].mesh.mtl.texture);
+                this->addEnfantOBJ(&koopaOBJ[i]);
+            }
+        }void rajouterShellOBJ() {
+            for (int i = 0; i < shellOBJ.size(); i++) {
+                shellOBJ[i].programID = this->programID;
+                shellOBJ[i].mesh.programID = programID;
+                shellOBJ[i].hasMesh = true;
+                shellOBJ[i].M = true;
+                shellOBJ[i].mesh.creerTextureOBJ(shellOBJ[i].mesh.mtl.texture);
+                this->addEnfantOBJ(&shellOBJ[i]);
+            }
         }
         bool lireOBJ(const char* filename){
             this->M = false; this->hasMesh = false; this->hasPlan = false;
@@ -767,15 +650,6 @@ class GameObject{
                         }
                         for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
                             unsigned short a,b,c;
-                            // if(nomOBJ=="Metal_Mario.mtl" || nomOBJ=="Mario64.mtl" || nomOBJ=="Mario64_Cap.mtl" || nomOBJ=="star.mtl" || nomOBJ=="goomba.mtl" || nomOBJ=="PowerStar.mtl" || nomOBJ=="blakbobomb.mtl" || nomOBJ=="Peach.mtl" || nomOBJ=="LLL.mtl"){
-                            //     a=i;
-                            //     b=i+1;
-                            //     c=i+2;
-                            // }else{
-                            //     a=(unsigned short)(vertexIndices[i+nb])-nb-1;
-                            //     b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
-                            //     c=(unsigned short)(vertexIndices[i+2+nb])-nb-1;
-                            // }
                             if(nomOBJ=="Peaches_Castale.mtl"){
                                 a=(unsigned short)(vertexIndices[i+nb])-nb-1;
                                 b=(unsigned short)(vertexIndices[i+1+nb])-nb-1;
@@ -792,15 +666,9 @@ class GameObject{
                             goa.mesh.indices.push_back(b);
                             goa.mesh.indices.push_back(c);
                         }
-                        // this->objetsOBJ.push_back(goa);
                         objetsOBJ.push_back(goa);
-                        // std::cout<<"nombre de traingles : "<<goa.mesh.triangles.size()<<std::endl;
-                        // std::cout<<"nombre de vertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
                         nb=vertexIndices.size();
                     }
-                    // this->rajouterOBJ();
-                    // std::cout<<"taille objetOBJ : "<<objetsOBJ.size()<<std::endl;
-                    // std::cout<<"taille enfant : "<<enfant.size()<<std::endl;
                     glm::vec3 centre = glm::vec3((minX+maxX)/2,(minY+maxY)/2,(minZ+maxZ)/2);
                     this->centre=centre;
                     std::cout<<"centre : "<<centre.x<<" "<<centre.y<<" "<<centre.z<<std::endl;
@@ -814,14 +682,6 @@ class GameObject{
                     glm::vec3 p6=glm::vec3(maxX,maxY,minZ);
                     glm::vec3 p7=glm::vec3(maxX,maxY,maxZ);
                     glm::vec3 p8=glm::vec3(minX,maxY,maxZ);
-                    // std::cout<<"p1 : "<<p1.x<<" "<<p1.y<<" "<<p1.z<<std::endl;
-                    // std::cout<<"p2 : "<<p2.x<<" "<<p2.y<<" "<<p2.z<<std::endl;
-                    // std::cout<<"p3 : "<<p3.x<<" "<<p3.y<<" "<<p3.z<<std::endl;
-                    // std::cout<<"p4 : "<<p4.x<<" "<<p4.y<<" "<<p4.z<<std::endl;
-                    // std::cout<<"p5 : "<<p5.x<<" "<<p5.y<<" "<<p5.z<<std::endl;
-                    // std::cout<<"p6 : "<<p6.x<<" "<<p6.y<<" "<<p6.z<<std::endl;
-                    // std::cout<<"p7 : "<<p7.x<<" "<<p7.y<<" "<<p7.z<<std::endl;
-                    // std::cout<<"p8 : "<<p8.x<<" "<<p8.y<<" "<<p8.z<<std::endl;
                     this->boiteEnglobante.indexed_vertices.push_back(p1);
                     this->boiteEnglobante.indexed_vertices.push_back(p2);
                     this->boiteEnglobante.indexed_vertices.push_back(p3);
@@ -890,7 +750,6 @@ class GameObject{
                     unsigned short nba=0;
                     for( unsigned short i=nb; i<vertexIndices.size(); i++ ){
                         unsigned int vertexIndex = vertexIndices[i];
-                        // std::cout<<"i : "<<i<<std::endl;
                         unsigned int uvIndex = uvIndices[i];
                         unsigned int normalIndex = normalIndices[i];
                         glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
@@ -899,11 +758,6 @@ class GameObject{
                         goa.mesh.indexed_vertices.push_back(vertex);
                         goa.mesh.texCoords     .push_back(uv);
                         goa.mesh.normal .push_back(normal);
-                        // if(vertexIndices[i]>temp_vertices.size()){
-                        //     std::cout<<"iiiiiiiiiiiiiiiiiiiiiiiiiiiii"<<std::endl;
-                        // }
-                        // std::cout<<"vertex : "<<vertexIndices[i]<<std::endl;
-                        // std::cout<<"vertices : "<<vertex.x<<" "<<vertex.y<<" "<<vertex.z<<std::endl;
                         nba++;
                     }
                     for( unsigned short i=0; i<goa.mesh.indexed_vertices.size(); i+=3 ){
@@ -917,7 +771,6 @@ class GameObject{
                             b=i+1;
                             c=i+2;
                         }
-                        // std::cout<<"a : "<<a<<" b : "<<b<<" c : "<<c<<std::endl;
                         std::vector<unsigned short> ind{a,b,c};
                         goa.mesh.triangles.push_back(ind);
                         nbTriangles++;
@@ -934,8 +787,6 @@ class GameObject{
                     }
                     objetsOBJ.push_back(goa);
                     nb+=nba;
-                    // std::cout<<"nbVertices : "<<goa.mesh.indexed_vertices.size()<<std::endl;
-                    // std::cout<<"nb : "<<nb<<std::endl;
                     nbTrianglesActu.push_back(nbTriangles*3);
                     goa.enfant.clear();
                     goa.mesh.indexed_vertices.clear();
@@ -980,8 +831,6 @@ class GameObject{
                 }else if ( strcmp( lineHeader, "vt" ) == 0 ){
                     glm::vec2 uv;
                     fscanf(file, "%f %f\n", &uv.x, &uv.y);
-                    // uv.y = -uv.y;
-                    // std::cout<<"uv : "<<uv.x<<" "<<uv.y<<std::endl;
                     temp_uvs.push_back(uv);
                 }else if ( strcmp( lineHeader, "vn" ) == 0 ){
                     glm::vec3 normal;
@@ -1045,8 +894,8 @@ class GameObject{
         void creerIA(){
             this->isIA=true;
             this->visionIA.m_origin = this->centreEspace;
-            // this->visionIA.m_direction = glm::normalize(this->globalTransform.m[2]);
-            this->visionIA.m_direction = glm::vec3(0.0,1.0,0.0);
+            this->visionIA.m_direction = glm::normalize(this->collisions[1]->centreEspace-this->centreEspace);
+            this->visionIA.m_direction[1]=0.0;
             this->rayonDepart=this->visionIA.m_direction;
             this->rotationDepart = this->globalTransform.m;
             std::cout<<"nouvelle IA cree !"<<std::endl;
@@ -1123,169 +972,35 @@ class GameObject{
             isBoiteEnglobante = true;
         }
 
-        // void setIsGround(){
-        //     this->isGround=true;
-        //     this->mesh.programID=this->programID;
-        //     this->boiteEnglobante = this->mesh;
-        //     for(int i=0;i<this->objetsOBJ.size();i++){
-        //         this->enfant[i]->isGround=true;
-        //         this->enfant[i]->mesh.programID=this->programID;
-        //         this->enfant[i]->boiteEnglobante = this->enfant[i]->mesh;
-        //     }
-        // }
-
-        // void collisions(){
-        //     if(isGravite){
-        //         vec3 dir = vec3(0.0);
-
-        //         if(objetsOBJ.size()>0){
-        //             for(int i=0;i<this->objetsOBJ.size();i++){
-        //                 dir = this->collisionWithChild(this->enfant[i],this);
-        //                 dir = this->collisionWithAcestor(this->enfant[i],this);
-        //                 if(dir != vec3(0.0)) {
-        //                     this->handleCollision(dir);
-        //                 }
-        //             }
-        //         }else{
-        //             dir = this->collisionWithChild(this,this);
-        //             dir = this->collisionWithAcestor(this,this);
-        //             if(dir != vec3(0.0)) {
-        //                 this->handleCollision(dir);
-        //             }
-        //         }
-        //     }
-        // }
-
-        // vec3 collisionWithAcestor(GameObject* go, GameObject* toAvoid) {
-        //     if (this->parent) {
-        //         for (int i = 0; i < this->parent->enfant.size(); i++) {
-        //             GameObject* go2 = this->parent->enfant[i];
-
-        //             if (go2 != go && go2 != this && go2!=toAvoid) { // Exclure l'objet lui-même
-        //                 if (go2->collisionCheck(go)) {
-        //                     std::cout << go2->globalTransform.t.x << " " << go2->globalTransform.t.y << " " << go2->globalTransform.t.z << std::endl;
-        //                     std::cout << go->globalTransform.t.x << " " << go->globalTransform.t.y << " " << go->globalTransform.t.z << std::endl;
-        //                     std::cout << "Collision avec acestor : " << go2->nom <<" id : "<<i<< std::endl;
-        //                     return (go2->globalTransform.t) - (go->globalTransform.t);
-        //                 }
-        //                 if(go2->enfant.size()>0){
-        //                     return go2->collisionWithChild(go, toAvoid);
-
-        //                 }
-        //             }
-        //         }
-        //         if (this->collisionCheck(go) && this != toAvoid) {
-        //             std::cout << "Collision avec parent : " << this->parent->nom << std::endl;
-        //             std::cout << this->parent->globalTransform.t.x << " " << this->parent->globalTransform.t.y << " " << this->parent->globalTransform.t.z << std::endl;
-        //             std::cout << go->globalTransform.t.x << " " << go->globalTransform.t.y << " " << go->globalTransform.t.z << std::endl;
-        //             return (this->parent->globalTransform.t) - (go->globalTransform.t);
-        //         }
-        //         return this->parent->collisionWithAcestor(go, toAvoid);
-        //     }
-        //     return vec3(0.0); // Aucune collision détectée
-        // }
-
-        // vec3 collisionWithChild(GameObject* go, GameObject* toAvoid) {
-        //     vec3 result = vec3(0.0);
-        //     if(this != toAvoid){
-        //         for (int i = 0; i < this->enfant.size(); i++) {
-        //             GameObject* go2 = this->enfant[i];
-        //             if (go2 != go && go2 != this && go2->nom !="Camera" && go2 != toAvoid) { // Exclure l'objet lui-même
-        //                 if (go2->collisionCheck(go)  && !go2->M) {
-        //                     std::cout << "Collision avec enfant : " << go2->nom <<" id : "<<i<< std::endl;
-        //                     return (go2->globalTransform.t) - (go->globalTransform.t);
-        //                 }
-        //                 result = go2->collisionWithChild(go,toAvoid)==vec3(0.0)?vec3(0.0):go2->collisionWithChild(go,toAvoid);
-        //             }
-        //         }
-        //     } else {
-        //         for (int i = this->objetsOBJ.size(); i < this->enfant.size(); i++) {
-        //             GameObject* go2 = this->enfant[i];
-        //             if (go2 != go && go2 != this && go2->nom !="Camera") { // Exclure l'objet lui-même
-        //                 if (go2->collisionCheck(go)) {
-        //                     std::cout << "Collisionfidufilfhiuh avec enfant : " << go2->nom <<" id : "<<i<< std::endl;
-        //                     return ((go2->globalTransform.t) - (go->globalTransform.t));
-        //                 }
-        //                 result = go2->collisionWithChild(go,toAvoid)==vec3(0.0)?vec3(0.0):go2->collisionWithChild(go,toAvoid);
-        //             }
-        //         }
-        //     }
-        //     return result; // Aucune collision détectée
-           
-        // }
-
-        // bool collisionCheck(GameObject* go) {
-        //     if (this == go) {
-        //         return false; // Ne pas tester la collision avec soi-même
-        //     }
-        
-        //     float collisionTolerance = 0.1f; // Tolérance pour éviter les fausses collisions
-        
-        //     // Vérifier si les objets sont proches avant de tester la collision
-        //     if (glm::length(this->globalTransform.t - go->globalTransform.t) < 5.0f) {
-        //         return false; // Ignorer si les objets sont trop éloignés
-        //     }
-
-        
-        //     bool result = this->boiteEnglobante.collisionCheck(go->boiteEnglobante, collisionTolerance);
-        
-        //     if (result) {
-        //         std::cout << "Collision détectée entre " << this->nom << " et " << go->nom << std::endl;
-        //     } else {
-        //     }
-        
-        //     return result;
-        // }
-
-
-        // void handleCollision(glm::vec3 dir) {
-        //     if (glm::length(dir) < 0.3f) { // Si la direction est proche de zéro, ignorer
-        //         std::cout << "Collision ignorée : direction nulle." << std::endl;
-        //         std::cout << "Position actuelle : " << this->globalTransform.t.x << ", " << this->globalTransform.t.y << ", " << this->globalTransform.t.z << std::endl;
-        //         return;
-        //     }
-
-        //     this->globalTransform.t += glm::normalize(dir) * 0.1f;
-        
-        //     this->speed = glm::vec3(0.0, 0.0, 0.0);
-        //     this->acceleration = glm::vec3(0.0, 0.0, 0.0);
-        
-        //     std::cout << "collision !" << std::endl;
-        //     std::cout << "dir : " << dir.x << " " << dir.y << " " << dir.z << std::endl;
-        // }
-
         void moveToPosition(float deltaTime) {
-            if (glm::length(this->positionAvance - this->globalTransform.t) > 0.01f) {
-                // std::cout << "Moving to position: " << positionAvance.x << ", " << positionAvance.y << ", " << positionAvance.z << std::endl;
-                // std::cout<<"position : "<<this->globalTransform.t.x<<" "<<this->globalTransform.t.y<<" "<<this->globalTransform.t.z<<std::endl;
-                glm::vec3 direction = glm::normalize(this->positionAvance - this->centreEspace);
-                // float dotProduct = glm::dot(this->rayonDepart, direction);
-                float dotProduct = glm::dot(glm::vec3(0.0,0.0,-1.0), direction);
-                dotProduct = glm::clamp(dotProduct, -1.0f, 1.0f);
-                float angle = glm::degrees(glm::acos(dotProduct));
-                // float angle = glm::acos(dotProduct);
-                // std::cout<<"angle : "<<angle<<std::endl;
-                this->speed = speed + (acceleration*deltaTime);
-                glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
-                // std::cout<<"speed : "<<speed.x<<" "<<speed.y<<" "<<speed.z<<std::endl;
-                Transform rotateY;
-                if(this->nom=="koopa1" || this->nom=="koopa2"){
-                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle-90);
+            int nb=this->getCollision();
+            this->speed=glm::vec3(0.0);
+            if (nb==-1) {
+                glm::vec3 direction=glm::normalize(this->collisions[1]->centreEspace-this->centreEspace);
+                direction[1]=0.0;
+                Transform rotateY;glm::vec3 newPosition;
+                if(this->nom=="koopa"){
+                    newPosition = this->globalTransform.t + direction * glm::vec3(3.0) * deltaTime*glm::vec3(1.0,0.0,1.0);
+                    float dotProduct = glm::dot(glm::vec3(-1.0,0.0,0.0), direction);
+                    float angle = glm::degrees(glm::acos(dotProduct));
+                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -angle);
                 }if(this->nom=="Bowser"){
-                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle+180);
+                    newPosition = this->globalTransform.t + direction * glm::vec3(2.0) * deltaTime*glm::vec3(1.0,0.0,1.0);
+                    float dotProduct = glm::dot(glm::vec3(0.0,0.0,1.0), direction);
+                    float angle = glm::degrees(glm::acos(dotProduct));
+                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle);
                 }
                 Transform a=Transform(rotationDepart, this->transform.t, this->transform.s);
-                Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
-                // newTransform=newTransform.combine_with(newTransform.rotation(glm::vec3(0.0f,1.0f,0.0f), angle));
-                // this->setGlobalTransform(Transform());
-                this->setLocalTransform(a.combine_with(rotateY));
-                this->setGlobalTransform(newTransform);
-                // this->setGlobalTransform(this->globalTransform.combine_with(rotateY));
+                Transform newTransform = Transform(glm::mat3x3(1.0), newPosition, this->globalTransform.s);
+                Transform ancien=this->globalTransform;
+                this->setGlobalTransform(newTransform.combine_with(rotateY));
                 this->visionIA.m_direction = direction;
-            } else {
-                this->speed = glm::vec3(0.0f);
-                this->isMoving = false;
-                this->avancer=false;
+                if(this->getCollision()>=0){
+                    this->setGlobalTransform(ancien);
+                }
+            } 
+            else {
+                this->nbCollision=nb;
             }
         }
 
@@ -1306,14 +1021,12 @@ class GameObject{
                         if(!intersection3.intersectionExists)intersection3=obj->objetsOBJ[i].mesh.getIntersection(ray3,j);
                         if(!intersection4.intersectionExists)intersection4=obj->objetsOBJ[i].mesh.getIntersection(ray4,j);
                         if(intersection1.intersectionExists && intersection1.t>0.01f && intersection2.intersectionExists && intersection2.t>0.01f && intersection3.intersectionExists && intersection3.t>0.01f && intersection4.intersectionExists && intersection4.t>0.01f){
-                            // std::cout<<"gravite !"<<std::endl;
                             glm::vec3 direction = glm::vec3(0.0,-1.0,0.0);
                             glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime;
                             Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
                             this->setGlobalTransform(newTransform);
                             break;
                         }else if(intersection1.intersectionExists && intersection1.t<=0.01f && intersection2.intersectionExists && intersection2.t<=0.01f && intersection3.intersectionExists && intersection3.t<=0.01f && intersection4.intersectionExists && intersection4.t<=0.01f){
-                            // std::cout<<"aTerre !"<<std::endl;
                             this->aTerre=true;
                             break;
                         }
@@ -1365,16 +1078,99 @@ class GameObject{
                 edgeIntersectsTriangle(t2_v2, t2_v0, t1_v0, t1_v1, t1_v2)) {
                 return true;
             }
-            // if (isPointInTriangle(t1_v0, t2_v0, t2_v1, t2_v2) ||
-            //     isPointInTriangle(t1_v1, t2_v0, t2_v1, t2_v2) ||
-            //     isPointInTriangle(t1_v2, t2_v0, t2_v1, t2_v2)) {
-            //     return true;
-            // }
-            // if (isPointInTriangle(t2_v0, t1_v0, t1_v1, t1_v2) ||
-            //     isPointInTriangle(t2_v1, t1_v0, t1_v1, t1_v2) ||
-            //     isPointInTriangle(t2_v2, t1_v0, t1_v1, t1_v2)) {
-            //     return true;
-            // }
             return false;
+        }
+
+        void clearGameObject(){
+            this->enfant.clear();
+            this->objetsOBJ.clear();
+            mesh.indexed_vertices.clear();
+            mesh.indices.clear();
+            mesh.triangles.clear();
+            mesh.normal.clear();
+            mesh.texCoords.clear();
+            hasMesh = false;
+            hasPlan = false;
+            height2parent = 0.0f;
+            hasLOD = false;
+            lodHighDistance = 2.0f;
+            lodMediumDistance = 5.0f;
+            speed = glm::vec3(0.0f);
+            poids = 1.0f;
+            Force = glm::vec3(0.0,poids * -9.83,0.0);
+            acceleration =Force/poids;
+            initialTransform = Transform(glm::mat3(1.0f), glm::vec3(0.0f), 1.0f);
+            mtls.clear();
+            nom="";
+            M=false;
+            tailleObjetOBJ=0;
+            isBoiteEnglobante=false;
+            isGravite=false;
+            aTerre=false;
+            isCollision=true;
+            boiteEnglobante.indexed_vertices.clear();
+            boiteEnglobante.indices.clear();
+            boiteEnglobante.triangles.clear();
+            boiteEnglobante.normal.clear();
+            boiteEnglobante.texCoords.clear();
+            isGround = false;
+            // collisions.clear();
+            map=false;
+            auSol=false;
+            index = 0;
+            isLight = false;
+            lightIntensity = 1.0f;
+            lightColor = glm::vec3(1.0f,1.0f,1.0f);
+            isIA=false;
+            avancer=false;
+            isMoving = true;
+            nbCollision=-1;
+        }
+
+        void mettreAuSol(GameObject* map){
+            while(this->getCollision()==-1){
+                this->globalTransform.t.y-=0.1f;
+                this->setGlobalTransform(this->globalTransform);
+            }
+            this->globalTransform.t.y+=0.1f;
+            this->setGlobalTransform(this->globalTransform);
+            this->transformSol=this->globalTransform;
+        }
+
+        void bougeCarapace(float deltaTime){
+            glm::vec3 direction;
+            if(this->nbCollision!=-1){
+                direction=-this->directionCarapace;
+                Ray ray;ray.m_origin=this->centreEspace;ray.m_direction=glm::vec3(0.0,-1.0,0.0);
+                for(int i=0;i<this->collisions[0]->objetsOBJ.size();i++){
+                    for(int j=0;j<this->collisions[0]->objetsOBJ[i].mesh.triangles.size();j++){
+                        RayTriangleIntersection intersection=this->collisions[0]->objetsOBJ[i].mesh.getIntersection(ray,j);
+                        if(intersection.intersectionExists && intersection.t<50.0f && intersection.t>0.0f){
+                            this->carapaceRespawn=false;
+                            break;
+                        }else{
+                            this->carapaceRespawn=true;
+                        }
+                    }
+                    if(!this->carapaceRespawn)break;
+                }
+            }else{
+                direction=this->collisions[2]->basEspace-this->basEspace;
+                direction=glm::normalize(direction);
+            }
+            glm::vec3 newPosition = this->globalTransform.t + direction * glm::vec3(50.0) * deltaTime;
+            Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+            newTransform=newTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0),1.0).rotation(glm::vec3(0.0,1.0,0.0),10));
+            Transform ancien=this->globalTransform;
+            this->setGlobalTransform(newTransform);
+            int a=this->getCollision();
+            if(a>=0 && nbCollision==-1){
+                this->setGlobalTransform(ancien);
+                this->directionCarapace=direction;
+                nbCollision=a;
+                this->collisions[nbCollision]->pv-=1;
+                std::cout<<this->collisions[nbCollision]->nom<<std::endl;
+                std::cout<<this->collisions[nbCollision]->pv<<std::endl;
+            }
         }
 };

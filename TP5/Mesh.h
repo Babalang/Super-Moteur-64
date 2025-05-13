@@ -149,6 +149,7 @@ class Mesh{
         }
 
         void compute_Normals(){
+            normal.clear();
             normal.resize(indexed_vertices.size());
             for(int i=0;i<indexed_vertices.size();i++){
                 normal[i] = glm::vec3(0.0,0.0,0.0);
@@ -157,7 +158,6 @@ class Mesh{
                 for(size_t y = 0;y<3;y++){
                     if(normal[triangles[i][y]]==vec3(0.,0.,0.)){
                         normal[triangles[i][y]]= glm::cross(indexed_vertices[triangles[i][abs(y-1)%3]]-indexed_vertices[triangles[i][y]], indexed_vertices[triangles[i][(y+1)%3]]-indexed_vertices[triangles[i][y]] );
-         //               std::cout<<normal[triangles[i][y]][0]<<" "<<normal[triangles[i][y]][1]<<" "<<normal[triangles[i][y]][2]<<std::endl;
                     }
                 }
             }
@@ -428,7 +428,6 @@ class Mesh{
 
         void creerTextureOBJ(const char* f){
             if(mtl.pbr){
-                // std::cout<<"pbr"<<std::endl;
                 loadPBR(mtl.albedo.c_str(),mtl.normal.c_str(),mtl.roughness.c_str(),mtl.metallic.c_str(),mtl.ao.c_str());
             }else{
                 int width, height, numComponents;
@@ -455,17 +454,6 @@ class Mesh{
                 }
                 glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                // glTexImage2D (GL_TEXTURE_2D,
-                //             0,
-                //             (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
-                //             width,
-                //             height,
-                //             0,
-                //             (numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA), 
-                //             GL_UNSIGNED_BYTE,
-                //             data);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
                 glGenerateMipmap(GL_TEXTURE_2D);
                 stbi_image_free(data);
@@ -528,9 +516,6 @@ class Mesh{
         RayTriangleIntersection getIntersection( Ray const & ray, int t ) {
             glm::vec3 m_normal=this->normal[t];
             glm::vec3 m_c[3]{this->vertices_Espace[this->triangles[t][0]],this->vertices_Espace[this->triangles[t][1]],this->vertices_Espace[this->triangles[t][2]]};
-            // std::cout<<m_c[0][0]<<" "<<m_c[0][1]<<" "<<m_c[0][2]<<std::endl;
-            // std::cout<<m_c[1][0]<<" "<<m_c[1][1]<<" "<<m_c[1][2]<<std::endl;
-            // std::cout<<m_c[2][0]<<" "<<m_c[2][1]<<" "<<m_c[2][2]<<std::endl;
             RayTriangleIntersection result;
             bool parallel=isParallelTo(ray,t);
             if(parallel){
@@ -564,26 +549,17 @@ class Mesh{
             return result;
         }
 
-        bool triangleIntersection(const glm::vec3& A1, const glm::vec3& B1, const glm::vec3& C1,
-                        const glm::vec3& A2, const glm::vec3& B2, const glm::vec3& C2) {
-            // Exemple simplifié : vérifier si les triangles se chevauchent
-            // Vous pouvez utiliser un algorithme plus précis ici
+        bool triangleIntersection(const glm::vec3& A1, const glm::vec3& B1, const glm::vec3& C1,const glm::vec3& A2, const glm::vec3& B2, const glm::vec3& C2){
             glm::vec3 normal1 = glm::normalize(glm::cross(B1 - A1, C1 - A1));
             glm::vec3 normal2 = glm::normalize(glm::cross(B2 - A2, C2 - A2));
-
-            // Vérifier si les sommets du triangle 2 sont du même côté du plan du triangle 1
             float d1 = glm::dot(normal1, A1);
             bool allOutside1 = (glm::dot(normal1, A2) - d1 > 0) &&
                     (glm::dot(normal1, B2) - d1 > 0) &&
                     (glm::dot(normal1, C2) - d1 > 0);
-
-            // Vérifier si les sommets du triangle 1 sont du même côté du plan du triangle 2
             float d2 = glm::dot(normal2, A2);
             bool allOutside2 = (glm::dot(normal2, A1) - d2 > 0) &&
                     (glm::dot(normal2, B1) - d2 > 0) &&
                     (glm::dot(normal2, C1) - d2 > 0);
-
-            // Si les triangles ne sont pas complètement en dehors l'un de l'autre, ils s'intersectent
             return !(allOutside1 || allOutside2);
             }
             glm::vec3 getMin() const {
@@ -609,19 +585,18 @@ class Mesh{
         bool collisionCheck(const Mesh& other, float tolerance = 0.0f) {
             for (int i = 0; i < this->triangles.size(); ++i) {
                 for (int j = 0; j < other.triangles.size(); ++j) {
-                    // On vérifie l'intersection de chaque paire de triangles
                     if (triangleIntersection(this->vertices_Espace[this->triangles[i][0]],
                                             this->vertices_Espace[this->triangles[i][1]],
                                             this->vertices_Espace[this->triangles[i][2]],
                                             other.vertices_Espace[other.triangles[j][0]],
                                             other.vertices_Espace[other.triangles[j][1]],
                                             other.vertices_Espace[other.triangles[j][2]])) {
-                        return true;  // Si les triangles s'intersectent, collision détectée
+                        return true;
                     }
                 }
             }
 
-            return false;  // Si aucune intersection n'est trouvée, il n'y a pas de collision
+            return false;
         }
 
 };

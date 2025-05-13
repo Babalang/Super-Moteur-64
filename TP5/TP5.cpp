@@ -167,7 +167,7 @@ void processInput(GLFWwindow *window)
         }
         if(glfwGetKey(window, GLFW_KEY_SPACE) && toggleInputSpace == false){
             toggleInputSpace = true;
-            if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,4.0f,0.0f);
+            if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_TAB) && toggleInputTab == false){
             toggleInputTab = true;
@@ -208,33 +208,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 GameObject GOchateau;GameObject GOmariometal;GameObject light, GOPeach;
 void sceneNiveau1(Scene *scene){
     GLuint programID=scene->root.programID;
-    //Affichage de la Map :
-    // std::cout<<"Chargement de la Map"<<std::endl;
-    // GameObject GOchateau;
-    // Plane map(64);
-    // GOchateau.setPlan(map);
-    // scene.root.addChild(&GOchateau);
-    // GOchateau.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
-    // GOchateau.setLocalTransform(Transform().scale(50));
 
     
     GOchateau.programID=programID;
     GOchateau.lireOBJ("../meshes/chateau.obj");
     GOchateau.rajouterOBJ();
-    // GOchateau.setIsGround();
     GOchateau.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
-    
-    // scene->root.addChild(&GOchateau);
-    
-    //    // Affichage de l'objet :
-    
-    // GameObject GOmariometal;
-    // std::cout<<"Chargement de l'objet"<<std::endl;
-    // GOmariometal.setLODMeshes("../meshes/sphere.off",true, "../textures/assemblies/");
-    // GOchateau.addChild(&GOmariometal);
-    // GOmariometal.setLocalTransform(Transform().scale(0.3));
-    // GOmariometal.setGlobalTransform(GOmariometal.globalTransform.combine_with(Transform().translation(glm::vec3(0.0,1.0,0.0),0.1)));  
-    // GOmariometal.height2parent = 0.3f;   
     
     
     GOmariometal.programID=programID;
@@ -247,31 +226,14 @@ void sceneNiveau1(Scene *scene){
     Transform yaw = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f); // Yaw (180° autour de Y)
     Transform combined = yaw.combine_with(roll); // Combinaison des transformations
 
-    // std::cout<<combined.m[0][0]<<" "<<combined.m[1][1]<<" "<<combined.m[2][2]<<std::endl;
-    // std::cout<<combined.m[0][1]<<" "<<combined.m[1][0]<<" "<<combined.m[2][1]<<std::endl;
-    // std::cout<<combined.m[0][2]<<" "<<combined.m[1][2]<<" "<<combined.m[2][0]<<std::endl;
     GOmariometal.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,0.0),1.0).combine_with(scale).combine_with(roll));
     GOmariometal.initialTransform = GOmariometal.transform;
 
     
     // Parent = translation uniquement
-    Transform translation =Transform(glm::mat3(1.0f), glm::vec3(20.0f, 10.0f, -70.5f), 1.0f);
-    std::cout<<GOmariometal.globalTransform.t[0]<<" "<<GOmariometal.globalTransform.t[1]<<" "<<GOmariometal.globalTransform.t[2]<<std::endl;
+    Transform translation =Transform(glm::mat3(1.0f), glm::vec3(20.0f, 10.0f, -50.5f), 1.0f);
     GOmariometal.setGlobalTransform(translation);
-    
-    
-    // GOchateau.addChild(&GOmariometal);
-
-    // albedo silver_albedo.png
-    // roughness silver_height.png
-    // ao silver_ao.png
-    // metallic silver_metallic.png
-    // normal silver_normal-ogl.png
-    // albedo assemblies/albedo.png
-    // roughness assemblies/roughness.png
-    // ao assemblies/ao.png
-    // metallic assemblies/metallic.png
-    // normal assemblies/normal.png
+    std::cout<<GOmariometal.globalTransform.t[0]<<" "<<GOmariometal.globalTransform.t[1]<<" "<<GOmariometal.globalTransform.t[2]<<std::endl;
 
     GOPeach.programID=programID;
     GOPeach.lireOBJ("../meshes/Peach.obj");
@@ -289,24 +251,12 @@ void sceneNiveau1(Scene *scene){
     light.lightIntensity = 100000.0f;
     light.isLight = true;
     light.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light.lightIntensity;
-    // scene->lights.push_back(&light);
 
     // Ajout de la caméra :
     std::cout<<"Chargement de la Caméra"<<std::endl;
-    // Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 100.0f);
     GOmariometal.addChild(&camera);
-    // camera.globalTransform=translate;
     scene->camera = camera;
     scene->camera.lookAt(&GOmariometal);
-    
-    // objetsOBJ.push_back(GOchateau);
-    // scene->root.addChild(&objetsOBJ[0]);
-    // objetsOBJ.push_back(GOmariometal);
-    // std::cout<<"i"<<std::endl;
-    // objetsOBJ[0].addChild(&objetsOBJ[1]);
-    // std::cout<<GOchateau.enfant.size()<<std::endl;
-    // lights.push_back(light);
-    // scene->lights.push_back(&lights[0]);
     scene->root.addChild(&GOchateau);
     GOchateau.addChild(&GOmariometal);
     GOchateau.addChild(&GOPeach);
@@ -314,9 +264,13 @@ void sceneNiveau1(Scene *scene){
     GOchateau.map=true;
     GOmariometal.collisions.push_back(&GOchateau);
     GOmariometal.collisions.push_back(&GOPeach);
+    GOPeach.collisions.push_back(&GOchateau);
     GOmariometal.nom="mario";
     GOPeach.nom="peach";
     GOchateau.nom="chateau";
+    GOPeach.mettreAuSol(&GOchateau);
+    GOmariometal.mettreAuSol(&GOchateau);
+    GOmariometal.pv=3;
 }
 
 GameObject GOBobombBattlefieldDS,GOBattanKing,light2,GOGoomba1,GOMetalMario2;
@@ -332,11 +286,9 @@ void sceneNiveau2(Scene *scene){
     
     //Affichage de l'objet :
     GOMetalMario2.programID=programID;
-    GOmariometal.lireOBJ("../meshes/Mario64_Cap.obj");
-    GOmariometal.lireOBJ("../meshes/Mario64.obj");
+    GOMetalMario2.lireOBJ("../meshes/Mario.obj");
     GOMetalMario2.rajouterOBJ();
     Transform scale      = Transform().scale(0.1f);
-    // Transform scale      = Transform().scale(0.04f);
     Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f);
     Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
     Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
@@ -380,7 +332,7 @@ void sceneNiveau2(Scene *scene){
     scene->lights.push_back(&light2);
 }
 
-GameObject GOkoopa1,GObowserStadium,GOMetalMario3,GOkoopa2,GOBowser,light3;
+GameObject GOkoopa1,GObowserStadium,GOMetalMario3,GOkoopa2,GOBowser,light3,GOstar;
 void sceneNiveau3(Scene *scene){
     GLuint programID=scene->root.programID;
     
@@ -388,31 +340,22 @@ void sceneNiveau3(Scene *scene){
     GObowserStadium.programID=programID;
     GObowserStadium.lireOBJ("../meshes/Bowser_Stadium.obj");
     GObowserStadium.rajouterOBJ();
-    GObowserStadium.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,-20.0,0.0),10.0));
-    GObowserStadium.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,-20.0,0.0),10.0));
+    GObowserStadium.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,-0.0,0.0),50.0));
     
     //Affichage de l'objet :
     GOMetalMario3.programID=programID;
-    // GOMetalMario3.lireOBJ("../meshes/Mario64_Cap.obj");
-    // GOMetalMario3.lireOBJ("../meshes/Mario64.obj");
     GOMetalMario3.lireOBJ("../meshes/Mario.obj");
     GOMetalMario3.rajouterOBJ();
-    // Transform scale      = Transform().scale(0.1f);
+    GOMetalMario3.isGround = true;
     Transform scale      = Transform().scale(0.04f);
     Transform translate  = Transform().translation(glm::vec3(-10.0f, 10.0f, 0.0f), 1.0f);
     Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
     Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 90.0f);
-    Transform finalTransform = translate
-        .combine_with(rotateY)
-        .combine_with(rotateX)
-        .combine_with(scale);
-    GOMetalMario3.setLocalTransform(finalTransform);
-    GOMetalMario3.setGlobalTransform(finalTransform);
-    GOMetalMario3.boiteEnglobante.setVerticesEspace(finalTransform);
-    GOMetalMario3.isGravite=true;
-    // for(int i=0;i<8;i++){
-    //     std::cout<<GOMetalMario3.boiteEnglobante.vertices_Espace[i][0]<<" "<<GOMetalMario3.boiteEnglobante.vertices_Espace[i][1]<<" "<<GOMetalMario3.boiteEnglobante.vertices_Espace[i][2]<<std::endl;
-    // }
+    Transform combined = rotateY.combine_with(rotateX);
+    GOMetalMario3.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,0.0),1.0).combine_with(scale).combine_with(rotateX));
+    GOMetalMario3.initialTransform = GOMetalMario3.transform;
+    Transform translation =Transform(glm::mat3(1.0f), glm::vec3(0.0f, 120.0f, -50.0f), 1.0f);
+    GOMetalMario3.setGlobalTransform(translation);
 
     light3.programID=programID;
     light3.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
@@ -422,39 +365,36 @@ void sceneNiveau3(Scene *scene){
     light3.isLight = true;
     light3.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light3.lightIntensity;
 
-    GOMetalMario3.addChild(&camera);
-    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
-    scene->camera = camera;
-    scene->camera.lookAt(&GOMetalMario3);
+
+    GameObject a,b;
+    a.programID=programID;b.programID=programID;
+    a.lireOBJ("../meshes/Koopa.obj");b.lireOBJ("../meshes/Shell.obj");
 
     GOkoopa1.programID=programID;
     GOkoopa1.lireOBJ("../meshes/Koopa.obj");
     GOkoopa1.rajouterOBJ();
-    Transform tKoopa1=Transform(glm::mat3x3(1.0),glm::vec3(10.0,5.0,-10.0),1.0);
-    GOkoopa1.setLocalTransform(tKoopa1);
+    Transform tKoopa1=Transform(glm::mat3x3(1.0),glm::vec3(-30.0,120.0,30.0),1.0);
+    tKoopa1=tKoopa1.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f));
     GOkoopa1.setGlobalTransform(tKoopa1);
     GOkoopa1.nom="koopa1";
+    GOkoopa1.koopaOBJ=a.objetsOBJ;GOkoopa1.shellOBJ=b.objetsOBJ;
 
     GOkoopa2.programID=programID;
     GOkoopa2.lireOBJ("../meshes/Koopa.obj");
-    Transform tKoopa2=Transform(glm::mat3x3(1.0),glm::vec3(10.0,5.0,10.0),1.0);
+    Transform tKoopa2=Transform(glm::mat3x3(1.0),glm::vec3(30.0,120.0,30.0),1.0);
+    tKoopa2=tKoopa2.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f));
     GOkoopa2.rajouterOBJ();
-    GOkoopa2.setLocalTransform(tKoopa2);
     GOkoopa2.setGlobalTransform(tKoopa2);
     GOkoopa2.nom="koopa2";
+    GOkoopa2.koopaOBJ=a.objetsOBJ;GOkoopa2.shellOBJ=b.objetsOBJ;
 
     GOBowser.programID=programID;
     GOBowser.lireOBJ("../meshes/koopa_model.obj");
-    Transform tkoopa_model=Transform(glm::mat3x3(1.0),glm::vec3(10.0,5.0,0.0),0.1);
+    Transform tkoopa_model=Transform(glm::mat3x3(1.0),glm::vec3(0.0,120.0,50.0),0.3);
+    tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
     GOBowser.rajouterOBJ();
-    // GOBowser.setLocalTransform(tkoopa_model.combine_with(tkoopa_model.rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f)));
-    // GOBowser.setGlobalTransform(tkoopa_model.combine_with(tkoopa_model.rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f)));
-    GOBowser.setLocalTransform(tkoopa_model);
     GOBowser.setGlobalTransform(tkoopa_model);
     GOBowser.nom="Bowser";
-    // for(int i=0;i<8;i++){
-    //     std::cout<<GOBowser.boiteEnglobante.vertices_Espace[i][0]<<" "<<GOBowser.boiteEnglobante.vertices_Espace[i][1]<<" "<<GOBowser.boiteEnglobante.vertices_Espace[i][2]<<std::endl;
-    // }
     
     scene->root.addChild(&GObowserStadium);
     GObowserStadium.addChild(&GOMetalMario3);
@@ -462,25 +402,82 @@ void sceneNiveau3(Scene *scene){
     GObowserStadium.addChild(&GOkoopa2);
     GObowserStadium.addChild(&GOBowser);
     scene->lights.push_back(&light2);
+    GOMetalMario3.collisions.push_back(&GObowserStadium);
+    GOMetalMario3.collisions.push_back(&GOkoopa1);
+    GOMetalMario3.collisions.push_back(&GOkoopa2);
+    GOMetalMario3.collisions.push_back(&GOBowser);
+    GOkoopa1.collisions.push_back(&GObowserStadium);
+    GOkoopa2.collisions.push_back(&GObowserStadium);
+    GOBowser.collisions.push_back(&GObowserStadium);
+    GOkoopa1.collisions.push_back(&GOMetalMario3);
+    GOkoopa2.collisions.push_back(&GOMetalMario3);
+    GOBowser.collisions.push_back(&GOMetalMario3);
+    GOkoopa1.collisions.push_back(&GOBowser);
+    GOkoopa2.collisions.push_back(&GOBowser);
+    GOBowser.collisions.push_back(&GOkoopa1);
+    GOkoopa1.collisions.push_back(&GOkoopa2);
+    GOkoopa2.collisions.push_back(&GOkoopa1);
+    GOBowser.collisions.push_back(&GOkoopa2);
+    GOMetalMario3.nom="mario";
+    GOkoopa1.nom="koopa";
+    GOkoopa2.nom="koopa";
+    GOBowser.nom="Bowser";
+    GObowserStadium.nom="bowser stadium";
+    GOMetalMario3.mettreAuSol(&GObowserStadium);
+    GOkoopa1.mettreAuSol(&GObowserStadium);
+    GOkoopa2.mettreAuSol(&GObowserStadium);
+    GOBowser.mettreAuSol(&GObowserStadium);
+    GOMetalMario3.addChild(&camera);
+    scene->camera = camera;
+    scene->camera.lookAt(&GOMetalMario3);
     GOBowser.creerIA();
     GOBowser.boiteEnglobante.setVerticesEspace(GOBowser.globalTransform);
     GOkoopa2.creerIA();
     GOkoopa2.boiteEnglobante.setVerticesEspace(GOkoopa2.globalTransform);
     GOkoopa1.creerIA();
     GOkoopa1.boiteEnglobante.setVerticesEspace(GOkoopa1.globalTransform);
+    GOMetalMario3.pv=3;
+    GOBowser.pv=3;
+    GOkoopa1.pv=1;
+    GOkoopa2.pv=1;
+    GObowserStadium.stars.push_back(&GOstar);
 }
 
+Camera Cswitch(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 1000.0f);
 void changerNiveau(){
     if(scene.niveau!=niveau){
         scene.root.enfant.clear();
         scene.lights.clear();
+        GOmariometal.axe=glm::vec3(0.0);
+        GOMetalMario2.axe=glm::vec3(0.0);
+        GOMetalMario3.axe=glm::vec3(0.0);
+        camera.setGlobalTransform(Transform());
+        camera.speed=glm::vec3(0.0);
+        camera.axe=glm::vec3(0.0);
         niveau=scene.niveau;
         if(scene.niveau==1){
+            scene.textureSkybox("../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg");
             sceneNiveau1(&scene);
         } else if(scene.niveau==2){
+            scene.textureSkybox("../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg");
             sceneNiveau2(&scene);
         } else if(scene.niveau==3){
+            // camera=Cswitch;
+            scene.textureSkybox("../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg");
             sceneNiveau3(&scene);
+        }
+    }if(scene.reset){
+        scene.reset=false;
+        if(niveau==1){
+            GOmariometal.setGlobalTransform(GOmariometal.transformSol);
+            GOmariometal.auSol=true;
+        } else if(niveau==2){
+            sceneNiveau2(&scene);
+        } else if(niveau==3){
+            GOMetalMario3.setGlobalTransform(GOMetalMario3.transformSol);
+            GOkoopa1.setGlobalTransform(GOkoopa1.transformSol);
+            GOkoopa2.setGlobalTransform(GOkoopa2.transformSol);
+            GOBowser.setGlobalTransform(GOBowser.transformSol);
         }
     }
 }
@@ -518,6 +515,23 @@ void sendTexture(GLuint text){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,text);
     glUniform1i(Text2DUniformID,0);
+}
+
+void clearNiveaux(){
+    scene.root.enfant.clear();
+    scene.lights.clear();
+    GOBattanKing.clearGameObject();
+    GOBowser.clearGameObject();
+    GOBobombBattlefieldDS.clearGameObject();
+    GOGoomba1.clearGameObject();
+    GOkoopa1.clearGameObject();
+    GOkoopa2.clearGameObject();
+    GOMetalMario2.clearGameObject();
+    GOMetalMario3.clearGameObject();
+    GObowserStadium.clearGameObject();
+    GOmariometal.clearGameObject();
+    GOPeach.clearGameObject();
+    GOchateau.clearGameObject();
 }
 
 int main( void )
@@ -575,9 +589,6 @@ int main( void )
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
 
-    // Cull triangles which normal is not towards the camera
-    //glEnable(GL_CULL_FACE);
-
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
@@ -585,10 +596,8 @@ int main( void )
     GLuint programID = LoadShaders( "vertex_shader.glsl", "fragment_shader.glsl" );
         
     scene.root.programID=programID;
-    // Camera camera=
-    // sceneNiveau1(&scene);
-    // sceneNiveau2(&scene);
-    // sceneNiveau3(&scene);
+    scene.programID=programID;
+    scene.creerSkybox();
     std::cout<<"Niveau crée"<<std::endl;
 
 
@@ -649,14 +658,6 @@ int main( void )
 
             GLuint LightColorUniformID = glGetUniformLocation(programID,"lightColors[0]");
             glUniform3f(LightColorUniformID, i->lightColor[0], i->lightColor[1], i->lightColor[2]);
-
-//             std::cout << "Light Position: " << i->globalTransform.t.x << ", "
-//           << i->globalTransform.t.y << ", "
-//           << i->globalTransform.t.z << std::endl;
-
-//              std::cout << "Light Color: " << i->lightColor.r << ", "
-//           << i->lightColor.g << ", "
-//           << i->lightColor.b << std::endl;
 
         }
 
