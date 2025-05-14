@@ -65,6 +65,7 @@ class GameObject{
         glm::vec3 directionCarapace;
         bool carapaceRespawn=false;
         std::vector<GameObject*> stars;
+        bool changementDuNiveau=false;
 
         // light
         int index = 0;
@@ -333,6 +334,13 @@ class GameObject{
         }
 
         void Move(float deltaTime, float vitesse = 5.0f){
+            if(changementDuNiveau){
+                std::cout<<"ukajzeukdsqhu"<<std::endl;
+                this->axe=glm::vec3(0.0);
+                this->speed=glm::vec3(0.0);
+            }
+            std::cout<<this->centreEspace[0]<<" "<<this->centreEspace[1]<<" "<<this->centreEspace[2]<<" "<<std::endl;
+            std::cout<<this->axe[0]<<" "<<this->axe[1]<<" "<<this->axe[2]<<" "<<std::endl;
             float height = 0.0f;
             if(this->parent && this->parent->hasPlan){
                 glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
@@ -378,6 +386,12 @@ class GameObject{
             if(this->getCollision()==-1 && !this->auSol){
                 this->PhysicMove(deltaTime);
             }
+            if(changementDuNiveau){
+                this->axe=glm::vec3(0.0);
+                this->speed=glm::vec3(0.0);
+                this->changementDuNiveau=false;
+            }
+            std::cout<<this->speed[0]<<" "<<this->speed[1]<<" "<<this->speed[2]<<" "<<std::endl;
         }
         
 

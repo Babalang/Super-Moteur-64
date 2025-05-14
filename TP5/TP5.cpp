@@ -6,7 +6,6 @@
 #include <vector>
 #include <iostream>
 #include <unistd.h>
-
 // Include GLEW
 
 // Include GLFW
@@ -57,6 +56,7 @@ bool toggleInputL = false;
 bool toggleInputJ = false;
 bool toggleInputQ = false;
 bool toggleInputZ = false;
+bool activeToogle=false;
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -69,6 +69,7 @@ Camera camera(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 1000.0f);
 int niveau=0;
 bool carte=false;
 GLuint programID;
+bool changementDuNiveau=true;
 
 // Fonction pour afficher le compteur de FPS
 double affiche(GLFWwindow *window,double lastTime){
@@ -93,7 +94,6 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-
     float cameraSpeed = 5.f * deltaTime; // Ajuster la vitesse en fonction du temps écoulé
     float cameraZoomSpeed = 0.1f; // Vitesse de zoom de la caméra
 
@@ -105,7 +105,7 @@ void processInput(GLFWwindow *window)
     glm::vec3 cameraRight = cameraRotation[0];                 // Axe X local (direction droite)
     glm::vec3 cameraUp = cameraRotation[1];                    // Axe Y local (direction vers le haut)
 
-
+    if(activeToogle){if(!changementDuNiveau){
     if (scene.camera.mode == CAMERA_MODE::ORBITAL) {
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
             scene.camera.phi = glm::clamp(scene.camera.phi + cameraSpeed, glm::radians(-89.0f), glm::radians(89.0f)); // Reculer
@@ -126,9 +126,11 @@ void processInput(GLFWwindow *window)
         }
     }
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-            if(!toggleInputI){
+            if(!toggleInputI && !changementDuNiveau){
                 scene.camera.parent->axe += glm::vec3(0.0f,0.0,1.0f);
                 toggleInputI = true;
+            }else{
+                changementDuNiveau=false;
             }
         } 
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE && toggleInputI == true){
@@ -196,6 +198,7 @@ void processInput(GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_TAB) == GLFW_RELEASE && toggleInputTab == true){
         toggleInputTab = false;
     }
+    }else changementDuNiveau=false;}
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -333,6 +336,7 @@ void sceneNiveau2(Scene *scene){
 }
 
 GameObject GOkoopa1,GObowserStadium,GOMetalMario3,GOkoopa2,GOBowser,light3,GOstar;
+Camera Cswitch(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 1000.0f);
 void sceneNiveau3(Scene *scene){
     GLuint programID=scene->root.programID;
     
@@ -427,8 +431,8 @@ void sceneNiveau3(Scene *scene){
     GOkoopa1.mettreAuSol(&GObowserStadium);
     GOkoopa2.mettreAuSol(&GObowserStadium);
     GOBowser.mettreAuSol(&GObowserStadium);
-    GOMetalMario3.addChild(&camera);
-    scene->camera = camera;
+    GOMetalMario3.addChild(&Cswitch);
+    scene->camera = Cswitch;
     scene->camera.lookAt(&GOMetalMario3);
     GOBowser.creerIA();
     GOBowser.boiteEnglobante.setVerticesEspace(GOBowser.globalTransform);
@@ -441,23 +445,65 @@ void sceneNiveau3(Scene *scene){
     GOkoopa1.pv=1;
     GOkoopa2.pv=1;
     GObowserStadium.stars.push_back(&GOstar);
+    std::cout<<"mario position : "<<GOMetalMario3.centreEspace[0]<<" "<<GOMetalMario3.centreEspace[1]<<" "<<GOMetalMario3.centreEspace[2]<<std::endl;
 }
 
-Camera Cswitch(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 1000.0f);
+void empecherMouvement(){
+    toggleInputC = false;
+    toggleInput1 = false;
+    toggleInput2 = false;
+    toggleInput3 = false;
+    toggleInput5 = false;
+    toggleInput8 = false;
+    toggleInputSpace = false;
+    toggleInputTab = false;
+    toggleInputI = false;
+    toggleInputK = false;
+    toggleInputL = false;
+    toggleInputJ = false;
+    toggleInputQ = false;
+    toggleInputZ = false;
+    activeToogle=false;
+    changementDuNiveau=true;
+}
+
+void clearNiveaux(){
+    scene.root.enfant.clear();
+    scene.lights.clear();
+    GOBattanKing.clearGameObject();
+    GOBowser.clearGameObject();
+    GOBobombBattlefieldDS.clearGameObject();
+    GOGoomba1.clearGameObject();
+    GOkoopa1.clearGameObject();
+    GOkoopa2.clearGameObject();
+    GOMetalMario2.clearGameObject();
+    GOMetalMario3.clearGameObject();
+    GObowserStadium.clearGameObject();
+    GOmariometal.clearGameObject();
+    GOPeach.clearGameObject();
+    GOchateau.clearGameObject();
+    empecherMouvement();
+}
+
 void changerNiveau(){
     if(scene.niveau!=niveau){
+        activeToogle=false;
+        clearNiveaux();
         scene.root.enfant.clear();
         scene.lights.clear();
-        GOmariometal.axe=glm::vec3(0.0);
-        GOMetalMario2.axe=glm::vec3(0.0);
-        GOMetalMario3.axe=glm::vec3(0.0);
         camera.setGlobalTransform(Transform());
-        camera.speed=glm::vec3(0.0);
-        camera.axe=glm::vec3(0.0);
+        // camera.speed=glm::vec3(0.0);
+        // camera.axe=glm::vec3(0.0);
         niveau=scene.niveau;
         if(scene.niveau==1){
             scene.textureSkybox("../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg");
             sceneNiveau1(&scene);
+            GOmariometal.axe=glm::vec3(0.0);
+            GOMetalMario2.axe=glm::vec3(0.0);
+            GOMetalMario3.axe=glm::vec3(0.0);
+            GOmariometal.changementDuNiveau=true;
+            GOMetalMario2.changementDuNiveau=true;
+            GOMetalMario3.changementDuNiveau=true;
         } else if(scene.niveau==2){
             scene.textureSkybox("../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg");
             sceneNiveau2(&scene);
@@ -465,7 +511,28 @@ void changerNiveau(){
             // camera=Cswitch;
             scene.textureSkybox("../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg");
             sceneNiveau3(&scene);
+            GOmariometal.axe=glm::vec3(0.0);
+            GOMetalMario2.axe=glm::vec3(0.0);
+            GOMetalMario3.axe=glm::vec3(0.0);
+            GOmariometal.changementDuNiveau=true;
+            GOMetalMario2.changementDuNiveau=true;
+            GOMetalMario3.changementDuNiveau=true;
         }
+        toggleInputC = false;
+        toggleInput1 = false;
+        toggleInput2 = false;
+        toggleInput3 = false;
+        toggleInput5 = false;
+        toggleInput8 = false;
+        toggleInputSpace = false;
+        toggleInputTab = false;
+        toggleInputI = false;
+        toggleInputK = false;
+        toggleInputL = false;
+        toggleInputJ = false;
+        toggleInputQ = false;
+        toggleInputZ = false;
+        activeToogle=true;
     }if(scene.reset){
         scene.reset=false;
         if(niveau==1){
@@ -517,22 +584,7 @@ void sendTexture(GLuint text){
     glUniform1i(Text2DUniformID,0);
 }
 
-void clearNiveaux(){
-    scene.root.enfant.clear();
-    scene.lights.clear();
-    GOBattanKing.clearGameObject();
-    GOBowser.clearGameObject();
-    GOBobombBattlefieldDS.clearGameObject();
-    GOGoomba1.clearGameObject();
-    GOkoopa1.clearGameObject();
-    GOkoopa2.clearGameObject();
-    GOMetalMario2.clearGameObject();
-    GOMetalMario3.clearGameObject();
-    GObowserStadium.clearGameObject();
-    GOmariometal.clearGameObject();
-    GOPeach.clearGameObject();
-    GOchateau.clearGameObject();
-}
+
 
 int main( void )
 {
