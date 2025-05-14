@@ -243,7 +243,6 @@ class GameObject{
                             this->nbCollision=-1;
                         }
                     }else if(this->nom=="Bowser"){
-                        std::cout<<"i"<<std::endl;
                         obj->collisions[0]->enfant.pop_back();
                         obj->collisions[0]->enfant.pop_back();
                         obj->collisions[0]->enfant.pop_back();
@@ -251,7 +250,6 @@ class GameObject{
                         obj->collisions.pop_back();
                         obj->collisions.pop_back();
                         obj->collisions[0]->stars[0]->programID=this->programID;
-                        std::cout<<"star"<<std::endl;
                         obj->collisions[0]->stars[0]->lireOBJ("../meshes/star.OBJ");
                         obj->collisions[0]->stars[0]->rajouterOBJ();
                         obj->collisions[0]->stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,120.0,0.0),1.0));
@@ -335,12 +333,9 @@ class GameObject{
 
         void Move(float deltaTime, float vitesse = 5.0f){
             if(changementDuNiveau){
-                std::cout<<"ukajzeukdsqhu"<<std::endl;
                 this->axe=glm::vec3(0.0);
                 this->speed=glm::vec3(0.0);
             }
-            std::cout<<this->centreEspace[0]<<" "<<this->centreEspace[1]<<" "<<this->centreEspace[2]<<" "<<std::endl;
-            std::cout<<this->axe[0]<<" "<<this->axe[1]<<" "<<this->axe[2]<<" "<<std::endl;
             float height = 0.0f;
             if(this->parent && this->parent->hasPlan){
                 glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
@@ -391,7 +386,6 @@ class GameObject{
                 this->speed=glm::vec3(0.0);
                 this->changementDuNiveau=false;
             }
-            std::cout<<this->speed[0]<<" "<<this->speed[1]<<" "<<this->speed[2]<<" "<<std::endl;
         }
         
 

@@ -68,6 +68,11 @@ class Scene{
             }
         }
         if(niveau==3){
+            for(int i=0;i<obj->collisions.size();i++){
+                if(obj->collisions[i]->nom=="star"){
+                    camera.lookAt(obj->collisions[i]);
+                }
+            }
             if(obj->nbCollision>0){
                 if(obj->collisions[obj->nbCollision]->nom=="star"){
                     niveau=1;
@@ -118,8 +123,8 @@ class Scene{
         this->skyboxmur1.texCoords={
             glm::vec2(0.0f, 1.0f),
             glm::vec2(1.0f, 1.0f),
-            glm::vec2(1.0f, 0.0f),
-            glm::vec2(0.0f, 0.0f)
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(1.0f, 0.0f)
         };
         this->skyboxmur1.indices={1,0,2,2,3,1};
         this->skyboxmur1.triangles={{1,0,2},{2,3,1}};
@@ -134,8 +139,8 @@ class Scene{
         this->skyboxmur2.texCoords={
             glm::vec2(0.0f, 1.0f),
             glm::vec2(1.0f, 1.0f),
-            glm::vec2(1.0f, 0.0f),
-            glm::vec2(0.0f, 0.0f)
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(1.0f, 0.0f)
         };
         this->skyboxmur2.indices={1,0,2,2,3,1};
         this->skyboxmur2.triangles={{1,0,2},{2,3,1}};

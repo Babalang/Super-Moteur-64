@@ -549,8 +549,34 @@ void changerNiveau(){
     }
 }
 
+void sendTexture(GLuint text){
+    GLuint Text2DUniformID = glGetUniformLocation(programID, "hudTexture");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,text);
+    glUniform1i(Text2DUniformID,0);
+}
+GLuint loadTextureHUD(std::string filename){
+    GLuint texture;
+    int width, height, numComponents;
+    unsigned char * data = stbi_load (filename.c_str(),&width,&height,&numComponents,0);
+    if(data == NULL){
+        std::cout<<"Erreur de chargement de la texture : "<<filename<<std::endl;
+        return -1;
+    }
+    glGenTextures (1, &texture);
+    glBindTexture (GL_TEXTURE_2D, texture);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexImage2D (GL_TEXTURE_2D,0,(numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA),width,height,0,(numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA),GL_UNSIGNED_BYTE,data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+    glBindTexture (GL_TEXTURE_2D, 0);    
+    return texture;                                                                      
+}
 std::vector<glm::vec2> verticesCarte{glm::vec2{-0.5f,0.5f},glm::vec2{-0.5f,-0.5f},glm::vec2{0.5f,-0.5f},glm::vec2{0.5f,-0.5f},glm::vec2{0.5f,0.5f},glm::vec2{-0.5f,0.5f}};
-std::vector<glm::vec2> uvCarte{glm::vec2{0.0f,1.0f},glm::vec2{0.0f,0.0f},glm::vec2{1.0f,0.0f},glm::vec2{0.0f,0.1f},glm::vec2{1.0f,0.0f},glm::vec2{1.0f,1.0f}};
+std::vector<glm::vec2> uvCarte{glm::vec2{0.0f,0.0f},glm::vec2{0.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,0.0f},glm::vec2{0.0f,0.0f}};
 std::vector<unsigned short> indicesCarte{0,1,2,3,4,5};
 GLuint hudVBuffer, hudIBuffer, hudUVBuffer, textureCarte;
 void afficherCarte(){
@@ -570,20 +596,153 @@ void afficherCarte(){
     glBindBuffer(GL_ARRAY_BUFFER, hudUVBuffer);
     glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hudIBuffer);
-    glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_TRUE);
-    glUniform4f(glGetUniformLocation(programID, "hudColor"), 0.0f, 0.0f, 0.0f, 1.0f);
     glDisable(GL_DEPTH_TEST);
-    // sendTexture(textureCarte);
+    sendTexture(textureCarte);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
     glEnable(GL_DEPTH_TEST);
 }
-void sendTexture(GLuint text){
-    GLuint Text2DUniformID = glGetUniformLocation(programID, "albedoMap");
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,text);
-    glUniform1i(Text2DUniformID,0);
+std::vector<glm::vec2> verticesPV{glm::vec2{-0.9f,0.9f},glm::vec2{-0.9f,0.7f},glm::vec2{-0.6f,0.7f},glm::vec2{-0.6f,0.7f},glm::vec2{-0.6f,0.9f},glm::vec2{-0.9f,0.9f}};
+std::vector<glm::vec2> uvPV{glm::vec2{0.0f,0.0f},glm::vec2{0.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,0.0f},glm::vec2{0.0f,0.0f}};
+std::vector<unsigned short> indicesPV{0,1,2,3,4,5};
+GLuint PVVBuffer, PVIBuffer, PVUVBuffer, texturePV;
+void afficherPV(){
+    glGenBuffers(1, &PVVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, PVVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, verticesPV.size()*sizeof(glm::vec2), &verticesPV[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &PVIBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, PVIBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesPV), &indicesPV[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &PVUVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, PVUVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, uvPV.size()*sizeof(glm::vec2), &uvPV[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, PVVBuffer);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(4);
+    glBindBuffer(GL_ARRAY_BUFFER, PVUVBuffer);
+    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, PVIBuffer);
+    glDisable(GL_DEPTH_TEST);
+    sendTexture(texturePV);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+    glEnable(GL_DEPTH_TEST);
+}
+std::vector<glm::vec2> verticesStar{glm::vec2{0.6f,0.9f},glm::vec2{0.6f,0.7f},glm::vec2{0.9f,0.7f},glm::vec2{0.9f,0.7f},glm::vec2{0.9f,0.9f},glm::vec2{0.6f,0.9f}};
+std::vector<glm::vec2> uvStar{glm::vec2{0.0f,0.0f},glm::vec2{0.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,0.0f},glm::vec2{0.0f,0.0f}};
+std::vector<unsigned short> indicesStar{0,1,2,3,4,5};
+GLuint StarVBuffer, StarIBuffer, StarUVBuffer, textureStar;
+void afficherStar(){
+    glGenBuffers(1, &StarVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, StarVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, verticesStar.size()*sizeof(glm::vec2), &verticesStar[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &StarIBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, StarIBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesStar), &indicesStar[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &StarUVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, StarUVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, uvStar.size()*sizeof(glm::vec2), &uvStar[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, StarVBuffer);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(4);
+    glBindBuffer(GL_ARRAY_BUFFER, StarUVBuffer);
+    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, StarIBuffer);
+    glDisable(GL_DEPTH_TEST);
+    sendTexture(texturePV);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+    glEnable(GL_DEPTH_TEST);
 }
 
+GLuint Text2DTextureID;
+GLuint Text2DVertexBufferID;
+GLuint Text2DUVBufferID;
+GLuint Text2DShaderID;
+GLuint Text2DUniformID;
+void initText2Da(const char * texturePath){
+	GLuint texture;
+    int width, height, numComponents;
+    unsigned char * data = stbi_load (texturePath,&width,&height,&numComponents,0);
+    if(data == NULL){
+        std::cout<<"Erreur de chargement de la texture : "<<texturePath<<std::endl;
+        return ;
+    }
+    glGenTextures (1, &Text2DTextureID);
+    glBindTexture (GL_TEXTURE_2D, Text2DTextureID);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexImage2D (GL_TEXTURE_2D,0,(numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA),width,height,0,(numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA),GL_UNSIGNED_BYTE,data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+    glBindTexture (GL_TEXTURE_2D, 0);    
+	glGenBuffers(1, &Text2DVertexBufferID);
+	glGenBuffers(1, &Text2DUVBufferID);
+	Text2DUniformID = glGetUniformLocation( programID, "text" );
+}
+
+void printText2Da(const char * text, int x, int y, int size){
+	unsigned int length = strlen(text);
+	std::vector<glm::vec2> vertices;
+	std::vector<glm::vec2> UVs;
+	for ( unsigned int i=0 ; i<length ; i++ ){
+		glm::vec2 vertex_up_left    = glm::vec2( x+i*size     , y+size );
+		glm::vec2 vertex_up_right   = glm::vec2( x+i*size+size, y+size );
+		glm::vec2 vertex_down_right = glm::vec2( x+i*size+size, y      );
+		glm::vec2 vertex_down_left  = glm::vec2( x+i*size     , y      );
+		vertices.push_back(vertex_up_left   );
+		vertices.push_back(vertex_down_left );
+		vertices.push_back(vertex_up_right  );
+		vertices.push_back(vertex_down_right);
+		vertices.push_back(vertex_up_right);
+		vertices.push_back(vertex_down_left);
+		char character = text[i];
+		float uv_x = (character%16)/16.0f;
+		float uv_y = (character/16)/16.0f;
+		glm::vec2 uv_up_left    = glm::vec2( uv_x           , uv_y );
+		glm::vec2 uv_up_right   = glm::vec2( uv_x+1.0f/16.0f, uv_y );
+		glm::vec2 uv_down_right = glm::vec2( uv_x+1.0f/16.0f, (uv_y + 1.0f/16.0f) );
+		glm::vec2 uv_down_left  = glm::vec2( uv_x           , (uv_y + 1.0f/16.0f) );
+		UVs.push_back(uv_up_left   );
+		UVs.push_back(uv_down_left );
+		UVs.push_back(uv_up_right  );
+		UVs.push_back(uv_down_right);
+		UVs.push_back(uv_up_right);
+		UVs.push_back(uv_down_left);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, Text2DVertexBufferID);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec2), &vertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, Text2DUVBufferID);
+	glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs[0], GL_STATIC_DRAW);
+	glUseProgram(programID);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, Text2DTextureID);
+	glUniform1i(Text2DUniformID, 0);
+	glEnableVertexAttribArray(5);
+	glBindBuffer(GL_ARRAY_BUFFER, Text2DVertexBufferID);
+	glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, 0, (void*)0 );
+	glEnableVertexAttribArray(6);
+	glBindBuffer(GL_ARRAY_BUFFER, Text2DUVBufferID);
+	glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (void*)0 );
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
+	glDisable(GL_BLEND);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, StarIBuffer);
+    // glDisable(GL_DEPTH_TEST);
+    // glDrawElements(GL_TRIANGLES, vertices.size(), GL_UNSIGNED_SHORT, (void*)0);
+    // glEnable(GL_DEPTH_TEST);
+	glDisableVertexAttribArray(5);
+	glDisableVertexAttribArray(6);
+}
+
+void cleanupText2Da(){
+	glDeleteBuffers(1, &Text2DVertexBufferID);
+	glDeleteBuffers(1, &Text2DUVBufferID);
+	glDeleteTextures(1, &Text2DTextureID);
+	// glDeleteProgram(Text2DShaderID);
+}
 
 
 int main( void )
@@ -661,6 +820,11 @@ int main( void )
     double lastTime = glfwGetTime();
     int nbFrames = 0;
 
+    textureCarte=loadTextureHUD("../textures/2k_moon.jpg");
+    texturePV=loadTextureHUD("../textures/2k_moon.jpg");
+    textureStar=loadTextureHUD("../textures/2k_moon.jpg");
+    initText2Da("../textures/white.png");
+
     do{
         changerNiveau();
         lastTime = affiche(window,lastTime);
@@ -712,12 +876,20 @@ int main( void )
             glUniform3f(LightColorUniformID, i->lightColor[0], i->lightColor[1], i->lightColor[2]);
 
         }
-
+        
+        glUniform1i(glGetUniformLocation(programID, "isText"), GL_FALSE);
         glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_FALSE);
         scene.draw(deltaTime);
+        glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_TRUE);
+        // glUniform4f(glGetUniformLocation(programID, "hudColor"), 0.0f, 0.0f, 0.0f, 1.0f);
+        afficherPV();
+        afficherStar();
         if(carte){
             afficherCarte();
         }
+        glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_FALSE);
+        glUniform1i(glGetUniformLocation(programID, "isText"), GL_TRUE);
+        printText2Da("caca",100,100,30);
 
 
         // Swap buffers
