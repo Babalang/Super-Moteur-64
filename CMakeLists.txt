@@ -20,6 +20,14 @@ endif()
 # Compile external dependencies 
 add_subdirectory (external)
 
+# Activer la compilation statique d'OpenAL Soft
+set(ALSOFT_STATIC_LIBS ON CACHE BOOL "Build static OpenAL Soft" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Disable shared libs" FORCE)
+
+# Ajoute OpenAL Soft
+add_subdirectory(external/openal-soft-master)
+
+
 # On Visual 2005 and above, this module can set the debug working directory
 cmake_policy(SET CMP0026 OLD)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/rpavlik-cmake-modules-fe2273")
@@ -36,13 +44,17 @@ include_directories(
 	external/glfw-3.1.2/include/
 	external/glm-0.9.7.1/
 	external/glew-1.13.0/include/
+    external/openal-soft-master/include
+    external/openal-soft-master/build/include
 	.
+
 )
 
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW_1130
+	OpenAL
 )
 
 add_definitions(

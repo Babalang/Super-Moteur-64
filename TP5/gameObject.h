@@ -1,6 +1,8 @@
 
 #include <TP5/Plane.h>
 #include <TP5/Transform.h>
+#include <TP5/audio.h>
+
 
 
 
@@ -1188,6 +1190,7 @@ class GameObject{
         void bougeCarapace(float deltaTime){
             glm::vec3 direction;
             if(this->nbCollision!=-1){
+                Audio::playAudioOnce("../audios/UI/move shell.wav",glm::vec3(0.0f));
                 direction=-this->directionCarapace;
                 Ray ray;ray.m_origin=this->centreEspace;ray.m_direction=glm::vec3(0.0,-1.0,0.0);
                 for(int i=0;i<this->collisions[0]->objetsOBJ.size();i++){
@@ -1217,6 +1220,7 @@ class GameObject{
                 this->directionCarapace=direction;
                 nbCollision=a;
                 this->collisions[nbCollision]->pv-=1;
+                Audio::playAudioOnce("../audios/bowser/mort.wav",glm::vec3(0.0f));
             }
         }
 };

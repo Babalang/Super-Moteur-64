@@ -6,6 +6,8 @@
 #include <vector>
 #include <iostream>
 #include <unistd.h>
+#include <random>
+
 // Include GLEW
 
 // Include GLFW
@@ -32,6 +34,7 @@ using namespace glm;
 #define STB_IMAGE_IMPLEMENTATION
 // #include "stb_image.h"
 #include <TP5/stb_image.h>
+#include <TP5/audio.h>
 // #include "../cegui-0-8-7/cegui/include/CEGUI/CEGUI.h"
 #endif
 
@@ -63,6 +66,8 @@ bool activeToogle=false;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 int nbFrames = 0;
+bool StartOftheGame = true;
+
 
 // Scène 
 Scene scene;
@@ -72,6 +77,11 @@ bool carte=false;
 GLuint programID;
 bool changementDuNiveau=true;
 float vitesse=1.0;
+
+// Création d'un générateur et d'une distribution
+std::random_device rd;
+std::mt19937 gen(rd()); // moteur Mersenne Twister
+std::uniform_int_distribution<int> dist(0, 3);
 
 // Fonction pour afficher le compteur de FPS
 double affiche(GLFWwindow *window,double lastTime){
@@ -133,6 +143,7 @@ void processInput(GLFWwindow *window)
                 toggleInputI = true;
             }else{
                 glm::vec3 tmp = glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t)*vitesse;
+                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 tmp.y = 0.0f ;
                 scene.camera.parent->frontAxe = tmp ;
                 changementDuNiveau=false;
@@ -147,6 +158,7 @@ void processInput(GLFWwindow *window)
                 toggleInputK = true;
             }else{
                 glm::vec3 tmp = -glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t)*vitesse;
+                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 tmp.y = 0.0f ;
                 scene.camera.parent->frontAxe = tmp ;
                 changementDuNiveau=false;
@@ -161,6 +173,7 @@ void processInput(GLFWwindow *window)
                 toggleInputL = true;
             }else{
                 scene.camera.parent->rightAxe = glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe))*vitesse;
+                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 changementDuNiveau=false;
             }
         }
@@ -173,6 +186,7 @@ void processInput(GLFWwindow *window)
                 toggleInputJ = true;
             }else{
                 scene.camera.parent->rightAxe = -glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe))*vitesse;
+                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 changementDuNiveau=false;
             }
         }
@@ -185,11 +199,21 @@ void processInput(GLFWwindow *window)
             if(scene.camera.parent->isGround){
                 if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
                 scene.camera.parent->isGround=false;
+                int r = dist(gen);
+                Audio::stopAudio("../audios/UI/snd_se_common_Step_Grass.wav");
+                if(r==0){
+                    Audio::playAudio("../audios/Sauts/jump.wav",glm::vec3(0.0f));
+                } else if (r==1) {
+                    Audio::playAudio("../audios/Sauts/jump_2.wav",glm::vec3(0.0f));
+                } else {
+                    Audio::playAudio("../audios/Sauts/Yahoo.wav",glm::vec3(0.0f));
+                }
             }
         }
         if(glfwGetKey(window, GLFW_KEY_TAB) && toggleInputTab == false){
             toggleInputTab = true;
             carte=!carte;
+            Audio::playAudio("../audios/menu.wav", glm::vec3(0.0f));
         }
         if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
             toggleInputSHIFT = true;
@@ -300,6 +324,7 @@ void sceneNiveau1(Scene *scene){
     GOmariometal.mettreAuSol(&GOchateau);
     GOmariometal.pv=3;
     scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
+    Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 - Inside Peachs Castle Music.wav");
 }
 
 GameObject GOBobombBattlefieldDS,GOBattanKing,light2,GOGoomba1,GOMetalMario2;
@@ -360,6 +385,7 @@ void sceneNiveau2(Scene *scene){
     GOBobombBattlefieldDS.addChild(&GOBattanKing);
     scene->lights.push_back(&light2);
     scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
+    Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 - Main Theme Music - Bob-Omb Battlefield.wav");
 }
 
 GameObject GOkoopa1,GObowserStadium,GOMetalMario3,GOkoopa2,GOBowser,light3,GOstar;
@@ -474,6 +500,7 @@ void sceneNiveau3(Scene *scene){
     GObowserStadium.stars.push_back(&GOstar);
     std::cout<<"mario position : "<<GOMetalMario3.centreEspace[0]<<" "<<GOMetalMario3.centreEspace[1]<<" "<<GOMetalMario3.centreEspace[2]<<std::endl;
     scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
+    Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 Soundtrack - Bowser's Theme.wav");
 }
 
 void empecherMouvement(){
@@ -860,7 +887,7 @@ int main( void )
     scene.creerSkybox();
     std::cout<<"Niveau crée"<<std::endl;
 
-
+    Audio::init();
 
 
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
@@ -947,7 +974,7 @@ int main( void )
         // glUniform1i(glGetUniformLocation(programID, "isText"), GL_TRUE);
         // printText2Da("caca",100,100,30);
 
-
+        Audio::update();
         // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -958,7 +985,7 @@ int main( void )
 
     glDeleteProgram(programID);
     glDeleteVertexArrays(1, &VertexArrayID);
-
+    Audio::cleanup();
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
 

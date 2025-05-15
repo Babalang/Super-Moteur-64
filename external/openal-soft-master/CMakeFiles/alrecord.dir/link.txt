@@ -1,0 +1,1 @@
+/usr/bin/cc -O2 -g -DNDEBUG CMakeFiles/alrecord.dir/examples/alrecord.c.o -o alrecord  -Wl,-rpath,/root/universite/HAI819I/Projet/Super-Moteur-64/external/openal-soft-master: -pthread libalsoft.excommon.a libopenal.so.1.24.3 -lrt 

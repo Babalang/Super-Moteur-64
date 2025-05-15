@@ -1,0 +1,1 @@
+/usr/bin/c++ -O2 -g -DNDEBUG CMakeFiles/aldebug.dir/examples/aldebug.cpp.o "fmt-11.1.4/CMakeFiles/alsoft.fmt.dir/src/format.cc.o" "fmt-11.1.4/CMakeFiles/alsoft.fmt.dir/src/os.cc.o" -o aldebug  -Wl,-rpath,/root/universite/HAI819I/Projet/Super-Moteur-64/external/openal-soft-master: -pthread libalsoft.excommon.a libopenal.so.1.24.3 -lrt 

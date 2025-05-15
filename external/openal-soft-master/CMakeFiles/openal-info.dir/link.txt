@@ -1,0 +1,1 @@
+/usr/bin/cc -O2 -g -DNDEBUG "CMakeFiles/openal-info.dir/utils/openal-info.c.o" -o openal-info  -Wl,-rpath,/root/universite/HAI819I/Projet/Super-Moteur-64/external/openal-soft-master: -pthread libopenal.so.1.24.3 

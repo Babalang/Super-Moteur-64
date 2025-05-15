@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <TP5/camera.h>
+#include <TP5/audio.h>
 
 class Scene{
     public : 
@@ -48,6 +49,13 @@ class Scene{
     void testChangementNiveau(GameObject* map, GameObject* obj){
         if(obj->pv=0 || obj->basEspace[1]<=-30.0f || obj->collisionChateau=="eau"){
             this->reset=true;
+            if(obj->collisionChateau=="eau"){
+                Audio::playAudioOnce("../audios/UI/Drowning.wav",glm::vec3(0.0f));
+            } else if(obj->basEspace[1]<=30.0f){
+                Audio::playAudioOnce("../audios/UI/Wahhh.wav",glm::vec3(0.0f));
+            } else {
+                Audio::playAudioOnce("../audios/UI/Ooph.wav",glm::vec3(0.0f));
+            }
         }
         if(niveau==1){
             float minX=std::numeric_limits<float>::max(),minY=std::numeric_limits<float>::max(),minZ=std::numeric_limits<float>::max(),maxX=0.0,maxY=0.0,maxZ=0.0;
@@ -64,17 +72,20 @@ class Scene{
                 }
             }
             if(obj->centreEspace[0]>=minX && obj->centreEspace[0]<=maxX && obj->centreEspace[2]>=minZ && obj->centreEspace[2]<=maxZ){
+                Audio::playAudioOnce("../audios/UI/Here we go.wav",glm::vec3(0.0f));
                 niveau=3;
             }
         }
         if(niveau==3){
             for(int i=0;i<obj->collisions.size();i++){
                 if(obj->collisions[i]->nom=="star"){
+                    Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
                     camera.lookAt(obj->collisions[i]);
                 }
             }
             if(obj->nbCollision>0){
                 if(obj->collisions[obj->nbCollision]->nom=="star"){
+                    Audio::playAudioOnce("../audios/UI/Completion.wav",glm::vec3(0.0f));
                     niveau=1;
                 }
             }
@@ -209,10 +220,12 @@ class Scene{
             obj->globalTransform.t[1]+=0.1;
             obj->setGlobalTransform(obj->globalTransform);
             if(obj->collisions[obj->nbCollision]->nom=="shell" && obj->collisions[obj->nbCollision]->pv==0){
+                Audio::playAudioOnce("../audios/UI/move shell.wav",glm::vec3(0.0f));
                 obj->collisions[obj->nbCollision]->pv=1;
                 obj->collisions[obj->nbCollision]->nbCollision=-1;
             }else{
                 obj->collisions[obj->nbCollision]->pv-=1;
+                Audio::playAudioOnce("../audios/UI/hit koopa.wav",glm::vec3(0.0f));
             }
             this->camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
         }
