@@ -2,7 +2,7 @@
 #include <TP5/Plane.h>
 #include <TP5/Transform.h>
 #include <TP5/audio.h>
-
+#include <time.h>
 
 
 
@@ -60,7 +60,7 @@ class GameObject{
         std::vector<GameObject*> collisions;
         bool map=false;
         bool auSol=true;
-        int pv;
+        int pv=0;
         std::string collisionChateau;
         Transform transformSol;
         int nbCollision=-1;
@@ -70,6 +70,9 @@ class GameObject{
         bool carapaceRespawn=false;
         std::vector<GameObject*> stars;
         bool changementDuNiveau=false;
+        time_t timerCollisionMario=time(nullptr);
+        time_t timerSautMario=time(nullptr);
+        time_t timerIA=time(nullptr);
 
         // light
         int index = 0;
@@ -240,6 +243,7 @@ class GameObject{
                         this->rajouterOBJ();
                         this->setGlobalTransform(this->globalTransform);
                         this->pv=1;
+                        this->timerIA=time(nullptr);
                     }else if(this->nom=="shell"){
                         this->bougeCarapace(deltaTime);
                         if(this->carapaceRespawn){
@@ -267,12 +271,16 @@ class GameObject{
                         obj->collisions[0]->stars[0]->programID=this->programID;
                         obj->collisions[0]->stars[0]->lireOBJ("../meshes/star.obj");
                         obj->collisions[0]->stars[0]->rajouterOBJ();
-                        obj->collisions[0]->stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,120.0,0.0),1.0));
+                        obj->collisions[0]->stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,140.0,0.0),1.0));
                         obj->collisions[0]->stars[0]->nom="star";
+                        obj->collisions[0]->stars[0]->isIA=true;
+                        obj->collisions[0]->stars[0]->auSol=false;
                         obj->collisions[0]->stars[0]->collisions.push_back(obj->collisions[0]);
                         obj->collisions[0]->stars[0]->collisions.push_back(obj);
                         obj->collisions[0]->addChild(obj->collisions[0]->stars[0]);
                         obj->collisions.push_back(obj->collisions[0]->stars[0]);
+                    }else if(this->nom=="star"){
+                        this->descendreEtoile(deltaTime);
                     }
                 }else{
                     if(this->nom!="shell" && this->nom!="peach"){
@@ -1042,10 +1050,12 @@ class GameObject{
                 this->visionIA.m_direction = direction;
                 int colActu=this->getCollision();
                 if(colActu>=0){
-                    this->setGlobalTransform(ancien);
-                    std::cout<<this->collisions[colActu]->nom<<std::endl;
                     if(this->collisions[colActu]->nom=="mario"){
-                        this->collisions[colActu]->pv-=1;
+                        if(difftime(time(NULL),this->collisions[colActu]->timerCollisionMario)>5 || this->collisions[colActu]->pv==3){
+                            std::cout<<"tas perdu une vie"<<std::endl;
+                            this->collisions[colActu]->pv-=1;
+                            this->collisions[colActu]->timerCollisionMario=time(nullptr);
+                        }
                     }
                 }
             } 
@@ -1221,6 +1231,27 @@ class GameObject{
                 nbCollision=a;
                 this->collisions[nbCollision]->pv-=1;
                 Audio::playAudioOnce("../audios/bowser/mort.wav",glm::vec3(0.0f));
+            }
+            if(difftime(time(NULL),this->timerIA)>4){
+                this->carapaceRespawn=true;
+            }
+        }
+
+        void descendreEtoile(float deltaTime){
+            std::cout<<this->basEspace[1]<<std::endl;
+            if(!this->auSol){
+                if(this->basEspace[1]>=this->collisions[1]->centreEspace[1]){
+                    glm::vec3 newPosition = this->globalTransform.t + glm::vec3(0.0,-1.0,0.0) * glm::vec3(1.0) * deltaTime;
+                    Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                    newTransform=newTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0),1.0).rotation(glm::vec3(0.0,1.0,0.0),10));
+                    Transform ancien=this->globalTransform;
+                    this->setGlobalTransform(newTransform);
+                }else{
+                    this->auSol=true;
+                }
+            }else{
+                this->globalTransform=this->globalTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0),1.0).rotation(glm::vec3(0.0,1.0,0.0),10));
+                this->setGlobalTransform(this->globalTransform);
             }
         }
 };

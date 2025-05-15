@@ -430,7 +430,7 @@ void sceneNiveau3(Scene *scene){
     GOkoopa1.programID=programID;
     GOkoopa1.lireOBJ("../meshes/Koopa.obj");
     GOkoopa1.rajouterOBJ();
-    Transform tKoopa1=Transform(glm::mat3x3(1.0),glm::vec3(-30.0,120.0,30.0),1.2);
+    Transform tKoopa1=Transform(glm::mat3x3(1.0),glm::vec3(-30.0,120.0,30.0),0.8);
     tKoopa1=tKoopa1.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f));
     GOkoopa1.setGlobalTransform(tKoopa1);
     GOkoopa1.nom="koopa1";
@@ -438,7 +438,7 @@ void sceneNiveau3(Scene *scene){
 
     GOkoopa2.programID=programID;
     GOkoopa2.lireOBJ("../meshes/Koopa.obj");
-    Transform tKoopa2=Transform(glm::mat3x3(1.0),glm::vec3(30.0,120.0,30.0),1.2);
+    Transform tKoopa2=Transform(glm::mat3x3(1.0),glm::vec3(30.0,120.0,30.0),0.8);
     tKoopa2=tKoopa2.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f));
     GOkoopa2.rajouterOBJ();
     GOkoopa2.setGlobalTransform(tKoopa2);
@@ -541,6 +541,14 @@ void clearNiveaux(){
 }
 
 void changerNiveau(){
+    if(niveau==3){
+        for(int i=0;i<GOMetalMario3.collisions.size();i++){
+            if(GOMetalMario3.collisions[i]->nom=="star"){
+                Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
+                scene.camera.lookAt(GOMetalMario3.collisions[i]);
+            }
+        }
+    }
     if(scene.niveau!=niveau){
         activeToogle=false;
         clearNiveaux();
@@ -597,9 +605,29 @@ void changerNiveau(){
             sceneNiveau2(&scene);
         } else if(niveau==3){
             GOMetalMario3.setGlobalTransform(GOMetalMario3.transformSol);
+            GOkoopa1.clearGameObject();
+            GOkoopa1.nom="koopa";
+            GOkoopa1.isIA=true;
+            GOkoopa1.lireOBJ("../meshes/Koopa.obj");
+            GOkoopa1.rajouterOBJ();
             GOkoopa1.setGlobalTransform(GOkoopa1.transformSol);
+            GOkoopa1.creerIA();
+            GOkoopa1.carapaceRespawn=false;
+            GOkoopa1.nbCollision=-1;
+            GOkoopa2.clearGameObject();
+            GOkoopa2.nom="koopa";
+            GOkoopa2.isIA=true;
+            GOkoopa2.lireOBJ("../meshes/Koopa.obj");
+            GOkoopa2.rajouterOBJ();
             GOkoopa2.setGlobalTransform(GOkoopa2.transformSol);
+            GOkoopa2.creerIA();
+            GOkoopa2.carapaceRespawn=false;
+            GOkoopa2.nbCollision=-1;
             GOBowser.setGlobalTransform(GOBowser.transformSol);
+            GOMetalMario3.pv=3;
+            GOkoopa1.pv=1;
+            GOkoopa2.pv=1;
+            GOBowser.pv=3;
         }
     }
 }

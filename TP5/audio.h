@@ -25,13 +25,18 @@ namespace Audio {
     static std::vector<SoundInstance> activeSounds;
 
     inline void init() {
+        if (initialized) return;
+
+        device = alcOpenDevice(nullptr);
+        if (!device) { 
+            std::cerr << "Failed to open OpenAL device\n"; 
+            return; 
+        }
+
         if (!alcIsExtensionPresent(device, "ALC_EXT_EFX")) {
             std::cerr << "EFX extension not supported!\n";
         }
 
-        if (initialized) return;
-        device = alcOpenDevice(nullptr);
-        if (!device) { std::cerr << "Failed to open OpenAL device\n"; return; }
         context = alcCreateContext(device, nullptr);
         if (!context || !alcMakeContextCurrent(context)) {
             std::cerr << "Failed to set OpenAL context\n";

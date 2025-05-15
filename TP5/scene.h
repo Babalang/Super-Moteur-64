@@ -77,12 +77,12 @@ class Scene{
             }
         }
         if(niveau==3){
-            for(int i=0;i<obj->collisions.size();i++){
-                if(obj->collisions[i]->nom=="star"){
-                    Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
-                    camera.lookAt(obj->collisions[i]);
-                }
-            }
+            // for(int i=0;i<obj->collisions.size();i++){
+            //     if(obj->collisions[i]->nom=="star"){
+            //         Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
+            //         camera.lookAt(obj->collisions[i]);
+            //     }
+            // }
             if(obj->nbCollision>0){
                 if(obj->collisions[obj->nbCollision]->nom=="star"){
                     Audio::playAudioOnce("../audios/UI/Completion.wav",glm::vec3(0.0f));
@@ -216,7 +216,7 @@ class Scene{
     }
 
     void sautIA(GameObject* obj){
-        if(obj->nbCollision>0){
+        if(obj->nbCollision>0 && difftime(time(NULL),obj->timerSautMario)>0){
             obj->globalTransform.t[1]+=0.1;
             obj->setGlobalTransform(obj->globalTransform);
             if(obj->collisions[obj->nbCollision]->nom=="shell" && obj->collisions[obj->nbCollision]->pv==0){
@@ -224,10 +224,13 @@ class Scene{
                 obj->collisions[obj->nbCollision]->pv=1;
                 obj->collisions[obj->nbCollision]->nbCollision=-1;
             }else{
-                obj->collisions[obj->nbCollision]->pv-=1;
-                Audio::playAudioOnce("../audios/UI/hit koopa.wav",glm::vec3(0.0f));
+                if(obj->collisions[obj->nbCollision]->nom=="koopa" || obj->collisions[obj->nbCollision]->nom=="shell"){
+                    obj->collisions[obj->nbCollision]->pv-=1;
+                    Audio::playAudioOnce("../audios/UI/hit koopa.wav",glm::vec3(0.0f));
+                }
             }
             this->camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
+            obj->timerSautMario=time(nullptr);
         }
     }
 };
