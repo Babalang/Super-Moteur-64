@@ -100,10 +100,12 @@ void processInput(GLFWwindow *window)
 
     // Récupérer les vecteurs de direction de la caméra
     glm::vec3 cameraPosition = scene.camera.globalTransform.t; // Position actuelle de la caméra
-    glm::mat3 cameraRotation = scene.camera.globalTransform.m; // Rotation actuelle de la caméra
+    glm::mat3 cameraRotation = scene.camera.transform.m; // Rotation actuelle de la caméra
+    // Calculer les vecteurs de direction de la caméra
     glm::vec3 cameraTarget = -cameraRotation[2];               // Axe Z local (direction vers l'avant)
     glm::vec3 cameraRight = cameraRotation[0];                 // Axe X local (direction droite)
     glm::vec3 cameraUp = cameraRotation[1];                    // Axe Y local (direction vers le haut)
+    glm::vec3 cameraFront = glm::normalize(cameraPosition - scene.camera.targetPosition);      // Direction vers l
 
     if(activeToogle){if(!changementDuNiveau){
     if (scene.camera.mode == CAMERA_MODE::ORBITAL) {
@@ -127,45 +129,53 @@ void processInput(GLFWwindow *window)
     }
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
             if(!toggleInputI && !changementDuNiveau){
-                scene.camera.parent->axe += glm::vec3(0.0f,0.0,1.0f);
+                std::cout<<"CameraFront : "<<cameraFront[0]<<" "<<cameraFront[1]<<" "<<cameraFront[2]<<std::endl;
                 toggleInputI = true;
             }else{
+                glm::vec3 tmp = glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t);
+                tmp.y = 0.0f ;
+               scene.camera.parent->frontAxe = tmp ;
                 changementDuNiveau=false;
             }
         } 
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE && toggleInputI == true){
             toggleInputI = false;
-            scene.camera.parent->axe -= glm::vec3(0.0f,0.0,1.0f);
+            scene.camera.parent->frontAxe = glm::vec3(0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
             if(!toggleInputK){
-                scene.camera.parent->axe -= glm::vec3(0.0f,0.0,1.0f);
                 toggleInputK = true;
+            } else{
+                glm::vec3 tmp = -glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t);
+                tmp.y = 0.0f ;
+               scene.camera.parent->frontAxe = tmp ;
             }
         }
         if(glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE && toggleInputK == true){
             toggleInputK = false;
-            scene.camera.parent->axe += glm::vec3(0.0f,0.0,1.0f);
+            scene.camera.parent->frontAxe = glm::vec3(0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
             if(!toggleInputL){
-                scene.camera.parent->axe += glm::vec3(-1.0f,0.0,0.0f);
                 toggleInputL = true;
+            } else{
+                scene.camera.parent->rightAxe = glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe));
             }
         }
         if(glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE && toggleInputL == true){
             toggleInputL = false;
-            scene.camera.parent->axe -= glm::vec3(-1.0f,0.0,0.0f);
+            scene.camera.parent->rightAxe = glm::vec3(0.0f,0.0,0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
             if(!toggleInputJ){
-                scene.camera.parent->axe += glm::vec3(1.0f,0.0,0.0f);
                 toggleInputJ = true;
+            } else {
+                scene.camera.parent->rightAxe = -glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe));
             }
         }
         if(glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE && toggleInputJ == true){
             toggleInputJ = false;
-            scene.camera.parent->axe -= glm::vec3(1.0f,0.0,0.0f);
+            scene.camera.parent->rightAxe = glm::vec3(0.0f,0.0,0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_SPACE) && toggleInputSpace == false){
             toggleInputSpace = true;
@@ -274,6 +284,7 @@ void sceneNiveau1(Scene *scene){
     GOPeach.mettreAuSol(&GOchateau);
     GOmariometal.mettreAuSol(&GOchateau);
     GOmariometal.pv=3;
+    scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
 }
 
 GameObject GOBobombBattlefieldDS,GOBattanKing,light2,GOGoomba1,GOMetalMario2;
@@ -333,6 +344,7 @@ void sceneNiveau2(Scene *scene){
     GOBobombBattlefieldDS.addChild(&GOGoomba1);
     GOBobombBattlefieldDS.addChild(&GOBattanKing);
     scene->lights.push_back(&light2);
+    scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
 }
 
 GameObject GOkoopa1,GObowserStadium,GOMetalMario3,GOkoopa2,GOBowser,light3,GOstar;
@@ -446,6 +458,8 @@ void sceneNiveau3(Scene *scene){
     GOkoopa2.pv=1;
     GObowserStadium.stars.push_back(&GOstar);
     std::cout<<"mario position : "<<GOMetalMario3.centreEspace[0]<<" "<<GOMetalMario3.centreEspace[1]<<" "<<GOMetalMario3.centreEspace[2]<<std::endl;
+    scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
+
 }
 
 void empecherMouvement(){
@@ -824,6 +838,7 @@ int main( void )
     texturePV=loadTextureHUD("../textures/2k_moon.jpg");
     textureStar=loadTextureHUD("../textures/2k_moon.jpg");
     initText2Da("../textures/white.png");
+
 
     do{
         changerNiveau();

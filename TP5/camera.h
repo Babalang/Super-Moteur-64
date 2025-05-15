@@ -25,11 +25,13 @@ class Camera : public GameObject {
         float farPlane;
 
         glm::vec3 targetPosition;
-        int mode = CAMERA_MODE::CLASSIC;
+        int mode = CAMERA_MODE::ORBITAL;
+
+        float sphericRadius = 0.5f;
 
         float orbitalRadius = 10.0f;
         float theta = 0.0f;     // angle horizontal en radians
-        float phi = glm::radians(45.0f); // angle vertical (évite de passer par les pôles)
+        float phi = glm::radians(75.0f); // angle vertical (évite de passer par les pôles)
 
 
         Camera(float fov = 45.0f, float aspectRatio = 4.0f / 3.0f, float nearPlane = 0.1f, float farPlane = 500.0f)
@@ -71,7 +73,7 @@ class Camera : public GameObject {
                 targetPosition = this->globalTransform.t - parentFront - glm::vec3(0.0,1.2f,0.0f);
             }
             else if (this->mode == CAMERA_MODE::ORBITAL) {
-                this->targetPosition = this->parent->globalTransform.t + glm::vec3(0.0f, 3.0f, 0.0f);
+                this->targetPosition = lerp(this->targetPosition, arrondirAuDixieme(this->parent->globalTransform.t) + glm::vec3(0.0f, 3.0f, 0.0f), 0.2f);
                 float adjustedPhi = phi + glm::radians(0.0f);
                 float adjustedTheta = theta + glm::radians(-90.0f);
                 adjustedPhi = glm::clamp(adjustedPhi, glm::radians(1.0f), glm::radians(90.0f));
@@ -79,8 +81,55 @@ class Camera : public GameObject {
                 float y = targetPosition.y + orbitalRadius * cos(adjustedPhi);
                 float z = targetPosition.z + orbitalRadius * sin(adjustedPhi) * sin(adjustedTheta);
                 glm::vec3 cameraPosition = glm::vec3(x, y, z);
+                float lerpFactor = 0.2f;
+                float distance = glm::length(cameraPosition - this->globalTransform.t);
+                if (distance > 0.1f) {
+                    cameraPosition = lerp(this->globalTransform.t, cameraPosition, lerpFactor);
+                }
                 this->setGlobalTransform(Transform(this->transform.m, cameraPosition, 1.0));
+                handleCollision(deltaTime);
             }
+        }
+
+        glm::vec3 lerp(const glm::vec3& start, const glm::vec3& end, float t) {
+            return start + t * (end - start);
+        }
+        glm::vec3 arrondirAuDixieme(glm::vec3 valeur) {
+            return glm::vec3(std::round(valeur[0] * 20.0f),std::round(valeur[1]*20.0f), std::round(valeur[2]*20.0f))/ 20.0f;
+        }
+
+        bool handleCollision(float deltaTime){
+            int index = 0;
+            for(auto& i: this->parent->collisions){
+                if(i->map){
+                    for(int j=0;j<i->objetsOBJ.size();j++){
+                        glm::vec3 ret;
+                        if(i->objetsOBJ[j].mesh.isPointInsideMesh(this->globalTransform.t)){
+                            float axeCollision = glm::dot((i->objetsOBJ[j].globalTransform.t-this->globalTransform.t), glm::cross(this->frontAxe,this->upAxe));
+                            std::cout<<axeCollision<<std::endl;
+                            if(axeCollision>0){
+                                theta += 5.0f*deltaTime;
+                            } else{
+                                theta-=5.0f*deltaTime;
+                            }   
+                        }
+                    }
+                }
+                else {
+                    bool test = i->boiteEnglobante.isPointInsideMesh(this->globalTransform.t);
+                    if(test){
+                        float axeCollision = glm::dot((i->globalTransform.t-this->globalTransform.t), glm::cross(this->frontAxe,this->upAxe));
+                        if(axeCollision>0){
+                            theta += 5.0f*deltaTime;
+                        } else{
+                            theta-=5.0f*deltaTime;
+                        }
+    
+                    }
+                }
+                index++;
+            }
+            return false;
         }
 };
 

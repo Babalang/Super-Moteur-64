@@ -36,6 +36,9 @@ class GameObject{
         glm::vec3 acceleration =Force/poids;
         Transform initialTransform = Transform(glm::mat3(1.0f), glm::vec3(0.0f), 1.0f);
         glm::vec3 axe;
+        glm::vec3 frontAxe;
+        glm::vec3 rightAxe;
+        glm::vec3 upAxe = glm::vec3(0.0f,1.0f,0.0f);
         std::vector<MTL> mtls;
         std::string nom;
         bool M=false;
@@ -250,7 +253,7 @@ class GameObject{
                         obj->collisions.pop_back();
                         obj->collisions.pop_back();
                         obj->collisions[0]->stars[0]->programID=this->programID;
-                        obj->collisions[0]->stars[0]->lireOBJ("../meshes/star.OBJ");
+                        obj->collisions[0]->stars[0]->lireOBJ("../meshes/star.obj");
                         obj->collisions[0]->stars[0]->rajouterOBJ();
                         obj->collisions[0]->stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,120.0,0.0),1.0));
                         obj->collisions[0]->stars[0]->nom="star";
@@ -334,6 +337,8 @@ class GameObject{
         void Move(float deltaTime, float vitesse = 5.0f){
             if(changementDuNiveau){
                 this->axe=glm::vec3(0.0);
+                this->frontAxe=glm::vec3(0.0);
+                this->rightAxe=glm::vec3(0.0);
                 this->speed=glm::vec3(0.0);
             }
             float height = 0.0f;
@@ -341,7 +346,8 @@ class GameObject{
                 glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
                 height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
             }
-            glm::vec3 NormalizedAxe = glm::length(axe) > 0.0f ? glm::normalize(axe) : axe;
+            glm::vec3 NormalizedAxe = glm::length(frontAxe+rightAxe) > 0.0f ? glm::normalize(frontAxe+rightAxe) : frontAxe+rightAxe;
+            axe = NormalizedAxe;
             glm::vec3 movement = NormalizedAxe * (vitesse * this->globalTransform.s * deltaTime);
             Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);
             if (glm::length(axe) > 0.0f) {

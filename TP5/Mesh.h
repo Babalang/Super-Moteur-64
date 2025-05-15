@@ -562,6 +562,14 @@ class Mesh{
                     (glm::dot(normal2, C1) - d2 > 0);
             return !(allOutside1 || allOutside2);
             }
+
+            int trianglePointIntersection(const glm::vec3& A1, const glm::vec3& B1, const glm::vec3& C1, glm::vec3 A2){
+                glm::vec3 normal1 = glm::normalize(glm::cross(B1 - A1, C1 - A1));  
+                float d1 = glm::dot(normal1,A2 - A1);
+                const float epsilon = 1e-5f;
+                if(std::abs(d1)>epsilon) return 1;
+                return -1;
+            }
             glm::vec3 getMin() const {
                 glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
                 for (const auto& vertex : this->vertices_Espace) {
@@ -582,22 +590,53 @@ class Mesh{
                 return max;
             }
 
-        bool collisionCheck(const Mesh& other, float tolerance = 0.0f) {
-            for (int i = 0; i < this->triangles.size(); ++i) {
-                for (int j = 0; j < other.triangles.size(); ++j) {
-                    if (triangleIntersection(this->vertices_Espace[this->triangles[i][0]],
-                                            this->vertices_Espace[this->triangles[i][1]],
-                                            this->vertices_Espace[this->triangles[i][2]],
-                                            other.vertices_Espace[other.triangles[j][0]],
-                                            other.vertices_Espace[other.triangles[j][1]],
-                                            other.vertices_Espace[other.triangles[j][2]])) {
-                        return true;
+            bool isPointInsideMesh(const glm::vec3& point) {
+                glm::vec3 direction = glm::normalize(glm::vec3(1.0f, 0.373f, 0.179f));
+                int intersectionCount = 0;
+
+                for (size_t i = 0; i < this->indices.size(); i += 3) {
+                    glm::vec3 v0 = this->vertices_Espace[this->indices[i]];
+                    glm::vec3 v1 = this->vertices_Espace[this->indices[i + 1]];
+                    glm::vec3 v2 = this->vertices_Espace[this->indices[i + 2]];
+
+                    float t, u, v;
+                    if (rayIntersectsTriangle(point, direction, v0, v1, v2, t, u, v)) {
+                        if (t >= 0.0f)
+                            intersectionCount++;
                     }
                 }
+                return (intersectionCount % 2) == 1;
             }
 
-            return false;
+
+
+        bool rayIntersectsTriangle(const glm::vec3& origin,const glm::vec3& dir,const glm::vec3& v0,const glm::vec3& v1,const glm::vec3& v2,float& t, float& u, float& v) {
+            const float EPSILON = 1e-6f;
+            glm::vec3 edge1 = v1 - v0;
+            glm::vec3 edge2 = v2 - v0;
+            glm::vec3 h = glm::cross(dir, edge2);
+            float a = glm::dot(edge1, h);
+
+            if (fabs(a) < EPSILON)
+                return false; // Rayon parallèle au triangle
+
+            float f = 1.0f / a;
+            glm::vec3 s = origin - v0;
+            u = f * glm::dot(s, h);
+
+            if (u < 0.0f || u > 1.0f)
+                return false;
+
+            glm::vec3 q = glm::cross(s, edge1);
+            v = f * glm::dot(dir, q);
+
+            if (v < 0.0f || u + v > 1.0f)
+                return false;
+
+            t = f * glm::dot(edge2, q);
+            return t > EPSILON;
         }
+
 
 };
 
