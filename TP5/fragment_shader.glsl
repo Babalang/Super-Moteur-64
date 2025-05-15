@@ -21,6 +21,7 @@ uniform sampler2D text;
 uniform bool isHUD;
 uniform vec4 hudColor;
 uniform bool isText;
+uniform bool isFond;
 // Ouput data
 out vec4 color;
 const float PI = 3.14159265359;
@@ -97,7 +98,11 @@ vec3 getNormalFromNormalMap()
 
 void main(){
         if(isHUD){
-                color=texture(hudTexture,TexCoordout);
+                if(isFond){
+                        color=vec4(0.0,0.0,0.0,0.5);
+                }else{
+                        color=texture(hudTexture,TexCoordout);
+                }
         }else if(isText){
                 color=texture(text,TexCoordout);
         }else{

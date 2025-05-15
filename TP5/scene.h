@@ -12,7 +12,7 @@ class Scene{
     GameObject root;
     Camera camera;
     GLuint programID;
-    int niveau=1;
+    int niveau=3;
     bool reset=false;
     Mesh skyboxplafond;
     Mesh skyboxsol;

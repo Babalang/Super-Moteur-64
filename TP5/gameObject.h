@@ -35,8 +35,7 @@ class GameObject{
         glm::vec3 Force = glm::vec3(0.0,poids * -9.83,0.0);
         glm::vec3 acceleration =Force/poids;
         Transform initialTransform = Transform(glm::mat3(1.0f), glm::vec3(0.0f), 1.0f);
-        glm::vec3 axe;
-        glm::vec3 frontAxe;
+        glm::vec3 axe;glm::vec3 frontAxe;
         glm::vec3 rightAxe;
         glm::vec3 upAxe = glm::vec3(0.0f,1.0f,0.0f);
         std::vector<MTL> mtls;
@@ -183,6 +182,17 @@ class GameObject{
                     if (hasLOD) {
                         updateLOD(cameraPosition);
                     }
+                    // bool dansCamera=true;
+                    // for(int i=0;i<this->boiteEnglobante.vertices_Espace.size();i++){
+                    //     for(int j=0;j<frustum.size();j++){
+                    //         if(glm::dot(glm::vec3(frustum[j]),this->boiteEnglobante.vertices_Espace[i])+frustum[j].w<0){
+                    //             dansCamera=false;
+                    //             break;
+                    //         }
+                    //     }
+                    //     if(!dansCamera)break;
+                    // }
+                    // if(dansCamera)
                     this->mesh.draw();
                 } else if (hasPlan) {
                     glUniform1f(scaleUniformID, this->transform.s);
@@ -263,7 +273,7 @@ class GameObject{
                         obj->collisions.push_back(obj->collisions[0]->stars[0]);
                     }
                 }else{
-                    if(this->nom!="shell"){
+                    if(this->nom!="shell" && this->nom!="peach"){
                         for(int i=0;i<this->boiteEnglobante.triangles.size();i++){
                             RayTriangleIntersection intersection = obj->boiteEnglobante.getIntersection(this->visionIA,i);
                             if(intersection.intersectionExists && intersection.t<500.0f && intersection.t>0.0f){
@@ -335,62 +345,65 @@ class GameObject{
         }
 
         void Move(float deltaTime, float vitesse = 5.0f){
-            if(changementDuNiveau){
-                this->axe=glm::vec3(0.0);
-                this->frontAxe=glm::vec3(0.0);
-                this->rightAxe=glm::vec3(0.0);
-                this->speed=glm::vec3(0.0);
-            }
-            float height = 0.0f;
-            if(this->parent && this->parent->hasPlan){
-                glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
-                height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
-            }
-            glm::vec3 NormalizedAxe = glm::length(frontAxe+rightAxe) > 0.0f ? glm::normalize(frontAxe+rightAxe) : frontAxe+rightAxe;
-            axe = NormalizedAxe;
-            glm::vec3 movement = NormalizedAxe * (vitesse * this->globalTransform.s * deltaTime);
-            Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);
-            if (glm::length(axe) > 0.0f) {
-                glm::vec3 projectedAxe = glm::normalize(glm::vec3(axe.x, 0.0f, axe.z));
-                glm::vec3 reference = glm::vec3(0.0f, 0.0f, 1.0f);
-                float dotProduct = glm::dot(projectedAxe, reference);
-                float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f));
-                float angleSignedRadians = glm::atan(projectedAxe.x, projectedAxe.z);
-                float angleDegrees = glm::degrees(angleSignedRadians);
-                Transform rotation = Transform();
-                rotation = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angleDegrees);
-                Transform transformTmp = Transform(rotation.m*initialTransform.m, transform.t, transform.s);
-                setLocalTransform(transformTmp);
-            }
-            Transform ancien=this->globalTransform;
-            this->setGlobalTransform(Mov);
-            int col=this->getCollision();
-            if(col>=0){
-                axe=glm::vec3(axe[0],1.0,axe[2]);
-                glm::vec3 NormalizedAxe = glm::length(axe) > 0.0f ? glm::normalize(axe) : axe;
-                glm::vec3 movement = axe * (vitesse * this->globalTransform.s * deltaTime);
-                Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);   
-                this->setGlobalTransform(Mov);
-                col=this->getCollision();
-                if(col>=0){
-                    this->setGlobalTransform(ancien);
-                    isCollision=true;
+            if(this->axe!=glm::vec3(0.0) || this->frontAxe!=glm::vec3(0.0) || this->rightAxe!=glm::vec3(0.0)){
+                if(changementDuNiveau){
+                    this->axe=glm::vec3(0.0);
+                    this->frontAxe=glm::vec3(0.0);
+                    this->rightAxe=glm::vec3(0.0);
+                    this->speed=glm::vec3(0.0);
                 }
-                isCollision=false;
-                axe=glm::vec3(axe[0],0.0,axe[2]);
-            }else{
-                isMoving = true;
-            }
-            if(ancien.t[0]!=this->globalTransform.t[0] || ancien.t[1]!=this->globalTransform.t[1] || ancien.t[2]!=this->globalTransform.t[2]){
-                this->auSol=false;
-            }
-            if(this->getCollision()==-1 && !this->auSol){
-                this->PhysicMove(deltaTime);
-            }
-            if(changementDuNiveau){
-                this->axe=glm::vec3(0.0);
-                this->speed=glm::vec3(0.0);
-                this->changementDuNiveau=false;
+                float height = 0.0f;
+                if(this->parent && this->parent->hasPlan){
+                    glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
+                    height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
+                }
+                // glm::vec3 NormalizedAxe = glm::length(frontAxe+rightAxe) > 0.0f ? glm::normalize(frontAxe+rightAxe) : frontAxe+rightAxe;
+                glm::vec3 NormalizedAxe=frontAxe+rightAxe;
+                axe = NormalizedAxe;
+                glm::vec3 movement = NormalizedAxe * (vitesse * this->globalTransform.s * deltaTime);
+                Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);
+                if (glm::length(axe) > 0.0f) {
+                    glm::vec3 projectedAxe = glm::normalize(glm::vec3(axe.x, 0.0f, axe.z));
+                    glm::vec3 reference = glm::vec3(0.0f, 0.0f, 1.0f);
+                    float dotProduct = glm::dot(projectedAxe, reference);
+                    float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f));
+                    float angleSignedRadians = glm::atan(projectedAxe.x, projectedAxe.z);
+                    float angleDegrees = glm::degrees(angleSignedRadians);
+                    Transform rotation = Transform();
+                    rotation = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angleDegrees);
+                    Transform transformTmp = Transform(rotation.m*initialTransform.m, transform.t, transform.s);
+                    setLocalTransform(transformTmp);
+                }
+                Transform ancien=this->globalTransform;
+                this->setGlobalTransform(Mov);
+                int col=this->getCollision();
+                if(col>=0){
+                    axe=glm::vec3(axe[0],1.0,axe[2]);
+                    glm::vec3 NormalizedAxe = glm::length(axe) > 0.0f ? glm::normalize(axe) : axe;
+                    glm::vec3 movement = axe * (vitesse * this->globalTransform.s * deltaTime);
+                    Transform Mov = Transform(this->globalTransform.m, this->globalTransform.t + movement, this->globalTransform.s);   
+                    this->setGlobalTransform(Mov);
+                    col=this->getCollision();
+                    if(col>=0){
+                        this->setGlobalTransform(ancien);
+                        isCollision=true;
+                    }
+                    isCollision=false;
+                    axe=glm::vec3(axe[0],0.0,axe[2]);
+                }else{
+                    isMoving = true;
+                }
+                if(ancien.t[0]!=this->globalTransform.t[0] || ancien.t[1]!=this->globalTransform.t[1] || ancien.t[2]!=this->globalTransform.t[2]){
+                    this->auSol=false;
+                }
+                if(this->getCollision()==-1 && !this->auSol){
+                    this->PhysicMove(deltaTime);
+                }
+                if(changementDuNiveau){
+                    this->axe=glm::vec3(0.0);
+                    this->speed=glm::vec3(0.0);
+                    this->changementDuNiveau=false;
+                }
             }
         }
         
@@ -412,6 +425,7 @@ class GameObject{
                 this->setGlobalTransform(ancien);
                 isCollision=true;
                 this->auSol=true;
+                if(!isGround) isGround=true;
                 speed = glm::vec3(0.0f);
             }else{
                 isMoving = true;
@@ -423,12 +437,26 @@ class GameObject{
             for(int i=0;i<this->collisions.size();i++){
                 if(collisions[i]->map){
                     for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
-                        for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
-                            for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
-                                if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
-                                    this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
-                                    return i;
+                        float minX=std::numeric_limits<float>::max(),minY=std::numeric_limits<float>::max(),minZ=std::numeric_limits<float>::max(),maxX=0.0,maxY=0.0,maxZ=0.0;
+                        for(int k=0;k<collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace.size();k++){
+                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0]<minX) minX=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0];
+                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1]<minY) minY=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1];
+                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2]<minZ) minZ=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2];
+                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0]>maxX) maxX=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0];
+                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1]>maxY) maxY=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1];
+                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2]>maxZ) maxZ=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2];
+                        }
+                        for(int m=0;m<this->boiteEnglobante.vertices_Espace.size();m++){
+                            if(this->boiteEnglobante.vertices_Espace[m][0]>=minX && this->boiteEnglobante.vertices_Espace[m][0]<=maxX && this->boiteEnglobante.vertices_Espace[m][1]>=minY && this->boiteEnglobante.vertices_Espace[m][1]<=maxY && this->boiteEnglobante.vertices_Espace[m][2]>=minZ && this->boiteEnglobante.vertices_Espace[m][2]<=maxZ){
+                                for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
+                                    for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
+                                        if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
+                                            this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
+                                            return i;
+                                        }
+                                    }
                                 }
+                                break;
                             }
                         }
                     }
@@ -987,6 +1015,7 @@ class GameObject{
         }
 
         void moveToPosition(float deltaTime) {
+            if(this->nom!="peach"){
             int nb=this->getCollision();
             this->speed=glm::vec3(0.0);
             if (nb==-1) {
@@ -1009,13 +1038,18 @@ class GameObject{
                 Transform ancien=this->globalTransform;
                 this->setGlobalTransform(newTransform.combine_with(rotateY));
                 this->visionIA.m_direction = direction;
-                if(this->getCollision()>=0){
+                int colActu=this->getCollision();
+                if(colActu>=0){
                     this->setGlobalTransform(ancien);
+                    std::cout<<this->collisions[colActu]->nom<<std::endl;
+                    if(this->collisions[colActu]->nom=="mario"){
+                        this->collisions[colActu]->pv-=1;
+                    }
                 }
             } 
             else {
                 this->nbCollision=nb;
-            }
+            }}
         }
 
         void gravite(GameObject* obj, float deltaTime){
@@ -1183,8 +1217,6 @@ class GameObject{
                 this->directionCarapace=direction;
                 nbCollision=a;
                 this->collisions[nbCollision]->pv-=1;
-                std::cout<<this->collisions[nbCollision]->nom<<std::endl;
-                std::cout<<this->collisions[nbCollision]->pv<<std::endl;
             }
         }
 };

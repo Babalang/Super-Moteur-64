@@ -56,6 +56,7 @@ bool toggleInputL = false;
 bool toggleInputJ = false;
 bool toggleInputQ = false;
 bool toggleInputZ = false;
+bool toggleInputSHIFT = false;
 bool activeToogle=false;
 
 // timing
@@ -70,6 +71,7 @@ int niveau=0;
 bool carte=false;
 GLuint programID;
 bool changementDuNiveau=true;
+float vitesse=1.0;
 
 // Fonction pour afficher le compteur de FPS
 double affiche(GLFWwindow *window,double lastTime){
@@ -101,11 +103,10 @@ void processInput(GLFWwindow *window)
     // Récupérer les vecteurs de direction de la caméra
     glm::vec3 cameraPosition = scene.camera.globalTransform.t; // Position actuelle de la caméra
     glm::mat3 cameraRotation = scene.camera.transform.m; // Rotation actuelle de la caméra
-    // Calculer les vecteurs de direction de la caméra
     glm::vec3 cameraTarget = -cameraRotation[2];               // Axe Z local (direction vers l'avant)
     glm::vec3 cameraRight = cameraRotation[0];                 // Axe X local (direction droite)
-    glm::vec3 cameraUp = cameraRotation[1];                    // Axe Y local (direction vers le haut)
-    glm::vec3 cameraFront = glm::normalize(cameraPosition - scene.camera.targetPosition);      // Direction vers l
+    glm::vec3 cameraUp = cameraRotation[1];  
+    glm::vec3 cameraFront = glm::normalize(cameraPosition - scene.camera.targetPosition);                  // Axe Y local (direction vers le haut)
 
     if(activeToogle){if(!changementDuNiveau){
     if (scene.camera.mode == CAMERA_MODE::ORBITAL) {
@@ -129,12 +130,11 @@ void processInput(GLFWwindow *window)
     }
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
             if(!toggleInputI && !changementDuNiveau){
-                std::cout<<"CameraFront : "<<cameraFront[0]<<" "<<cameraFront[1]<<" "<<cameraFront[2]<<std::endl;
                 toggleInputI = true;
             }else{
-                glm::vec3 tmp = glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t);
+                glm::vec3 tmp = glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t)*vitesse;
                 tmp.y = 0.0f ;
-               scene.camera.parent->frontAxe = tmp ;
+                scene.camera.parent->frontAxe = tmp ;
                 changementDuNiveau=false;
             }
         } 
@@ -143,12 +143,13 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->frontAxe = glm::vec3(0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-            if(!toggleInputK){
+            if(!toggleInputK && !changementDuNiveau){
                 toggleInputK = true;
-            } else{
-                glm::vec3 tmp = -glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t);
+            }else{
+                glm::vec3 tmp = -glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t)*vitesse;
                 tmp.y = 0.0f ;
-               scene.camera.parent->frontAxe = tmp ;
+                scene.camera.parent->frontAxe = tmp ;
+                changementDuNiveau=false;
             }
         }
         if(glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE && toggleInputK == true){
@@ -156,10 +157,11 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->frontAxe = glm::vec3(0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-            if(!toggleInputL){
+            if(!toggleInputL && !changementDuNiveau){
                 toggleInputL = true;
-            } else{
-                scene.camera.parent->rightAxe = glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe));
+            }else{
+                scene.camera.parent->rightAxe = glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe))*vitesse;
+                changementDuNiveau=false;
             }
         }
         if(glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE && toggleInputL == true){
@@ -167,10 +169,11 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->rightAxe = glm::vec3(0.0f,0.0,0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-            if(!toggleInputJ){
+            if(!toggleInputJ && !changementDuNiveau){
                 toggleInputJ = true;
-            } else {
-                scene.camera.parent->rightAxe = -glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe));
+            }else{
+                scene.camera.parent->rightAxe = -glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe))*vitesse;
+                changementDuNiveau=false;
             }
         }
         if(glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE && toggleInputJ == true){
@@ -179,11 +182,22 @@ void processInput(GLFWwindow *window)
         }
         if(glfwGetKey(window, GLFW_KEY_SPACE) && toggleInputSpace == false){
             toggleInputSpace = true;
-            if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
+            if(scene.camera.parent->isGround){
+                if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
+                scene.camera.parent->isGround=false;
+            }
         }
         if(glfwGetKey(window, GLFW_KEY_TAB) && toggleInputTab == false){
             toggleInputTab = true;
             carte=!carte;
+        }
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+            toggleInputSHIFT = true;
+            vitesse=3.0;
+        }
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE && toggleInputSHIFT == true){
+            toggleInputSHIFT = false;
+            vitesse=1.0;
         }
 
     if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS && toggleInputC == false){
@@ -202,11 +216,12 @@ void processInput(GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE && toggleInputC == true){
         toggleInputC = false;
     }
-        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE && toggleInputSpace == true){
+    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE && toggleInputSpace == true){
         toggleInputSpace = false;
     }
     if(glfwGetKey(window, GLFW_KEY_TAB) == GLFW_RELEASE && toggleInputTab == true){
         toggleInputTab = false;
+        carte=!carte;
     }
     }else changementDuNiveau=false;}
 }
@@ -389,7 +404,7 @@ void sceneNiveau3(Scene *scene){
     GOkoopa1.programID=programID;
     GOkoopa1.lireOBJ("../meshes/Koopa.obj");
     GOkoopa1.rajouterOBJ();
-    Transform tKoopa1=Transform(glm::mat3x3(1.0),glm::vec3(-30.0,120.0,30.0),1.0);
+    Transform tKoopa1=Transform(glm::mat3x3(1.0),glm::vec3(-30.0,120.0,30.0),1.2);
     tKoopa1=tKoopa1.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f));
     GOkoopa1.setGlobalTransform(tKoopa1);
     GOkoopa1.nom="koopa1";
@@ -397,7 +412,7 @@ void sceneNiveau3(Scene *scene){
 
     GOkoopa2.programID=programID;
     GOkoopa2.lireOBJ("../meshes/Koopa.obj");
-    Transform tKoopa2=Transform(glm::mat3x3(1.0),glm::vec3(30.0,120.0,30.0),1.0);
+    Transform tKoopa2=Transform(glm::mat3x3(1.0),glm::vec3(30.0,120.0,30.0),1.2);
     tKoopa2=tKoopa2.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -90.0f));
     GOkoopa2.rajouterOBJ();
     GOkoopa2.setGlobalTransform(tKoopa2);
@@ -459,7 +474,6 @@ void sceneNiveau3(Scene *scene){
     GObowserStadium.stars.push_back(&GOstar);
     std::cout<<"mario position : "<<GOMetalMario3.centreEspace[0]<<" "<<GOMetalMario3.centreEspace[1]<<" "<<GOMetalMario3.centreEspace[2]<<std::endl;
     scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
-
 }
 
 void empecherMouvement(){
@@ -667,7 +681,28 @@ void afficherStar(){
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
     glEnable(GL_DEPTH_TEST);
 }
-
+GLuint VBuffer, IBuffer, UVBuffer;
+void afficherFond(std::vector<glm::vec2> vertices,std::vector<glm::vec2> uv,std::vector<unsigned short> indices){
+    glGenBuffers(1, &VBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, VBuffer);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(glm::vec2), &vertices[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &IBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &UVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, UVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, uv.size()*sizeof(glm::vec2), &uv[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, VBuffer);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(4);
+    glBindBuffer(GL_ARRAY_BUFFER, UVBuffer);
+    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBuffer);
+    glDisable(GL_DEPTH_TEST);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+    glEnable(GL_DEPTH_TEST);
+}
 GLuint Text2DTextureID;
 GLuint Text2DVertexBufferID;
 GLuint Text2DUVBufferID;
@@ -834,11 +869,10 @@ int main( void )
     double lastTime = glfwGetTime();
     int nbFrames = 0;
 
-    textureCarte=loadTextureHUD("../textures/2k_moon.jpg");
-    texturePV=loadTextureHUD("../textures/2k_moon.jpg");
-    textureStar=loadTextureHUD("../textures/2k_moon.jpg");
+    textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
+    texturePV=loadTextureHUD("../textures/5EDC83BD_c.png");
+    textureStar=loadTextureHUD("../textures/5EDC83BD_c.png");
     initText2Da("../textures/white.png");
-
 
     do{
         changerNiveau();
@@ -897,14 +931,21 @@ int main( void )
         scene.draw(deltaTime);
         glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_TRUE);
         // glUniform4f(glGetUniformLocation(programID, "hudColor"), 0.0f, 0.0f, 0.0f, 1.0f);
+        glUniform1i(glGetUniformLocation(programID, "isFond"), GL_TRUE);
+        afficherFond(verticesPV,uvPV,indicesPV);
+        afficherFond(verticesStar,uvStar,indicesStar);
+        glUniform1i(glGetUniformLocation(programID, "isFond"), GL_FALSE);
         afficherPV();
         afficherStar();
         if(carte){
+            glUniform1i(glGetUniformLocation(programID, "isFond"), GL_TRUE);
+            afficherFond(verticesCarte,uvCarte,indicesCarte);
+            glUniform1i(glGetUniformLocation(programID, "isFond"), GL_FALSE);
             afficherCarte();
         }
-        glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_FALSE);
-        glUniform1i(glGetUniformLocation(programID, "isText"), GL_TRUE);
-        printText2Da("caca",100,100,30);
+        // glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_FALSE);
+        // glUniform1i(glGetUniformLocation(programID, "isText"), GL_TRUE);
+        // printText2Da("caca",100,100,30);
 
 
         // Swap buffers

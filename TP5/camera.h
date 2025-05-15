@@ -13,10 +13,76 @@ struct CAMERA_MODE{
     };
 };
 
+// struct FrustumPlane {
+//     glm::vec4 equation;
+// };
+
+// struct Frustum {
+//     std::vector<FrustumPlane> planes=std::vector<FrustumPlane>(6);
+// };
+
+// // Normalise un plan (pour que a^2 + b^2 + c^2 = 1)
+// inline glm::vec4 normalizePlane(const glm::vec4& plane) {
+//     float length = glm::length(glm::vec3(plane));
+//     return plane / length;
+// }
+
+// // Extrait les plans du frustum à partir de la matrice VP
+// inline Frustum extractFrustumPlanes(const glm::mat4& VP) {
+//     Frustum frustum;
+
+//     // Left
+//     frustum.planes[0].equation = normalizePlane(glm::vec4(
+//         VP[0][3] + VP[0][0],
+//         VP[1][3] + VP[1][0],
+//         VP[2][3] + VP[2][0],
+//         VP[3][3] + VP[3][0]
+//     ));
+//     // Right
+//     frustum.planes[1].equation = normalizePlane(glm::vec4(
+//         VP[0][3] - VP[0][0],
+//         VP[1][3] - VP[1][0],
+//         VP[2][3] - VP[2][0],
+//         VP[3][3] - VP[3][0]
+//     ));
+//     // Bottom
+//     frustum.planes[2].equation = normalizePlane(glm::vec4(
+//         VP[0][3] + VP[0][1],
+//         VP[1][3] + VP[1][1],
+//         VP[2][3] + VP[2][1],
+//         VP[3][3] + VP[3][1]
+//     ));
+//     // Top
+//     frustum.planes[3].equation = normalizePlane(glm::vec4(
+//         VP[0][3] - VP[0][1],
+//         VP[1][3] - VP[1][1],
+//         VP[2][3] - VP[2][1],
+//         VP[3][3] - VP[3][1]
+//     ));
+//     // Near
+//     frustum.planes[4].equation = normalizePlane(glm::vec4(
+//         VP[0][3] + VP[0][2],
+//         VP[1][3] + VP[1][2],
+//         VP[2][3] + VP[2][2],
+//         VP[3][3] + VP[3][2]
+//     ));
+//     // Far
+//     frustum.planes[5].equation = normalizePlane(glm::vec4(
+//         VP[0][3] - VP[0][2],
+//         VP[1][3] - VP[1][2],
+//         VP[2][3] - VP[2][2],
+//         VP[3][3] - VP[3][2]
+//     ));
+
+//     return frustum;
+// }
+
 class Camera : public GameObject {
     public:
         glm::mat4 viewMatrix;
         glm::mat4 projectionMatrix;
+        glm::mat4 vp;
+        // Frustum frustum;
         bool hasMesh = false;
 
         float fov;
@@ -89,6 +155,8 @@ class Camera : public GameObject {
                 this->setGlobalTransform(Transform(this->transform.m, cameraPosition, 1.0));
                 handleCollision(deltaTime);
             }
+            // this->vp=this->projectionMatrix*this->viewMatrix;
+            // this->frustum = extractFrustumPlanes(this->vp);
         }
 
         glm::vec3 lerp(const glm::vec3& start, const glm::vec3& end, float t) {
