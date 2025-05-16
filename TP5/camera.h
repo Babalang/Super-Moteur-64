@@ -153,7 +153,7 @@ class Camera : public GameObject {
                     cameraPosition = lerp(this->globalTransform.t, cameraPosition, lerpFactor);
                 }
                 this->setGlobalTransform(Transform(this->transform.m, cameraPosition, 1.0));
-                handleCollision(deltaTime);
+                // handleCollision(deltaTime);
             }
             // this->vp=this->projectionMatrix*this->viewMatrix;
             // this->frustum = extractFrustumPlanes(this->vp);

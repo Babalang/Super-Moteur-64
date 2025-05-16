@@ -13,7 +13,7 @@ class Scene{
     GameObject root;
     Camera camera;
     GLuint programID;
-    int niveau=3;
+    int niveau=2;
     bool reset=false;
     Mesh skyboxplafond;
     Mesh skyboxsol;
@@ -21,6 +21,13 @@ class Scene{
     Mesh skyboxmur2;
     Mesh skyboxmur3;
     Mesh skyboxmur4;
+    bool niveau2=false;
+    bool niveau3=false;
+    int nbEtoiles=0;
+    int nbPV=3;
+    bool nouvelleEtoile=false;
+    bool nouveauPV=false;
+    bool nouveauNiveau=false;
     std::vector<GameObject*> lights;
         Scene(){}
 
@@ -47,7 +54,11 @@ class Scene{
     }
 
     void testChangementNiveau(GameObject* map, GameObject* obj){
-        if(obj->pv=0 || obj->basEspace[1]<=-30.0f || obj->collisionChateau=="eau"){
+        if(obj->pv!=this->nbPV){
+            this->nbPV=obj->pv;
+            this->nouveauPV=true;
+        }
+        if(obj->pv==0 || obj->basEspace[1]<=-30.0f || obj->collisionChateau=="eau"){
             this->reset=true;
             if(obj->collisionChateau=="eau"){
                 Audio::playAudioOnce("../audios/UI/Drowning.wav",glm::vec3(0.0f));
@@ -73,7 +84,29 @@ class Scene{
             }
             if(obj->centreEspace[0]>=minX && obj->centreEspace[0]<=maxX && obj->centreEspace[2]>=minZ && obj->centreEspace[2]<=maxZ){
                 Audio::playAudioOnce("../audios/UI/Here we go.wav",glm::vec3(0.0f));
-                niveau=3;
+                if(niveau2){
+                    niveau=3;
+                }else if(niveau3){
+                    niveau=2;
+                }else{
+                    niveau=2;
+                }
+            }
+        }
+        if(niveau==2){
+            // for(int i=0;i<obj->collisions.size();i++){
+            //     if(obj->collisions[i]->nom=="star"){
+            //         Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
+            //         camera.lookAt(obj->collisions[i]);
+            //     }
+            // }
+            if(obj->nbCollision>0){
+                if(obj->collisions[obj->nbCollision]->nom=="star"){
+                    Audio::playAudioOnce("../audios/UI/Completion.wav",glm::vec3(0.0f));
+                    niveau=1;
+                    this->niveau2=true;
+                    nbEtoiles++;nouvelleEtoile=true;
+                }
             }
         }
         if(niveau==3){
@@ -87,6 +120,8 @@ class Scene{
                 if(obj->collisions[obj->nbCollision]->nom=="star"){
                     Audio::playAudioOnce("../audios/UI/Completion.wav",glm::vec3(0.0f));
                     niveau=1;
+                    this->niveau3=true;
+                    nbEtoiles++;nouvelleEtoile=true;
                 }
             }
         }
@@ -94,99 +129,123 @@ class Scene{
 
     void creerSkybox(){
         this->skyboxplafond.vertices_Espace={
-            glm::vec3(-300.0f, 300.0f, -300.0f),
             glm::vec3(300.0f, 300.0f, -300.0f),
+            glm::vec3(-300.0f, 300.0f, -300.0f),
+            glm::vec3(-300.0f, 300.0f, 300.0f),
+            glm::vec3(-300.0f, 300.0f, 300.0f),
             glm::vec3(300.0f, 300.0f, 300.0f),
-            glm::vec3(-300.0f, 300.0f, 300.0f)
+            glm::vec3(300.0f, 300.0f, -300.0f)
         };
         this->skyboxplafond.texCoords={
-            glm::vec2(0.0f, 1.0f),
             glm::vec2(1.0f, 1.0f),
+            glm::vec2(0.0f, 1.0f),
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(0.0f, 0.0f),
             glm::vec2(1.0f, 0.0f),
-            glm::vec2(0.0f, 0.0f)
+            glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxplafond.indices={1,0,3,3,2,1};
-        this->skyboxplafond.triangles={{1,0,3},{3,2,1}};
+        this->skyboxplafond.indices={0,1,2,3,4,5};
+        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
         this->skyboxplafond.programID=this->root.programID;
         
         this->skyboxsol.vertices_Espace={
-            glm::vec3(-300.0f, -300.0f, -300.0f),
             glm::vec3(300.0f, -300.0f, -300.0f),
+            glm::vec3(-300.0f, -300.0f, -300.0f),
+            glm::vec3(-300.0f, -300.0f, 300.0f),
+            glm::vec3(-300.0f, -300.0f, 300.0f),
             glm::vec3(300.0f, -300.0f, 300.0f),
-            glm::vec3(-300.0f, -300.0f, 300.0f)
+            glm::vec3(300.0f, -300.0f, -300.0f)
         };
         this->skyboxsol.texCoords={
-            glm::vec2(0.0f, 1.0f),
             glm::vec2(1.0f, 1.0f),
+            glm::vec2(0.0f, 1.0f),
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(0.0f, 0.0f),
             glm::vec2(1.0f, 0.0f),
-            glm::vec2(0.0f, 0.0f)
+            glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxsol.indices={1,0,3,3,2,1};
-        this->skyboxsol.triangles={{1,0,3},{3,2,1}};
+        this->skyboxplafond.indices={0,1,2,3,4,5};
+        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
         this->skyboxsol.programID=this->root.programID;
         
         this->skyboxmur1.vertices_Espace={
-            glm::vec3(-300.0f, -300.0f, -300.0f),
             glm::vec3(300.0f, -300.0f, -300.0f),
+            glm::vec3(-300.0f, -300.0f, -300.0f),
             glm::vec3(-300.0f, 300.0f, -300.0f),
-            glm::vec3(300.0f, 300.0f, -300.0f)
+            glm::vec3(-300.0f, 300.0f, -300.0f),
+            glm::vec3(300.0f, 300.0f, -300.0f),
+            glm::vec3(300.0f, -300.0f, -300.0f)
         };
         this->skyboxmur1.texCoords={
-            glm::vec2(0.0f, 1.0f),
             glm::vec2(1.0f, 1.0f),
+            glm::vec2(0.0f, 1.0f),
             glm::vec2(0.0f, 0.0f),
-            glm::vec2(1.0f, 0.0f)
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(1.0f, 0.0f),
+            glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxmur1.indices={1,0,2,2,3,1};
-        this->skyboxmur1.triangles={{1,0,2},{2,3,1}};
+        this->skyboxplafond.indices={0,1,2,3,4,5};
+        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
         this->skyboxmur1.programID=this->root.programID;
         
         this->skyboxmur2.vertices_Espace={
-            glm::vec3(300.0f, -300.0f, -300.0f),
             glm::vec3(300.0f, -300.0f, 300.0f),
+            glm::vec3(300.0f, -300.0f, -300.0f),
             glm::vec3(300.0f, 300.0f, -300.0f),
-            glm::vec3(300.0f, 300.0f, 300.0f)
+            glm::vec3(300.0f, 300.0f, -300.0f),
+            glm::vec3(300.0f, 300.0f, 300.0f),
+            glm::vec3(300.0f, -300.0f, 300.0f)
         };
         this->skyboxmur2.texCoords={
-            glm::vec2(0.0f, 1.0f),
             glm::vec2(1.0f, 1.0f),
+            glm::vec2(0.0f, 1.0f),
             glm::vec2(0.0f, 0.0f),
-            glm::vec2(1.0f, 0.0f)
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(1.0f, 0.0f),
+            glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxmur2.indices={1,0,2,2,3,1};
-        this->skyboxmur2.triangles={{1,0,2},{2,3,1}};
+        this->skyboxplafond.indices={0,1,2,3,4,5};
+        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
         this->skyboxmur2.programID=this->root.programID;
         
         this->skyboxmur3.vertices_Espace={
-            glm::vec3(300.0f, -300.0f, 300.0f),
             glm::vec3(-300.0f, -300.0f, 300.0f),
+            glm::vec3(300.0f, -300.0f, 300.0f),
+            glm::vec3(300.0f, 300.0f, 300.0f),
+            glm::vec3(300.0f, 300.0f, 300.0f),
             glm::vec3(-300.0f, 300.0f, 300.0f),
-            glm::vec3(300.0f, 300.0f, 300.0f)
+            glm::vec3(-300.0f, -300.0f, 300.0f)
         };
         this->skyboxmur3.texCoords={
-            glm::vec2(0.0f, 1.0f),
             glm::vec2(1.0f, 1.0f),
+            glm::vec2(0.0f, 1.0f),
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(0.0f, 0.0f),
             glm::vec2(1.0f, 0.0f),
-            glm::vec2(0.0f, 0.0f)
+            glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxmur3.indices={1,0,3,3,2,1};
-        this->skyboxmur3.triangles={{1,0,3},{3,2,1}};
+        this->skyboxplafond.indices={0,1,2,3,4,5};
+        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
         this->skyboxmur3.programID=this->root.programID;
         
         this->skyboxmur4.vertices_Espace={
-            glm::vec3(-300.0f, -300.0f, 300.0f),
             glm::vec3(-300.0f, -300.0f, -300.0f),
+            glm::vec3(-300.0f, -300.0f, 300.0f),
+            glm::vec3(-300.0f, 300.0f, 300.0f),
+            glm::vec3(-300.0f, 300.0f, 300.0f),
             glm::vec3(-300.0f, 300.0f, -300.0f),
-            glm::vec3(-300.0f, 300.0f, 300.0f)
+            glm::vec3(-300.0f, -300.0f, -300.0f)
         };
         this->skyboxmur4.texCoords={
-            glm::vec2(0.0f, 1.0f),
             glm::vec2(1.0f, 1.0f),
+            glm::vec2(0.0f, 1.0f),
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(0.0f, 0.0f),
             glm::vec2(1.0f, 0.0f),
-            glm::vec2(0.0f, 0.0f)
+            glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxmur4.indices={1,0,3,3,2,1};
-        this->skyboxmur4.triangles={{1,0,3},{3,2,1}};
+        this->skyboxplafond.indices={0,1,2,3,4,5};
+        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
         this->skyboxmur4.programID=this->root.programID;
         
     }
@@ -227,6 +286,13 @@ class Scene{
                 if(obj->collisions[obj->nbCollision]->nom=="koopa" || obj->collisions[obj->nbCollision]->nom=="shell"){
                     obj->collisions[obj->nbCollision]->pv-=1;
                     Audio::playAudioOnce("../audios/UI/hit koopa.wav",glm::vec3(0.0f));
+                }else if(obj->collisions[obj->nbCollision]->nom=="goomba"){
+                    obj->collisions[obj->nbCollision]->pv-=1;
+                    Audio::playAudioOnce("../audios/UI/hit koopa.wav",glm::vec3(0.0f));
+                }else if(obj->collisions[obj->nbCollision]->nom=="battan" && obj->collisions[obj->nbCollision]->rotationner && !obj->collisions[obj->nbCollision]->pvBattan){
+                    obj->collisions[obj->nbCollision]->pv-=1;
+                    obj->collisions[obj->nbCollision]->pvBattan=true;
+                    obj->collisions[obj->nbCollision]->timerIA=time(nullptr)-4;
                 }
             }
             this->camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);

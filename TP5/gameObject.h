@@ -60,7 +60,7 @@ class GameObject{
         std::vector<GameObject*> collisions;
         bool map=false;
         bool auSol=true;
-        int pv=0;
+        int pv=3;
         std::string collisionChateau;
         Transform transformSol;
         int nbCollision=-1;
@@ -73,6 +73,16 @@ class GameObject{
         time_t timerCollisionMario=time(nullptr);
         time_t timerSautMario=time(nullptr);
         time_t timerIA=time(nullptr);
+        bool rotationner=false;
+        float angleBattan=0;
+        float sautBattan=0;
+        bool rotaBattan=false;
+        bool pvBattan=false;
+        bool changementTextureBattan=false;
+        bool toucherMario=false;
+        std::vector<GameObject> bowserFireBall;
+        bool boolBowserFireBall=false;
+        glm::vec3 distanceFireBall;
 
         // light
         int index = 0;
@@ -281,13 +291,93 @@ class GameObject{
                         obj->collisions.push_back(obj->collisions[0]->stars[0]);
                     }else if(this->nom=="star"){
                         this->descendreEtoile(deltaTime);
+                    }else if(this->nom=="goomba"){
+                        std::cout<<"mort"<<std::endl;
+                        for(int i=0;i<obj->collisions[0]->enfant.size();i++){
+                            if(obj->collisions[0]->enfant[i]->nom=="goomba" && obj->collisions[0]->enfant[i]->pv<=0){
+                                obj->collisions[0]->enfant.erase(obj->collisions[0]->enfant.begin()+i);
+                            }
+                        }
+                        for(int i=0;i<obj->collisions.size();i++){
+                            if(obj->collisions[i]->nom=="goomba" && obj->collisions[i]->pv<=0){
+                                obj->collisions.erase(obj->collisions.begin()+i);
+                            }
+                        }
+                    }else if(this->nom=="battan"){
+                        std::cout<<"mort"<<std::endl;
+                        for(int i=0;i<obj->collisions[0]->enfant.size();i++){
+                            if(obj->collisions[0]->enfant[i]->nom=="battan" && obj->collisions[0]->enfant[i]->pv<=0){
+                                obj->collisions[0]->enfant.erase(obj->collisions[0]->enfant.begin()+i);
+                            }
+                        }
+                        for(int i=0;i<obj->collisions.size();i++){
+                            if(obj->collisions[i]->nom=="battan" && obj->collisions[i]->pv<=0){
+                                obj->collisions.erase(obj->collisions.begin()+i);
+                            }
+                        }
+                        obj->collisions[0]->stars[0]->programID=this->programID;
+                        obj->collisions[0]->stars[0]->lireOBJ("../meshes/star.obj");
+                        obj->collisions[0]->stars[0]->rajouterOBJ();
+                        obj->collisions[0]->stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(37.0,100.0,-90.0),1.0));
+                        obj->collisions[0]->stars[0]->nom="star";
+                        obj->collisions[0]->stars[0]->isIA=true;
+                        obj->collisions[0]->stars[0]->auSol=false;
+                        obj->collisions[0]->stars[0]->collisions.push_back(obj->collisions[0]);
+                        obj->collisions[0]->stars[0]->collisions.push_back(obj);
+                        obj->collisions[0]->addChild(obj->collisions[0]->stars[0]);
+                        obj->collisions.push_back(obj->collisions[0]->stars[0]);
                     }
                 }else{
-                    if(this->nom!="shell" && this->nom!="peach"){
-                        for(int i=0;i<this->boiteEnglobante.triangles.size();i++){
-                            RayTriangleIntersection intersection = obj->boiteEnglobante.getIntersection(this->visionIA,i);
-                            if(intersection.intersectionExists && intersection.t<500.0f && intersection.t>0.0f){
-                                this->avancer=true;
+                    if(this->nom=="Bowser"){
+                        this->avancer=true;
+                        if(!this->bowserFireBall[0].boolBowserFireBall){
+                            glm::vec3 a=this->centreEspace;
+                            a[1]+=3.0;
+                            Transform fb=Transform(this->bowserFireBall[0].globalTransform.m,a,this->bowserFireBall[0].globalTransform.s);
+                            this->bowserFireBall[0].setGlobalTransform(fb);
+                        }
+                        this->bowserFireBall[0].fireBallBowser(deltaTime);
+                        this->bowserFireBall[0].setMesh(this->bowserFireBall[0].highMesh);
+                        this->bowserFireBall[0].mesh.draw();
+                        // std::cout<<this->bowserFireBall[0].centreEspace[0]<<" "<<this->bowserFireBall[0].centreEspace[1]<<" "<<this->bowserFireBall[0].centreEspace[2]<<std::endl;
+                    }else if(this->nom=="koopa"){
+                        this->avancer=true;
+                    }else if(this->nom=="goomba"){
+                        if(glm::distance(this->centreEspace,obj->centreEspace)<20){
+                            this->avancer=true;
+                        }else{
+                            this->avancer=false;
+                        }
+                    }else if(this->nom=="battan"){
+                        if(this->changementTextureBattan){
+                            if(this->pv==2){
+                                for(int i=0;i<this->objetsOBJ.size();i++){
+                                    if(this->objetsOBJ[i].mesh.mtl.nom=="mat_body"){
+                                        this->objetsOBJ[i].mesh.filename="../textures/battan_king_back_2.png";
+                                        this->objetsOBJ[i].mesh.loadTexture();
+                                    }
+                                }
+                            }else if(this->pv==1){
+                                for(int i=0;i<this->objetsOBJ.size();i++){
+                                    if(this->objetsOBJ[i].mesh.mtl.nom=="mat_body"){
+                                        this->objetsOBJ[i].mesh.filename="../textures/battan_king_back_3.png";
+                                        this->objetsOBJ[i].mesh.loadTexture();
+                                    }
+                                }
+                            }
+                        }
+                        if(this->rotaBattan){
+                            this->battanKing(deltaTime);
+                        }else{
+                            if(this->basEspace[1]-2.5<obj->basEspace[1]){
+                                if(glm::distance(this->basEspace,obj->basEspace)<10){
+                                    this->avancer=false;
+                                    this->rotaBattan=true;
+                                }else{
+                                    this->avancer=true;
+                                }
+                            }else{
+                                this->avancer=false;
                             }
                         }
                     }
@@ -414,6 +504,7 @@ class GameObject{
                     this->speed=glm::vec3(0.0);
                     this->changementDuNiveau=false;
                 }
+                // std::cout<<this->centreEspace[0]<<" "<<this->centreEspace[1]<<" "<<this->centreEspace[2]<<std::endl;
             }
         }
         
@@ -446,27 +537,44 @@ class GameObject{
         int getCollision(){
             for(int i=0;i<this->collisions.size();i++){
                 if(collisions[i]->map){
-                    for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
-                        float minX=std::numeric_limits<float>::max(),minY=std::numeric_limits<float>::max(),minZ=std::numeric_limits<float>::max(),maxX=0.0,maxY=0.0,maxZ=0.0;
-                        for(int k=0;k<collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace.size();k++){
-                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0]<minX) minX=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0];
-                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1]<minY) minY=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1];
-                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2]<minZ) minZ=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2];
-                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0]>maxX) maxX=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0];
-                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1]>maxY) maxY=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1];
-                            if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2]>maxZ) maxZ=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2];
-                        }
-                        for(int m=0;m<this->boiteEnglobante.vertices_Espace.size();m++){
-                            if(this->boiteEnglobante.vertices_Espace[m][0]>=minX && this->boiteEnglobante.vertices_Espace[m][0]<=maxX && this->boiteEnglobante.vertices_Espace[m][1]>=minY && this->boiteEnglobante.vertices_Espace[m][1]<=maxY && this->boiteEnglobante.vertices_Espace[m][2]>=minZ && this->boiteEnglobante.vertices_Espace[m][2]<=maxZ){
-                                for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
-                                    for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
-                                        if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
-                                            this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
-                                            return i;
+                    if(collisions[i]->nom=="chateau"){
+                        std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaachateau"<<std::endl;
+                        for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
+                            float minX=std::numeric_limits<float>::max(),minY=std::numeric_limits<float>::max(),minZ=std::numeric_limits<float>::max(),maxX=0.0,maxY=0.0,maxZ=0.0;
+                            for(int k=0;k<collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace.size();k++){
+                                if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0]<minX) minX=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0];
+                                if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1]<minY) minY=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1];
+                                if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2]<minZ) minZ=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2];
+                                if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0]>maxX) maxX=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][0];
+                                if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1]>maxY) maxY=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][1];
+                                if(collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2]>maxZ) maxZ=collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace[k][2];
+                            }
+                            for(int m=0;m<this->boiteEnglobante.vertices_Espace.size();m++){
+                                if(this->boiteEnglobante.vertices_Espace[m][0]>=minX && this->boiteEnglobante.vertices_Espace[m][0]<=maxX && this->boiteEnglobante.vertices_Espace[m][1]>=minY && this->boiteEnglobante.vertices_Espace[m][1]<=maxY && this->boiteEnglobante.vertices_Espace[m][2]>=minZ && this->boiteEnglobante.vertices_Espace[m][2]<=maxZ){
+                                    for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
+                                        for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
+                                            if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
+                                                std::cout<<collisions[i]->nom<<std::endl;
+                                                this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
+                                                return i;
+                                            }
                                         }
                                     }
+                                    break;
                                 }
-                                break;
+                            }
+                        }
+                    }else{
+                        // std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabobomb"<<std::endl;
+                        for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
+                            for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
+                                for(int l=0;l<this->boiteEnglobante.triangles.size();l++){
+                                    if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
+                                        this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
+                                        // std::cout<<collisions[i]->nom<<std::endl;
+                                        return i;
+                                    }
+                                }
                             }
                         }
                     }
@@ -1026,42 +1134,52 @@ class GameObject{
 
         void moveToPosition(float deltaTime) {
             if(this->nom!="peach"){
-            int nb=this->getCollision();
-            this->speed=glm::vec3(0.0);
-            if (nb==-1) {
-                glm::vec3 direction=glm::normalize(this->collisions[1]->centreEspace-this->centreEspace);
-                direction[1]=0.0;
-                Transform rotateY;glm::vec3 newPosition;
-                if(this->nom=="koopa"){
-                    newPosition = this->globalTransform.t + direction * glm::vec3(3.0) * deltaTime*glm::vec3(1.0,0.0,1.0);
-                    float dotProduct = glm::dot(glm::vec3(-1.0,0.0,0.0), direction);
-                    float angle = glm::degrees(glm::acos(dotProduct));
-                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -angle);
-                }if(this->nom=="Bowser"){
-                    newPosition = this->globalTransform.t + direction * glm::vec3(2.0) * deltaTime*glm::vec3(1.0,0.0,1.0);
-                    float dotProduct = glm::dot(glm::vec3(0.0,0.0,1.0), direction);
-                    float angle = glm::degrees(glm::acos(dotProduct));
-                    rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle);
-                }
-                Transform a=Transform(rotationDepart, this->transform.t, this->transform.s);
-                Transform newTransform = Transform(glm::mat3x3(1.0), newPosition, this->globalTransform.s);
-                Transform ancien=this->globalTransform;
-                this->setGlobalTransform(newTransform.combine_with(rotateY));
-                this->visionIA.m_direction = direction;
-                int colActu=this->getCollision();
-                if(colActu>=0){
-                    if(this->collisions[colActu]->nom=="mario"){
-                        if(difftime(time(NULL),this->collisions[colActu]->timerCollisionMario)>5 || this->collisions[colActu]->pv==3){
-                            std::cout<<"tas perdu une vie"<<std::endl;
-                            this->collisions[colActu]->pv-=1;
-                            this->collisions[colActu]->timerCollisionMario=time(nullptr);
+                int nb=this->getCollision();
+                this->speed=glm::vec3(0.0);
+                if (nb==-1) {
+                    glm::vec3 direction=glm::normalize(this->collisions[1]->centreEspace-this->centreEspace);
+                    direction[1]=0.0;
+                    Transform rotateY;glm::vec3 newPosition;
+                    if(this->nom=="koopa"){
+                        newPosition = this->globalTransform.t + direction * glm::vec3(3.0) * deltaTime*glm::vec3(1.0,0.0,1.0);
+                        float dotProduct = glm::dot(glm::vec3(-1.0,0.0,0.0), direction);
+                        float angle = glm::degrees(glm::acos(dotProduct));
+                        rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), -angle);
+                    }else if(this->nom=="Bowser"){
+                        newPosition = this->globalTransform.t + direction * glm::vec3(2.0) * deltaTime*glm::vec3(1.0,0.0,1.0);
+                        float dotProduct = glm::dot(glm::vec3(0.0,0.0,1.0), direction);
+                        float angle = glm::degrees(glm::acos(dotProduct));
+                        rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle);
+                    }else if(this->nom=="goomba"){
+                        newPosition = this->globalTransform.t + direction * glm::vec3(4.0) * deltaTime*glm::vec3(1.0,0.0,1.0);
+                        float dotProduct = glm::dot(glm::vec3(0.0,0.0,1.0), direction);
+                        float angle = glm::degrees(glm::acos(dotProduct));
+                        rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle);
+                    }else if(this->nom=="battan"){
+                        newPosition = this->globalTransform.t + direction * glm::vec3(1.0) * deltaTime*glm::vec3(1.0,0.0,1.0);
+                        float dotProduct = glm::dot(glm::vec3(0.0,0.0,1.0), direction);
+                        float angle = glm::degrees(glm::acos(dotProduct));
+                        rotateY= Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angle);
+                    }
+                    Transform a=Transform(rotationDepart, this->transform.t, this->transform.s);
+                    Transform newTransform = Transform(glm::mat3x3(1.0), newPosition, this->globalTransform.s);
+                    Transform ancien=this->globalTransform;
+                    this->setGlobalTransform(newTransform.combine_with(rotateY));
+                    this->visionIA.m_direction = direction;
+                    int colActu=this->getCollision();
+                    if(colActu>=0){
+                        if(this->collisions[colActu]->nom=="mario"){
+                            if(difftime(time(NULL),this->collisions[colActu]->timerCollisionMario)>5 && this->collisions[colActu]->pv>0){
+                                this->collisions[colActu]->pv-=1;
+                                this->collisions[colActu]->timerCollisionMario=time(nullptr);
+                            }
                         }
                     }
+                } 
+                else {
+                    this->nbCollision=nb;
                 }
-            } 
-            else {
-                this->nbCollision=nb;
-            }}
+            }
         }
 
         void gravite(GameObject* obj, float deltaTime){
@@ -1188,6 +1306,7 @@ class GameObject{
         }
 
         void mettreAuSol(GameObject* map){
+            std::cout<<this->nom<<std::endl;
             while(this->getCollision()==-1){
                 this->globalTransform.t.y-=0.1f;
                 this->setGlobalTransform(this->globalTransform);
@@ -1235,23 +1354,95 @@ class GameObject{
             if(difftime(time(NULL),this->timerIA)>4){
                 this->carapaceRespawn=true;
             }
+            // if(direction!=glm::normalize(this->collisions[2]->basEspace-this->basEspace) && glm::distance(this->basEspace,this->collisions[2]->basEspace)>20){
+            //     std::cout<<"respawn"<<std::endl;
+            //     this->carapaceRespawn=true;
+            // }
         }
 
         void descendreEtoile(float deltaTime){
             std::cout<<this->basEspace[1]<<std::endl;
             if(!this->auSol){
                 if(this->basEspace[1]>=this->collisions[1]->centreEspace[1]){
-                    glm::vec3 newPosition = this->globalTransform.t + glm::vec3(0.0,-1.0,0.0) * glm::vec3(1.0) * deltaTime;
+                    glm::vec3 newPosition = this->globalTransform.t + glm::vec3(0.0,-1.0,0.0) * glm::vec3(3.0) * deltaTime;
                     Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
-                    newTransform=newTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0),1.0).rotation(glm::vec3(0.0,1.0,0.0),10));
+                    newTransform=newTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0),1.0).rotation(glm::vec3(0.0,1.0,0.0),5));
                     Transform ancien=this->globalTransform;
                     this->setGlobalTransform(newTransform);
                 }else{
                     this->auSol=true;
                 }
             }else{
-                this->globalTransform=this->globalTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0),1.0).rotation(glm::vec3(0.0,1.0,0.0),10));
+                this->globalTransform=this->globalTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0),1.0).rotation(glm::vec3(0.0,1.0,0.0),5));
                 this->setGlobalTransform(this->globalTransform);
+            }
+        }
+        
+
+        void battanKing(float deltaTime){
+            if(!this->rotationner){
+                if(sautBattan<1.5){
+                    glm::vec3 a=glm::vec3(0.0,1.0,0.0) * glm::vec3(3.0) * deltaTime;
+                    glm::vec3 newPosition = this->globalTransform.t + a;
+                    Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                    this->setGlobalTransform(newTransform);
+                    this->sautBattan+=a[1];
+                }
+                else if(this->angleBattan<90){
+                    Transform rotateY= Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), 2.0);
+                    this->angleBattan+=2.0;
+                    this->setGlobalTransform(this->globalTransform.combine_with(rotateY));
+                    if(this->angleBattan>=90){
+                        this->timerIA=time(nullptr);
+                        this->rotationner=true;
+                    }
+                }
+            }else{
+                if(difftime(time(NULL),this->timerIA)>5){
+                    if(this->sautBattan>=0){
+                        glm::vec3 a=glm::vec3(0.0,-1.0,0.0) * glm::vec3(3.5) * deltaTime;
+                        glm::vec3 newPosition = this->globalTransform.t + a;
+                        Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                        this->setGlobalTransform(newTransform);
+                        this->sautBattan+=a[1];
+                    }
+                    if(this->angleBattan>0){
+                        Transform rotateY= Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -2.5);
+                        this->angleBattan-=2.5;
+                        this->setGlobalTransform(this->globalTransform.combine_with(rotateY));
+                    }
+                    if(this->angleBattan<=0 && this->sautBattan<=0){
+                        this->timerIA=time(nullptr);
+                        this->rotationner=false;
+                        this->rotaBattan=false;
+                        this->pvBattan=false;
+                    }
+                }
+            }
+        }
+
+        void fireBallBowser(float deltaTime){
+            if(this->boolBowserFireBall){
+                glm::vec3 a=glm::normalize(this->directionCarapace);
+                glm::vec3 b=a * glm::vec3(20.0) * deltaTime;
+                glm::vec3 newPosition = this->globalTransform.t + b;
+                Transform newTransform = Transform(this->globalTransform.m, newPosition, this->globalTransform.s);
+                newTransform=newTransform.combine_with(Transform(this->globalTransform.m,glm::vec3(0.0),1.0).rotation(glm::vec3(0.0,1.0,0.0),5));
+                this->setGlobalTransform(newTransform);
+                int col=this->getCollision();
+                if(col==0){
+                    this->collisions[0]->pv-=1;
+                    this->boolBowserFireBall=false;
+                }else if(col==1){
+                    this->boolBowserFireBall=false;
+                }
+                if(glm::distance(this->distanceFireBall,this->globalTransform.t)>=glm::distance(this->distanceFireBall,this->directionCarapace)){
+                    this->boolBowserFireBall=false;
+                }
+            }else{
+                this->directionCarapace=this->collisions[0]->centreEspace-this->globalTransform.t;
+                this->distanceFireBall=this->globalTransform.t;
+                this->boolBowserFireBall=true;
             }
         }
 };

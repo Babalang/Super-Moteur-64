@@ -445,7 +445,7 @@ class Mesh{
                 glGenTextures (1, &this->Text2DalbedoID);
                 glBindTexture (GL_TEXTURE_2D, this->Text2DalbedoID);
                 std::string s(f);
-                if(s=="../textures/koopa_all.png" || s=="../textures/kuribo_cmp4.png" || s=="../textures/battan_king_face.png" || s=="../textures/battan_king_back_1.png" || s=="../textures/ookan.png"){
+                if(s=="../textures/koopa_all.png" || s=="../textures/kuribo_cmp4.png" || s=="../textures/battan_king_face.png" || s=="../textures/battan_king_back_1.png" || s=="../textures/ookan.png" || s=="../textures/houdai_cmp4.png"){
                     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
                     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
                 }else{
@@ -637,6 +637,7 @@ class Mesh{
             return t > EPSILON;
         }
 
+        
 
 };
 

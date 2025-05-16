@@ -10,6 +10,11 @@ Ni 1.000000
 d 1.000000
 illum 1
 map_Kd metalmario_nrm.png
+albedo assemblies/albedo.png
+roughness assemblies/roughness.png
+ao assemblies/ao.png
+metallic assemblies/metallic.png
+normal assemblies/normal.png
 
 newmtl Texture_0.001
 Ns 0.000000
@@ -20,6 +25,11 @@ Ni 1.000000
 d 1.000000
 illum 1
 map_Kd metalmario_nrm.png
+albedo assemblies/albedo.png
+roughness assemblies/roughness.png
+ao assemblies/ao.png
+metallic assemblies/metallic.png
+normal assemblies/normal.png
 
 newmtl Texture_1
 Ns 0.000000
@@ -30,6 +40,11 @@ Ni 1.000000
 d 1.000000
 illum 1
 map_Kd metalmario_nrm.png
+albedo assemblies/albedo.png
+roughness assemblies/roughness.png
+ao assemblies/ao.png
+metallic assemblies/metallic.png
+normal assemblies/normal.png
 
 newmtl Texture_2
 Ns 0.000000
@@ -40,6 +55,11 @@ Ni 1.000000
 d 1.000000
 illum 1
 map_Kd metalmario_nrm.png
+albedo assemblies/albedo.png
+roughness assemblies/roughness.png
+ao assemblies/ao.png
+metallic assemblies/metallic.png
+normal assemblies/normal.png
 
 newmtl Texture_3
 Ns 0.000000
@@ -50,3 +70,8 @@ Ni 1.000000
 d 1.000000
 illum 1
 map_Kd metalmario_nrm.png
+albedo assemblies/albedo.png
+roughness assemblies/roughness.png
+ao assemblies/ao.png
+metallic assemblies/metallic.png
+normal assemblies/normal.png

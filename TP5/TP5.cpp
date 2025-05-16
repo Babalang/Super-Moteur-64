@@ -143,7 +143,7 @@ void processInput(GLFWwindow *window)
                 toggleInputI = true;
             }else{
                 glm::vec3 tmp = glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t)*vitesse;
-                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
+                // Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 tmp.y = 0.0f ;
                 scene.camera.parent->frontAxe = tmp ;
                 changementDuNiveau=false;
@@ -158,7 +158,7 @@ void processInput(GLFWwindow *window)
                 toggleInputK = true;
             }else{
                 glm::vec3 tmp = -glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t)*vitesse;
-                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
+                // Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 tmp.y = 0.0f ;
                 scene.camera.parent->frontAxe = tmp ;
                 changementDuNiveau=false;
@@ -173,7 +173,7 @@ void processInput(GLFWwindow *window)
                 toggleInputL = true;
             }else{
                 scene.camera.parent->rightAxe = glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe))*vitesse;
-                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
+                // Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 changementDuNiveau=false;
             }
         }
@@ -186,7 +186,7 @@ void processInput(GLFWwindow *window)
                 toggleInputJ = true;
             }else{
                 scene.camera.parent->rightAxe = -glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe))*vitesse;
-                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
+                // Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 changementDuNiveau=false;
             }
         }
@@ -255,6 +255,34 @@ void processInput(GLFWwindow *window)
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
+}
+
+void sendTexture(GLuint text){
+    GLuint Text2DUniformID = glGetUniformLocation(programID, "hudTexture");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,text);
+    glUniform1i(Text2DUniformID,0);
+}
+GLuint loadTextureHUD(std::string filename){
+    GLuint texture;
+    int width, height, numComponents;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char * data = stbi_load (filename.c_str(),&width,&height,&numComponents,0);
+    if(data == NULL){
+        std::cout<<"Erreur de chargement de la texture : "<<filename<<std::endl;
+        return -1;
+    }
+    glGenTextures (1, &texture);
+    glBindTexture (GL_TEXTURE_2D, texture);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexImage2D (GL_TEXTURE_2D,0,(numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA),width,height,0,(numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA),GL_UNSIGNED_BYTE,data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+    glBindTexture (GL_TEXTURE_2D, 0);    
+    return texture;                                                                      
 }
 
 GameObject GOchateau;GameObject GOmariometal;GameObject light, GOPeach;
@@ -327,7 +355,8 @@ void sceneNiveau1(Scene *scene){
     Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 - Inside Peachs Castle Music.wav");
 }
 
-GameObject GOBobombBattlefieldDS,GOBattanKing,light2,GOGoomba1,GOMetalMario2;
+GameObject GOBobombBattlefieldDS,GOBattanKing,light2,GOGoomba1,GOGoomba2,GOGoomba3,GOGoomba4,GOGoomba5,GOGoomba6,GOGoomba7,GOGoomba8,GOMetalMario2,GOstar,GOcanon,GOchainchomp;
+Camera cameraNiv2(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 1000.0f);
 void sceneNiveau2(Scene *scene){
     GLuint programID=scene->root.programID;
     
@@ -335,60 +364,243 @@ void sceneNiveau2(Scene *scene){
     GOBobombBattlefieldDS.programID=programID;
     GOBobombBattlefieldDS.lireOBJ("../meshes/SM64DS_Model.obj");
     GOBobombBattlefieldDS.rajouterOBJ();
-    GOBobombBattlefieldDS.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
-    GOBobombBattlefieldDS.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),10.0));
+    GOBobombBattlefieldDS.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),20.0));
     
     //Affichage de l'objet :
+    // GOMetalMario2.programID=programID;
+    // GOMetalMario2.lireOBJ("../meshes/Mario.obj");
+    // GOMetalMario2.rajouterOBJ();
+    // Transform scale      = Transform().scale(0.1f);
+    // Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f);
+    // Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
+    // Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
+    // Transform finalTransform = translate
+    //     .combine_with(rotateY)
+    //     .combine_with(rotateX)
+    //     .combine_with(scale);
+    // GOMetalMario2.setLocalTransform(finalTransform);
+
     GOMetalMario2.programID=programID;
     GOMetalMario2.lireOBJ("../meshes/Mario.obj");
+    std::cout<<"Chargement de l'objet"<<std::endl;
     GOMetalMario2.rajouterOBJ();
-    Transform scale      = Transform().scale(0.1f);
-    Transform translate  = Transform().translation(glm::vec3(0.0f, 1.0f, 0.0f), 5.0f);
-    Transform rotateX    = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
-    Transform rotateY    = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
-    Transform finalTransform = translate
-        .combine_with(rotateY)
-        .combine_with(rotateX)
-        .combine_with(scale);
-    GOMetalMario2.setLocalTransform(finalTransform);
+    GOMetalMario2.isGround = true;
+    Transform scale = Transform().scale(0.020f);
+    Transform roll = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
+    Transform yaw = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
+    Transform combined = yaw.combine_with(roll);
+    GOMetalMario2.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,0.0),1.0).combine_with(scale).combine_with(roll));
+    GOMetalMario2.initialTransform = GOMetalMario2.transform;
+    Transform translation =Transform(glm::mat3(1.0f), glm::vec3(-132.0,10.0,126.0), 1.0f);//-132.0,10.0,126.0 50.0,90.0,-100.0
+    GOMetalMario2.setGlobalTransform(translation);
+    GOMetalMario2.nom="mario";
 
     light2.programID=programID;
     light2.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
     light2.setLocalTransform(Transform().scale(5.0f));
-    light2.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(50.0,50.0,50.0),1.0));
+    light2.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(275.0,275.0,275.0),1.0));
     light2.lightIntensity = 100000.0f;
     light2.isLight = true;
     light2.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light2.lightIntensity;
 
-    GOMetalMario2.addChild(&camera);
-    camera.setGlobalTransform(camera.globalTransform.combine_with(Transform(glm::mat3x3(1.0),glm::vec3(0.0,51.0,-1.0),1.0)));
-    scene->camera = camera;
-    scene->camera.lookAt(&GOMetalMario2);
+    // GOGoomba1.programID=programID;
+    // GOGoomba1.lireOBJ("../meshes/kuribo_model.obj");
+    // GOGoomba1.rajouterOBJ();
+    // Transform tGoomba1=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
+    // GOGoomba1.setLocalTransform(tGoomba1);
+    // GOGoomba1.setGlobalTransform(tGoomba1);
 
     GOGoomba1.programID=programID;
     GOGoomba1.lireOBJ("../meshes/kuribo_model.obj");
+    Transform tgoomba=Transform(glm::mat3x3(1.0),glm::vec3(-90.0,25.0,-11.0),0.1);
+    // tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
     GOGoomba1.rajouterOBJ();
-    Transform tGoomba1=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),1.0);
-    GOGoomba1.setLocalTransform(tGoomba1);
-    GOGoomba1.setGlobalTransform(tGoomba1);
+    GOGoomba1.setGlobalTransform(tgoomba);
+    GOGoomba1.nom="goomba";
+
+    GOGoomba2.programID=programID;
+    GOGoomba2.lireOBJ("../meshes/kuribo_model.obj");
+    tgoomba=Transform(glm::mat3x3(1.0),glm::vec3(-38.0,10.0,110.0),0.1);
+    // tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
+    GOGoomba2.rajouterOBJ();
+    GOGoomba2.setGlobalTransform(tgoomba);
+    GOGoomba2.nom="goomba";
+
+    GOGoomba3.programID=programID;
+    GOGoomba3.lireOBJ("../meshes/kuribo_model.obj");
+    tgoomba=Transform(glm::mat3x3(1.0),glm::vec3(26.0,20.0,105.0),0.1);
+    // tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
+    GOGoomba3.rajouterOBJ();
+    GOGoomba3.setGlobalTransform(tgoomba);
+    GOGoomba3.nom="goomba";
+
+    GOGoomba4.programID=programID;
+    GOGoomba4.lireOBJ("../meshes/kuribo_model.obj");
+    tgoomba=Transform(glm::mat3x3(1.0),glm::vec3(-42.0,5.0,70.5),0.1);
+    // tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
+    GOGoomba4.rajouterOBJ();
+    GOGoomba4.setGlobalTransform(tgoomba);
+    GOGoomba4.nom="goomba";
+
+    GOGoomba5.programID=programID;
+    GOGoomba5.lireOBJ("../meshes/kuribo_model.obj");
+    tgoomba=Transform(glm::mat3x3(1.0),glm::vec3(-28.0,5.0,68.0),0.1);
+    // tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
+    GOGoomba5.rajouterOBJ();
+    GOGoomba5.setGlobalTransform(tgoomba);
+    GOGoomba5.nom="goomba";
+
+    GOGoomba6.programID=programID;
+    GOGoomba6.lireOBJ("../meshes/kuribo_model.obj");
+    tgoomba=Transform(glm::mat3x3(1.0),glm::vec3(-48.0,5.0,-74.0),0.1);
+    // tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
+    GOGoomba6.rajouterOBJ();
+    GOGoomba6.setGlobalTransform(tgoomba);
+    GOGoomba6.nom="goomba";
+
+    GOGoomba7.programID=programID;
+    GOGoomba7.lireOBJ("../meshes/kuribo_model.obj");
+    tgoomba=Transform(glm::mat3x3(1.0),glm::vec3(-98.0,25.0,-28.0),0.1);
+    // tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
+    GOGoomba7.rajouterOBJ();
+    GOGoomba7.setGlobalTransform(tgoomba);
+    GOGoomba7.nom="goomba";
+
+    GOGoomba8.programID=programID;
+    GOGoomba8.lireOBJ("../meshes/kuribo_model.obj");
+    tgoomba=Transform(glm::mat3x3(1.0),glm::vec3(-110.0,20.0,56.0),0.1);
+    // tkoopa_model=tkoopa_model.combine_with(Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f));
+    GOGoomba8.rajouterOBJ();
+    GOGoomba8.setGlobalTransform(tgoomba);
+    GOGoomba8.nom="goomba";
 
     GOBattanKing.programID=programID;
     GOBattanKing.lireOBJ("../meshes/battan_king.obj");
-    Transform tBattanKing=Transform(glm::mat3x3(1.0),glm::vec3(0.0,5.0,-3.0),0.1);
+    Transform tBattanKing=Transform(glm::mat3x3(1.0),glm::vec3(37.0,90.0,-90.0),0.15);
     GOBattanKing.rajouterOBJ();
-    GOBattanKing.setLocalTransform(tBattanKing);
     GOBattanKing.setGlobalTransform(tBattanKing);
+    GOBattanKing.nom="battan";
+    // GOBattanKing.battanPV3=loadTextureHUD()
+
+    GOcanon.programID=programID;
+    GOcanon.lireOBJ("../meshes/houdai.obj");
+    // GOcanon.setLocalTransform(Transform().rotation(glm::vec3(1.0,0.0,0.0),90));
+    Transform thoudai=Transform(glm::mat3x3(1.0),glm::vec3(-111.3,2.0,109.5),0.13);
+    thoudai=thoudai.combine_with(Transform().rotation(glm::vec3(1.0,0.0,0.0),90));
+    GOcanon.rajouterOBJ();
+    GOcanon.setGlobalTransform(thoudai);
+    GOcanon.nom="houdai";
+
+    GOchainchomp.programID=programID;
+    GOchainchomp.lireOBJ("../meshes/ChainChomp.obj");
+    // GOcanon.setLocalTransform(Transform().rotation(glm::vec3(1.0,0.0,0.0),90));
+    Transform tchainchomp=Transform(glm::mat3x3(1.0),glm::vec3(13.0,40.0,36.0),0.2);
+    tchainchomp=tchainchomp.combine_with(Transform().rotation(glm::vec3(0.0,1.0,0.0),-90));
+    GOchainchomp.rajouterOBJ();
+    GOchainchomp.setGlobalTransform(tchainchomp);
+    GOchainchomp.nom="chainchomp";
     
     scene->root.addChild(&GOBobombBattlefieldDS);
     GOBobombBattlefieldDS.addChild(&GOMetalMario2);
     GOBobombBattlefieldDS.addChild(&GOGoomba1);
     GOBobombBattlefieldDS.addChild(&GOBattanKing);
+    GOBobombBattlefieldDS.addChild(&GOGoomba2);
+    GOBobombBattlefieldDS.addChild(&GOGoomba3);
+    GOBobombBattlefieldDS.addChild(&GOGoomba4);
+    GOBobombBattlefieldDS.addChild(&GOGoomba5);
+    GOBobombBattlefieldDS.addChild(&GOGoomba6);
+    GOBobombBattlefieldDS.addChild(&GOGoomba7);
+    GOBobombBattlefieldDS.addChild(&GOGoomba8);
+    GOBobombBattlefieldDS.addChild(&GOcanon);
+    GOBobombBattlefieldDS.addChild(&GOchainchomp);
+    // GOBobombBattlefieldDS.addChild(&GObridge);
     scene->lights.push_back(&light2);
-    scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
     Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 - Main Theme Music - Bob-Omb Battlefield.wav");
+    GOMetalMario2.collisions.push_back(&GOBobombBattlefieldDS);
+    GOMetalMario2.collisions.push_back(&GOGoomba1);
+    GOMetalMario2.collisions.push_back(&GOGoomba8);
+    GOMetalMario2.collisions.push_back(&GOGoomba7);
+    GOMetalMario2.collisions.push_back(&GOGoomba6);
+    GOMetalMario2.collisions.push_back(&GOGoomba5);
+    GOMetalMario2.collisions.push_back(&GOGoomba4);
+    GOMetalMario2.collisions.push_back(&GOGoomba3);
+    GOMetalMario2.collisions.push_back(&GOGoomba2);
+    GOMetalMario2.collisions.push_back(&GOBattanKing);
+    GOMetalMario2.collisions.push_back(&GOcanon);
+    GOMetalMario2.collisions.push_back(&GOchainchomp);
+    // GOMetalMario2.collisions.push_back(&GObridge);
+    GOGoomba1.collisions.push_back(&GOBobombBattlefieldDS);
+    GOBattanKing.collisions.push_back(&GOBobombBattlefieldDS);
+    GOGoomba1.collisions.push_back(&GOMetalMario2);
+    GOBattanKing.collisions.push_back(&GOMetalMario2);
+    GOGoomba2.collisions.push_back(&GOBobombBattlefieldDS);
+    GOGoomba2.collisions.push_back(&GOMetalMario2);
+    GOGoomba3.collisions.push_back(&GOBobombBattlefieldDS);
+    GOGoomba3.collisions.push_back(&GOMetalMario2);
+    GOGoomba4.collisions.push_back(&GOBobombBattlefieldDS);
+    GOGoomba4.collisions.push_back(&GOMetalMario2);
+    GOGoomba5.collisions.push_back(&GOBobombBattlefieldDS);
+    GOGoomba5.collisions.push_back(&GOMetalMario2);
+    GOGoomba6.collisions.push_back(&GOBobombBattlefieldDS);
+    GOGoomba6.collisions.push_back(&GOMetalMario2);
+    GOGoomba7.collisions.push_back(&GOBobombBattlefieldDS);
+    GOGoomba7.collisions.push_back(&GOMetalMario2);
+    GOGoomba8.collisions.push_back(&GOBobombBattlefieldDS);
+    GOGoomba8.collisions.push_back(&GOMetalMario2);
+    GOchainchomp.collisions.push_back(&GOMetalMario2);
+    GOchainchomp.collisions.push_back(&GOBobombBattlefieldDS);
+    GOMetalMario2.nom="mario";
+    GOBobombBattlefieldDS.nom="bobombbattlefield";
+    GOBobombBattlefieldDS.map=true;
+    GOMetalMario2.mettreAuSol(&GOBobombBattlefieldDS);
+    GOGoomba1.mettreAuSol(&GOBobombBattlefieldDS);
+    GOBattanKing.mettreAuSol(&GOBobombBattlefieldDS);
+    GOGoomba2.mettreAuSol(&GOBobombBattlefieldDS);
+    GOGoomba3.mettreAuSol(&GOBobombBattlefieldDS);
+    GOGoomba4.mettreAuSol(&GOBobombBattlefieldDS);
+    GOGoomba5.mettreAuSol(&GOBobombBattlefieldDS);
+    GOGoomba6.mettreAuSol(&GOBobombBattlefieldDS);
+    GOGoomba7.mettreAuSol(&GOBobombBattlefieldDS);
+    GOGoomba8.mettreAuSol(&GOBobombBattlefieldDS);
+    GOchainchomp.mettreAuSol(&GOBobombBattlefieldDS);
+    GOMetalMario2.addChild(&cameraNiv2);
+    scene->camera = cameraNiv2;
+    scene->camera.lookAt(&GOMetalMario2);
+    GOGoomba1.creerIA();
+    GOGoomba1.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOBattanKing.creerIA();
+    GOBattanKing.boiteEnglobante.setVerticesEspace(GOBattanKing.globalTransform);
+    GOGoomba2.creerIA();
+    GOGoomba2.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba3.creerIA();
+    GOGoomba3.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba4.creerIA();
+    GOGoomba4.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba5.creerIA();
+    GOGoomba5.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba6.creerIA();
+    GOGoomba6.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba7.creerIA();
+    GOGoomba7.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba8.creerIA();
+    GOGoomba8.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOMetalMario2.pv=3;
+    GOBattanKing.pv=3;
+    GOGoomba1.pv=1;
+    GOGoomba2.pv=1;
+    GOGoomba3.pv=1;
+    GOGoomba4.pv=1;
+    GOGoomba5.pv=1;
+    GOGoomba6.pv=1;
+    GOGoomba7.pv=1;
+    GOGoomba8.pv=1;
+    GOMetalMario2.pv=10;
+    GOBobombBattlefieldDS.stars.push_back(&GOstar);
+    // scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);z
+    // scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
 }
 
-GameObject GOkoopa1,GObowserStadium,GOMetalMario3,GOkoopa2,GOBowser,light3,GOstar;
+GameObject GOkoopa1,GObowserStadium,GOMetalMario3,GOkoopa2,GOBowser,light3,GOBowserFireBall;
 Camera Cswitch(45.0f, float(SCR_WIDTH)/float(SCR_HEIGHT), 0.1f, 1000.0f);
 void sceneNiveau3(Scene *scene){
     GLuint programID=scene->root.programID;
@@ -417,7 +629,7 @@ void sceneNiveau3(Scene *scene){
     light3.programID=programID;
     light3.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
     light3.setLocalTransform(Transform().scale(5.0f));
-    light3.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(50.0,50.0,50.0),1.0));
+    light3.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(275.0,275.0,275.0),1.0));
     light3.lightIntensity = 100000.0f;
     light3.isLight = true;
     light3.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light3.lightIntensity;
@@ -452,6 +664,16 @@ void sceneNiveau3(Scene *scene){
     GOBowser.rajouterOBJ();
     GOBowser.setGlobalTransform(tkoopa_model);
     GOBowser.nom="Bowser";
+    GOBowser.bowserFireBall.push_back(GOBowserFireBall);
+    GOBowser.bowserFireBall[0].programID=programID;
+    GOBowser.bowserFireBall[0].mesh.programID=programID;
+    GOBowser.bowserFireBall[0].nom="boule de feu";
+    GOBowser.bowserFireBall[0].setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
+    GOBowser.bowserFireBall[0].setMesh(GOBowser.bowserFireBall[0].highMesh);
+    GOBowser.bowserFireBall[0].calculerBoiteEnglobante();
+    GOBowser.bowserFireBall[0].collisions.push_back(&GOMetalMario3);
+    GOBowser.bowserFireBall[0].collisions.push_back(&GObowserStadium);
+    GOBowser.bowserFireBall[0].setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0),4.0));
     
     scene->root.addChild(&GObowserStadium);
     GObowserStadium.addChild(&GOMetalMario3);
@@ -555,6 +777,7 @@ void changerNiveau(){
         scene.root.enfant.clear();
         scene.lights.clear();
         camera.setGlobalTransform(Transform());
+        scene.nouveauNiveau=true;
         // camera.speed=glm::vec3(0.0);
         // camera.axe=glm::vec3(0.0);
         niveau=scene.niveau;
@@ -568,8 +791,14 @@ void changerNiveau(){
             GOMetalMario2.changementDuNiveau=true;
             GOMetalMario3.changementDuNiveau=true;
         } else if(scene.niveau==2){
-            scene.textureSkybox("../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg","../textures/2k_moon.jpg");
+            scene.textureSkybox("../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg","../textures/ciel.jpg");
             sceneNiveau2(&scene);
+            GOmariometal.axe=glm::vec3(0.0);
+            GOMetalMario2.axe=glm::vec3(0.0);
+            GOMetalMario3.axe=glm::vec3(0.0);
+            GOmariometal.changementDuNiveau=true;
+            GOMetalMario2.changementDuNiveau=true;
+            GOMetalMario3.changementDuNiveau=true;
         } else if(scene.niveau==3){
             // camera=Cswitch;
             scene.textureSkybox("../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg","../textures/univers.jpg");
@@ -597,12 +826,32 @@ void changerNiveau(){
         toggleInputZ = false;
         activeToogle=true;
     }if(scene.reset){
+        scene.nouveauPV=true;
         scene.reset=false;
         if(niveau==1){
             GOmariometal.setGlobalTransform(GOmariometal.transformSol);
             GOmariometal.auSol=true;
         } else if(niveau==2){
-            sceneNiveau2(&scene);
+            GOGoomba1.setGlobalTransform(GOGoomba1.transformSol);
+            GOGoomba2.setGlobalTransform(GOGoomba2.transformSol);
+            GOGoomba3.setGlobalTransform(GOGoomba3.transformSol);
+            GOGoomba4.setGlobalTransform(GOGoomba4.transformSol);
+            GOGoomba5.setGlobalTransform(GOGoomba5.transformSol);
+            GOGoomba6.setGlobalTransform(GOGoomba6.transformSol);
+            GOGoomba7.setGlobalTransform(GOGoomba7.transformSol);
+            GOGoomba8.setGlobalTransform(GOGoomba8.transformSol);
+            GOBattanKing.setGlobalTransform(GOBattanKing.transformSol);
+            GOMetalMario2.setGlobalTransform(GOMetalMario2.transformSol);
+            GOGoomba1.pv=1;
+            GOGoomba2.pv=1;
+            GOGoomba3.pv=1;
+            GOGoomba4.pv=1;
+            GOGoomba5.pv=1;
+            GOGoomba6.pv=1;
+            GOGoomba7.pv=1;
+            GOGoomba8.pv=1;
+            GOBattanKing.pv=3;
+            GOMetalMario2.pv=3;
         } else if(niveau==3){
             GOMetalMario3.setGlobalTransform(GOMetalMario3.transformSol);
             GOkoopa1.clearGameObject();
@@ -632,32 +881,7 @@ void changerNiveau(){
     }
 }
 
-void sendTexture(GLuint text){
-    GLuint Text2DUniformID = glGetUniformLocation(programID, "hudTexture");
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,text);
-    glUniform1i(Text2DUniformID,0);
-}
-GLuint loadTextureHUD(std::string filename){
-    GLuint texture;
-    int width, height, numComponents;
-    unsigned char * data = stbi_load (filename.c_str(),&width,&height,&numComponents,0);
-    if(data == NULL){
-        std::cout<<"Erreur de chargement de la texture : "<<filename<<std::endl;
-        return -1;
-    }
-    glGenTextures (1, &texture);
-    glBindTexture (GL_TEXTURE_2D, texture);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexImage2D (GL_TEXTURE_2D,0,(numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA),width,height,0,(numComponents == 1 ? GL_RED : numComponents == 3 ? GL_RGB : GL_RGBA),GL_UNSIGNED_BYTE,data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-    glBindTexture (GL_TEXTURE_2D, 0);    
-    return texture;                                                                      
-}
+
 std::vector<glm::vec2> verticesCarte{glm::vec2{-0.5f,0.5f},glm::vec2{-0.5f,-0.5f},glm::vec2{0.5f,-0.5f},glm::vec2{0.5f,-0.5f},glm::vec2{0.5f,0.5f},glm::vec2{-0.5f,0.5f}};
 std::vector<glm::vec2> uvCarte{glm::vec2{0.0f,0.0f},glm::vec2{0.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,0.0f},glm::vec2{0.0f,0.0f}};
 std::vector<unsigned short> indicesCarte{0,1,2,3,4,5};
@@ -732,7 +956,7 @@ void afficherStar(){
     glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, StarIBuffer);
     glDisable(GL_DEPTH_TEST);
-    sendTexture(texturePV);
+    sendTexture(textureStar);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
     glEnable(GL_DEPTH_TEST);
 }
@@ -924,13 +1148,44 @@ int main( void )
     double lastTime = glfwGetTime();
     int nbFrames = 0;
 
-    textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
-    texturePV=loadTextureHUD("../textures/5EDC83BD_c.png");
-    textureStar=loadTextureHUD("../textures/5EDC83BD_c.png");
+    std::cout<<"iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"<<std::endl;
+    texturePV=loadTextureHUD("../textures/mario3.png");
+    textureCarte=loadTextureHUD("../textures/star0.png");
+    textureStar=loadTextureHUD("../textures/star0.png");
     initText2Da("../textures/white.png");
+    scene.nbPV=3;
+    GOMetalMario3.pv=3;
 
     do{
         changerNiveau();
+        if(scene.nouvelleEtoile){
+            if(scene.nbEtoiles==1){
+                textureStar=loadTextureHUD("../textures/star1.png");
+            }if(scene.nbEtoiles==2){
+                textureStar=loadTextureHUD("../textures/star2.png");
+            }if(scene.nbEtoiles==3){
+                textureStar=loadTextureHUD("../textures/star3.png");
+            }
+            scene.nouvelleEtoile=false;
+        }if(scene.nouveauPV){
+            if(scene.nbPV==1){
+                texturePV=loadTextureHUD("../textures/mario1.png");
+            }if(scene.nbPV==2){
+                texturePV=loadTextureHUD("../textures/mario2.png");
+            }if(scene.nbPV==3){
+                texturePV=loadTextureHUD("../textures/mario3.png");
+            }
+            scene.nouveauPV=false;
+        }if(scene.nouveauNiveau){
+            if(scene.niveau==1){
+                textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
+            }if(scene.niveau==2){
+                textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
+            }if(scene.niveau==3){
+                textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
+            }
+            scene.nouveauNiveau=false;
+        }
         lastTime = affiche(window,lastTime);
         // Measure speed
         // per-frame time logic
