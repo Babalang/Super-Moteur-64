@@ -73,6 +73,13 @@ class Transform{
             }
             return matrix;
         }
+
+        glm::mat4 toMat4() const {
+            glm::mat4 mat = glm::mat4(1.0f);
+            mat = glm::translate(mat, t);
+            mat *= glm::mat4(m) * glm::scale(glm::mat4(1.0f), glm::vec3(s));
+            return mat;
+        }
 };
 
 #endif // TRANSFORM_H

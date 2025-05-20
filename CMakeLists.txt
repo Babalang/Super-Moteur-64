@@ -20,6 +20,22 @@ endif()
 # Compile external dependencies 
 add_subdirectory (external)
 
+# Option pour désactiver les tests, export inutile, etc.
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_COLLADA_IMPORTER ON CACHE BOOL "" FORCE)
+# Ajoute Assimp à la build
+add_subdirectory(external/assimp)
+
+# Avant l'ajout d'OpenAL-Soft
+# Désactiver C++17 pour OpenAL-Soft
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(ALSOFT_CPP_STD 11 CACHE STRING "C++ Standard Version for OpenAL Soft" FORCE)
+
 # Activer la compilation statique d'OpenAL Soft
 set(ALSOFT_STATIC_LIBS ON CACHE BOOL "Build static OpenAL Soft" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Disable shared libs" FORCE)
@@ -46,6 +62,7 @@ include_directories(
 	external/glew-1.13.0/include/
     external/openal-soft-master/include
     external/openal-soft-master/build/include
+	external/assimp/include/
 	.
 
 )
@@ -87,6 +104,7 @@ add_executable(TP5
 )
 target_link_libraries(TP5
 	${ALL_LIBS}
+	assimp
 )
 # Xcode and Visual working directories
 set_target_properties(TP5 PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/TP5/")
