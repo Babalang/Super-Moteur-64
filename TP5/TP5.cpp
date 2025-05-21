@@ -964,6 +964,35 @@ void clearNiveaux(){
     GOBowser.clearGameObject();
     GOBobombBattlefieldDS.clearGameObject();
     GOGoomba1.clearGameObject();
+    GOGoomba2.clearGameObject();
+    GOGoomba3.clearGameObject();
+    GOGoomba4.clearGameObject();
+    GOGoomba5.clearGameObject();
+    GOGoomba6.clearGameObject();
+    GOGoomba7.clearGameObject();
+    GOGoomba8.clearGameObject();
+    GOQuestion.clearGameObject();
+    GOQuestion2.clearGameObject();
+    GOQuestion3.clearGameObject();
+    GOQuestion4.clearGameObject();
+    GOQuestion5.clearGameObject();
+    GOQuestion6.clearGameObject();
+    GOQuestion7.clearGameObject();
+    GOQuestion8.clearGameObject();
+    GOQuestion9.clearGameObject();
+    GOQuestion10.clearGameObject();
+    GOQuestion11.clearGameObject();
+    GOQuestion12.clearGameObject();
+    GOQuestion13.clearGameObject();
+    GOQuestion14.clearGameObject();
+    GOQuestion15.clearGameObject();
+    GOQuestion16.clearGameObject();
+    GOQuestion17.clearGameObject();
+    GOQuestion18.clearGameObject();
+    GOQuestion19.clearGameObject();
+    GOQuestionToad.clearGameObject();
+    GOQuestionYoshi.clearGameObject();
+    GOcanon.clearGameObject();
     GOkoopa1.clearGameObject();
     GOkoopa2.clearGameObject();
     GOMetalMario2.clearGameObject();
@@ -971,6 +1000,11 @@ void clearNiveaux(){
     GObowserStadium.clearGameObject();
     GOmariometal.clearGameObject();
     GOPeach.clearGameObject();
+    GOYoshi.clearGameObject();
+    GOToad.clearGameObject();
+    GOchateau.clearGameObject();
+    GOStarPlateforme.clearGameObject();
+    GOstar.clearGameObject();
     GOchateau.clearGameObject();
     empecherMouvement();
 }
@@ -1320,7 +1354,7 @@ int main( void )
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     // Hide the mouse and enable unlimited mouvement
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Set the mouse at the center of the screen
     glfwPollEvents();
