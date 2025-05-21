@@ -5,7 +5,7 @@
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <TP5/camera.h>
+#include <main/camera.h>
 
 class Scene{
     public : 
@@ -20,7 +20,8 @@ class Scene{
     Mesh skyboxmur2;
     Mesh skyboxmur3;
     Mesh skyboxmur4;
-    bool niveau2=false;
+    bool niveau1=false;
+    bool niveau2=true;
     bool niveau3=false;
     int nbEtoiles=0;
     int nbPV=3;
@@ -58,6 +59,10 @@ class Scene{
             this->nouveauPV=true;
         }
         if(obj->pv==0 || obj->basEspace[1]<=-30.0f || obj->collisionChateau=="eau"){
+            //std::cout<<"pv : "<<obj->pv<<std::endl;
+            //std::cout<<"bas : "<<obj->basEspace[1]<<std::endl;
+            //std::cout<<"col : "<<obj->collisionChateau<<std::endl;
+            obj->collisionChateau="";
             this->reset=true;
             // if(obj->collisionChateau=="eau"){
             //     Audio::playAudioOnce("../audios/UI/Drowning.wav",glm::vec3(0.0f));
@@ -99,6 +104,7 @@ class Scene{
                     // obj->setGlobalTransform(Transform(obj->globalTransform.m,glm::vec3(0.0,75.5,32.0),obj->globalTransform.s));
                     obj->setGlobalTransform(obj->transformSol);
                     nbEtoiles++;nouvelleEtoile=true;
+                    this->niveau1=true;
                 }
             }
         }
@@ -306,7 +312,7 @@ class Scene{
     }
 
     void textureSkybox(std::string f1,std::string f2,std::string f3,std::string f4,std::string f5,std::string f6){
-        std::cout<<"hehooo"<<std::endl;
+        //std::cout<<"hehooo"<<std::endl;
         this->skyboxplafond.filename=f1;
         this->skyboxplafond.loadTexture();
         this->skyboxsol.filename=f2;

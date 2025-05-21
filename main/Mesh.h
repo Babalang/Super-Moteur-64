@@ -24,7 +24,7 @@ using namespace glm;
 #include <common/vboindexer.hpp>
 #include <common/texture.hpp>
 #include <common/text2D.hpp>
-#include <TP5/stb_image.h>
+#include <main/stb_image.h>
 #include<unordered_map>
 #include "Transform.h"
 
@@ -145,7 +145,7 @@ class Mesh{
             }
             generateUVs();
             if(test){
-                // std::cout<<"Calcul des normales"<<std::endl;
+                // //std::cout<<"Calcul des normales"<<std::endl;
                 compute_Normals();
             }
         }
@@ -159,7 +159,7 @@ class Mesh{
         bool setMesh(const char* path) {
             bool test = loadOFF(path, indexed_vertices, this->indices, this->triangles );
             if(test){
-                // std::cout<<"Calcul des normales"<<std::endl;
+                // //std::cout<<"Calcul des normales"<<std::endl;
                 compute_Normals();
             }
             return test;
@@ -209,7 +209,7 @@ class Mesh{
             int width, height, numComponents;
             unsigned char * data = stbi_load (this->filename.c_str(),&width,&height,&numComponents,0);
             if(data == NULL){
-                std::cout<<"Erreur de chargement de la texture : "<<this->filename<<std::endl;
+                //std::cout<<"Erreur de chargement de la texture : "<<this->filename<<std::endl;
                 return;
             }
             glGenTextures (1, &Text2DalbedoID);
@@ -228,7 +228,7 @@ class Mesh{
             int width, height, numComponents;
             unsigned char * data = stbi_load (path,&width,&height,&numComponents,0);
             if(data == NULL){
-                std::cout<<"Erreur de chargement de la texture : "<<path<<std::endl;
+                //std::cout<<"Erreur de chargement de la texture : "<<path<<std::endl;
                 return;
             }
             glGenTextures (1, &id);
@@ -237,7 +237,7 @@ class Mesh{
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            // std::cout<<"help me"<<std::endl;
+            // //std::cout<<"help me"<<std::endl;
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             GLenum format = GL_RGB;
             if(numComponents == 2){
@@ -305,7 +305,7 @@ class Mesh{
 
         void draw(bool test = true){
             if(this->programID == 0){
-                std::cout<<"Erreur de chargement du shader !"<<std::endl;
+                //std::cout<<"Erreur de chargement du shader !"<<std::endl;
                 return;
             }
             glUseProgram(this->programID);
@@ -457,7 +457,7 @@ class Mesh{
                                                 STBI_rgb_alpha);
                                                 // 0);
                 if(data == NULL){
-                    std::cout<<"Erreur de chargement de la texture : "<<f<<std::endl;
+                    //std::cout<<"Erreur de chargement de la texture : "<<f<<std::endl;
                     return;
                 }
                 glGenTextures (1, &this->Text2DalbedoID);
@@ -854,10 +854,10 @@ class Mesh{
 //             this->scale = scale;
 //             Assimp::Importer importer;
 //             baseScene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-//             std::cout << "Nombre de meshes : " << baseScene->mNumMeshes << std::endl;
-//             std::cout << "Nombre d’animations : " << baseScene->mNumAnimations << std::endl;
+//             //std::cout << "Nombre de meshes : " << baseScene->mNumMeshes << std::endl;
+//             //std::cout << "Nombre d’animations : " << baseScene->mNumAnimations << std::endl;
 //             for (unsigned int i = 0; i < baseScene->mNumMeshes; i++) {
-//                 std::cout << "Mesh " << i << " contient " << baseScene->mMeshes[i]->mNumVertices << " vertices" << std::endl;
+//                 //std::cout << "Mesh " << i << " contient " << baseScene->mMeshes[i]->mNumVertices << " vertices" << std::endl;
 //             }
 //             if (!baseScene || !baseScene->mRootNode) {
 //                 std::cerr << "Scene or root node is null!" << std::endl;
@@ -871,11 +871,11 @@ class Mesh{
 //             if (!baseScene->HasAnimations()) {
 //                 std::cerr << "⚠️ Aucune animation dans le fichier DAE !" << std::endl;
 //             } else {
-//                 std::cout << "Root node name: " << baseScene->mRootNode->mName.C_Str() << std::endl;
-//                 std::cout << "Root node children: " << baseScene->mRootNode->mNumChildren << std::endl;
-//                 std::cout << "Nombre d'animations : " << baseScene->mNumAnimations << std::endl;
-//                 std::cout << "Frames (duration): " << baseScene->mAnimations[0]->mDuration << std::endl;
-//                 std::cout << "Ticks per second: " << baseScene->mAnimations[0]->mTicksPerSecond << std::endl;
+//                 //std::cout << "Root node name: " << baseScene->mRootNode->mName.C_Str() << std::endl;
+//                 //std::cout << "Root node children: " << baseScene->mRootNode->mNumChildren << std::endl;
+//                 //std::cout << "Nombre d'animations : " << baseScene->mNumAnimations << std::endl;
+//                 //std::cout << "Frames (duration): " << baseScene->mAnimations[0]->mDuration << std::endl;
+//                 //std::cout << "Ticks per second: " << baseScene->mAnimations[0]->mTicksPerSecond << std::endl;
 //                 PrintNodeHierarchy(baseScene->mRootNode);  
 //             }
 //             for (unsigned int i = 0; i < baseScene->mNumMeshes; i++) {
@@ -1016,7 +1016,7 @@ class Mesh{
             
 //         bakedAnimations[path] = std::move(bakedFrames);
         
-//         std::cout << "✅ Added animation from: " << path << std::endl;
+//         //std::cout << "✅ Added animation from: " << path << std::endl;
 //     }
 //     catch (const std::exception& e) {
 //         std::cerr << "❌ Error while processing animation: " << e.what() << std::endl;
@@ -1046,7 +1046,7 @@ class Mesh{
 //                 if (boneTransforms.find(boneName) != boneTransforms.end()) {
 //                     finalBoneMatrices[index] = boneTransforms[boneName] * boneOffsets[index];
 //                 } else {
-//                     std::cout << "Bone non trouvé dans boneTransforms : " << boneName << std::endl;
+//                     //std::cout << "Bone non trouvé dans boneTransforms : " << boneName << std::endl;
 //                     finalBoneMatrices[index] = glm::mat4(1.0f);
 //                 }
 //             }
@@ -1093,8 +1093,8 @@ class Mesh{
 //         }
 
 //         void PrintNodeHierarchy(const aiNode* node, int depth = 0) {
-//             for (int i = 0; i < depth; ++i) std::cout << "  ";
-//             std::cout << node->mName.C_Str() << std::endl;
+//             for (int i = 0; i < depth; ++i) //std::cout << "  ";
+//             //std::cout << node->mName.C_Str() << std::endl;
 //             for (unsigned int i = 0; i < node->mNumChildren; ++i) {
 //                 PrintNodeHierarchy(node->mChildren[i], depth + 1);
 //             }

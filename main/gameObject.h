@@ -1,7 +1,7 @@
 
-#include <TP5/Plane.h>
-#include <TP5/Transform.h>
-// #include <TP5/audio.h>
+#include <main/Plane.h>
+#include <main/Transform.h>
+// #include <main/audio.h>
 #include <time.h>
 // Assimp
 // #include <assimp/Importer.hpp> 
@@ -221,7 +221,7 @@ class GameObject{
             if (isMoving) {
                 // if(hasAnimation){
                 //     for(auto& mesh : this->animationMeshes.baseMeshes){
-                //         //std::cout<<"draw"<<std::endl;
+                //         ////std::cout<<"draw"<<std::endl;
                 //         //mesh.draw(false);
                 //     }
                 // elapsedTime += deltaTime;
@@ -241,7 +241,7 @@ class GameObject{
                 
                 // }
                 // if(length(axe) <=0.0f){
-                //     std::cout<<length(axe)<<std::endl;
+                //     //std::cout<<length(axe)<<std::endl;
                 //     setAnimation("../animations/mario/Idle.dae");
                 // }
                 // Transform translation = Transform().translation(glm::vec3(0.0f,1.0f,0.0f),this->transform.s/0.011f);
@@ -318,7 +318,7 @@ class GameObject{
                     }else if(this->nom=="shell"){
                         this->bougeCarapace(deltaTime);
                         if(this->carapaceRespawn){
-                            std::cout<<this->carapaceRespawn<<std::endl;
+                            //std::cout<<this->carapaceRespawn<<std::endl;
                             this->clearGameObject();
                             this->nom="koopa";
                             this->isIA=true;
@@ -350,12 +350,12 @@ class GameObject{
                         obj->collisions[0]->stars[0]->collisions.push_back(obj);
                         obj->collisions[0]->addChild(obj->collisions[0]->stars[0]);
                         obj->collisions.push_back(obj->collisions[0]->stars[0]);
-                        std::cout<<obj->collisions[0]->stars[0]->nom<<std::endl;
-                        std::cout<<"etoile"<<std::endl;
+                        //std::cout<<obj->collisions[0]->stars[0]->nom<<std::endl;
+                        //std::cout<<"etoile"<<std::endl;
                     }else if(this->nom=="star"){
                         this->descendreEtoile(deltaTime);
                     }else if(this->nom=="goomba"){
-                        std::cout<<"mort"<<std::endl;
+                        //std::cout<<"mort"<<std::endl;
                         for(int i=0;i<obj->collisions[0]->enfant.size();i++){
                             if(obj->collisions[0]->enfant[i]->nom=="goomba" && obj->collisions[0]->enfant[i]->pv<=0){
                                 obj->collisions[0]->enfant.erase(obj->collisions[0]->enfant.begin()+i);
@@ -367,7 +367,7 @@ class GameObject{
                             }
                         }
                     }else if(this->nom=="battan"){
-                        std::cout<<"mort"<<std::endl;
+                        //std::cout<<"mort"<<std::endl;
                         for(int i=0;i<obj->collisions[0]->enfant.size();i++){
                             if(obj->collisions[0]->enfant[i]->nom=="battan" && obj->collisions[0]->enfant[i]->pv<=0){
                                 obj->collisions[0]->enfant.erase(obj->collisions[0]->enfant.begin()+i);
@@ -402,7 +402,7 @@ class GameObject{
                         this->bowserFireBall[0].fireBallBowser(deltaTime);
                         this->bowserFireBall[0].setMesh(this->bowserFireBall[0].highMesh);
                         this->bowserFireBall[0].mesh.draw();
-                        // std::cout<<this->bowserFireBall[0].centreEspace[0]<<" "<<this->bowserFireBall[0].centreEspace[1]<<" "<<this->bowserFireBall[0].centreEspace[2]<<std::endl;
+                        // //std::cout<<this->bowserFireBall[0].centreEspace[0]<<" "<<this->bowserFireBall[0].centreEspace[1]<<" "<<this->bowserFireBall[0].centreEspace[2]<<std::endl;
                     }else if(this->nom=="koopa"){
                         this->avancer=true;
                     }else if(this->nom=="goomba" || this->nom=="chainchomp"){
@@ -567,7 +567,7 @@ class GameObject{
                     this->speed=glm::vec3(0.0);
                     this->changementDuNiveau=false;
                 }
-                std::cout<<this->basEspace[0]<<" "<<this->basEspace[1]<<" "<<this->basEspace[2]<<std::endl;
+                //std::cout<<this->basEspace[0]<<" "<<this->basEspace[1]<<" "<<this->basEspace[2]<<std::endl;
             }
         }
         
@@ -662,7 +662,7 @@ class GameObject{
             }
         }
         bool lireMTL(const char* fichier){
-            printf("Loading MTL file %s...\n", fichier);
+            // printf("Loading MTL file %s...\n", fichier);
             FILE * file = fopen(fichier, "r");
             if( file == NULL ){
                 getchar();
@@ -769,7 +769,7 @@ class GameObject{
                     fgets(stupidBuffer, 1000, file);
                 }
             }
-            std::cout<<"fini de charger le fichier MTL !"<<std::endl;
+            //std::cout<<"fini de charger le fichier MTL !"<<std::endl;
             return true;
         }
         void addEnfantOBJ(GameObject* e){
@@ -830,7 +830,7 @@ class GameObject{
         }
         bool lireOBJ(const char* filename){
             this->M = false; this->hasMesh = false; this->hasPlan = false;
-            printf("Loading OBJ file %s...\n", filename);
+            // printf("Loading OBJ file %s...\n", filename);
             GameObject goa;goa.M=true;goa.programID=this->programID;
             goa.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
             goa.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,0.0,0.0),1.0));
@@ -892,9 +892,9 @@ class GameObject{
                     }
                     glm::vec3 centre = glm::vec3((minX+maxX)/2,(minY+maxY)/2,(minZ+maxZ)/2);
                     this->centre=centre;
-                    std::cout<<"centre : "<<centre.x<<" "<<centre.y<<" "<<centre.z<<std::endl;
+                    //std::cout<<"centre : "<<centre.x<<" "<<centre.y<<" "<<centre.z<<std::endl;
                     this->bas=glm::vec3(centre[0],minY,centre[2]);
-                    std::cout<<"bas : "<<this->bas.x<<" "<<this->bas.y<<" "<<this->bas.z<<std::endl;
+                    //std::cout<<"bas : "<<this->bas.x<<" "<<this->bas.y<<" "<<this->bas.z<<std::endl;
                     glm::vec3 p1=glm::vec3(minX,minY,minZ);
                     glm::vec3 p2=glm::vec3(maxX,minY,minZ);
                     glm::vec3 p3=glm::vec3(maxX,minY,maxZ);
@@ -1085,7 +1085,7 @@ class GameObject{
                         normalIndex[2]=1;
                     }
                     else if (matches != 9){
-                        printf("File can't be read by our simple parser :-( Try exporting with other options\n");
+                        // printf("File can't be read by our simple parser :-( Try exporting with other options\n");
                         fclose(file);
                         return false;
                     }
@@ -1108,7 +1108,7 @@ class GameObject{
             // For each vertex of each triangle
             
             fclose(file);
-            std::cout<<"fini de charger le fichier OBJ !"<<std::endl;
+            //std::cout<<"fini de charger le fichier OBJ !"<<std::endl;
             return true;
         }
 
@@ -1119,9 +1119,9 @@ class GameObject{
             this->visionIA.m_direction[1]=0.0;
             this->rayonDepart=this->visionIA.m_direction;
             this->rotationDepart = this->globalTransform.m;
-            std::cout<<"nouvelle IA cree !"<<std::endl;
-            std::cout<<"direction : "<<this->visionIA.m_direction.x<<" "<<this->visionIA.m_direction.y<<" "<<this->visionIA.m_direction.z<<std::endl;
-            std::cout<<"position : "<<this->visionIA.m_origin.x<<" "<<this->visionIA.m_origin.y<<" "<<this->visionIA.m_origin.z<<std::endl;
+            //std::cout<<"nouvelle IA cree !"<<std::endl;
+            //std::cout<<"direction : "<<this->visionIA.m_direction.x<<" "<<this->visionIA.m_direction.y<<" "<<this->visionIA.m_direction.z<<std::endl;
+            //std::cout<<"position : "<<this->visionIA.m_origin.x<<" "<<this->visionIA.m_origin.y<<" "<<this->visionIA.m_origin.z<<std::endl;
         }
 
         void calculerBoiteEnglobante() {
@@ -1131,7 +1131,7 @@ class GameObject{
             }
 
             if (isGround) {
-                std::cout << "Cet objet est marqué comme sol, pas de boîte englobante générée." << std::endl;
+                //std::cout << "Cet objet est marqué comme sol, pas de boîte englobante générée." << std::endl;
                 return;
             }
         
@@ -1367,7 +1367,7 @@ class GameObject{
         }
 
         void mettreAuSol(GameObject* map){
-            std::cout<<this->nom<<std::endl;
+            //std::cout<<this->nom<<std::endl;
             while(this->getCollision()==-1){
                 this->globalTransform.t.y-=0.1f;
                 this->setGlobalTransform(this->globalTransform);
@@ -1416,7 +1416,7 @@ class GameObject{
                 this->carapaceRespawn=true;
             }
             // if(direction!=glm::normalize(this->collisions[2]->basEspace-this->basEspace) && glm::distance(this->basEspace,this->collisions[2]->basEspace)>20){
-            //     std::cout<<"respawn"<<std::endl;
+            //     //std::cout<<"respawn"<<std::endl;
             //     this->carapaceRespawn=true;
             // }
         }

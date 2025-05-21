@@ -24,7 +24,7 @@ using namespace glm;
 #include <common/vboindexer.hpp>
 #include <common/texture.hpp>
 #include <common/text2D.hpp>
-#include <TP5/Mesh.h>
+#include <main/Mesh.h>
 
 #include "Transform.h"
 

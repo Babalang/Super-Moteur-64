@@ -36,8 +36,8 @@ using namespace glm;
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 // #include "stb_image.h"
-#include <TP5/stb_image.h>
-// #include <TP5/audio.h>
+#include <main/stb_image.h>
+// #include <main/audio.h>
 // #include "../cegui-0-8-7/cegui/include/CEGUI/CEGUI.h"
 #endif
 
@@ -114,13 +114,13 @@ double affiche(GLFWwindow *window,double lastTime){
 //         if (std::regex_search(line, match, unitRegex)) {
 //             if (match.size() > 1) {
 //                 float meterValue = std::stof(match[1].str());
-//                 std::cout << "Unité trouvée dans le .dae : " << meterValue << " m" << std::endl;
+//                 //std::cout << "Unité trouvée dans le .dae : " << meterValue << " m" << std::endl;
 //                 return meterValue;
 //             }
 //         }
 //     }
 
-//     std::cout << "Pas de balise <unit meter=.../> trouvée, on prend 1.0 par défaut." << std::endl;
+//     //std::cout << "Pas de balise <unit meter=.../> trouvée, on prend 1.0 par défaut." << std::endl;
 //     return 1.0f;
 // }
 
@@ -156,12 +156,12 @@ void processInput(GLFWwindow *window)
             scene.camera.theta += cameraSpeed;
         if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS){
             scene.camera.orbitalRadius = glm::max(10.0f, scene.camera.orbitalRadius - cameraZoomSpeed);
-            std::cout<<"Camera distance : "<<scene.camera.orbitalRadius<<std::endl;
+            //std::cout<<"Camera distance : "<<scene.camera.orbitalRadius<<std::endl;
 
         }
         if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS){
             scene.camera.orbitalRadius = glm::min(100.0f, scene.camera.orbitalRadius + cameraZoomSpeed);
-            std::cout<<"Camera distance : "<<scene.camera.orbitalRadius<<std::endl;
+            //std::cout<<"Camera distance : "<<scene.camera.orbitalRadius<<std::endl;
         }
     }
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
@@ -254,13 +254,13 @@ void processInput(GLFWwindow *window)
         toggleInputC = true;
         if(scene.camera.mode == CAMERA_MODE::CLASSIC){
             scene.camera.mode = CAMERA_MODE::ORBITAL;
-            std::cout<<"Mode camera : orbital"<<std::endl;
+            //std::cout<<"Mode camera : orbital"<<std::endl;
         } else if(scene.camera.mode == CAMERA_MODE::ORBITAL){
             scene.camera.mode = CAMERA_MODE::FIRST_PERSON;
-            std::cout<<"Mode camera : up"<<std::endl;
+            //std::cout<<"Mode camera : up"<<std::endl;
         } else if(scene.camera.mode == CAMERA_MODE::FIRST_PERSON){
             scene.camera.mode = CAMERA_MODE::CLASSIC;
-            std::cout<<"Mode camera : classic"<<std::endl;
+            //std::cout<<"Mode camera : classic"<<std::endl;
         }
     }
     if(glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE && toggleInputC == true){
@@ -295,7 +295,7 @@ GLuint loadTextureHUD(std::string filename){
     stbi_set_flip_vertically_on_load(true);
     unsigned char * data = stbi_load (filename.c_str(),&width,&height,&numComponents,0);
     if(data == NULL){
-        std::cout<<"Erreur de chargement de la texture : "<<filename<<std::endl;
+        //std::cout<<"Erreur de chargement de la texture : "<<filename<<std::endl;
         return -1;
     }
     glGenTextures (1, &texture);
@@ -324,7 +324,7 @@ void sceneNiveau1(Scene *scene){
     
     GOmariometal.programID=programID;
     GOmariometal.lireOBJ("../meshes/Mario.obj");
-    std::cout<<"Chargement de l'objet"<<std::endl;
+    //std::cout<<"Chargement de l'objet"<<std::endl;
     GOmariometal.rajouterOBJ();
     GOmariometal.isGround = true;
     Transform scale = Transform().scale(0.020f);
@@ -337,11 +337,11 @@ void sceneNiveau1(Scene *scene){
 
     // std::string path = "../animations/mario/Idle.dae";
     // float scaleFromFile = readDaeUnitScale(path);
-    // std::cout<<"UnitScale : "<<scaleFromFile<<std::endl;
-    // std::cout << "Chargement de la première animation..." << std::endl;
+    // //std::cout<<"UnitScale : "<<scaleFromFile<<std::endl;
+    // //std::cout << "Chargement de la première animation..." << std::endl;
     // GOmariometal.animationMeshes.loadAnimatedModel("../animations/mario/Idle.dae", scaleFromFile*2);
     // GOmariometal.hasAnimation = true;
-    // std::cout << "Chargement des animations supplémentaires..." << std::endl;
+    // //std::cout << "Chargement des animations supplémentaires..." << std::endl;
     // GOmariometal.animationMeshes.addAnimation("../animations/mario/Walking.dae");
     // GOmariometal.animationMeshes.addAnimation("../animations/mario/Running.dae");
     // GOmariometal.animationMeshes.addAnimation("../animations/mario/Jump.dae");
@@ -359,7 +359,7 @@ void sceneNiveau1(Scene *scene){
     Transform translation =Transform(glm::mat3(1.0f), glm::vec3(20.0f, 10.0f, -50.5f), 1.0f);
     // Transform translation =Transform(glm::mat3(1.0f), glm::vec3(0.0f, 80.0f, 32.0f), 1.0f);
     GOmariometal.setGlobalTransform(translation);
-    std::cout<<GOmariometal.globalTransform.t[0]<<" "<<GOmariometal.globalTransform.t[1]<<" "<<GOmariometal.globalTransform.t[2]<<std::endl;
+    //std::cout<<GOmariometal.globalTransform.t[0]<<" "<<GOmariometal.globalTransform.t[1]<<" "<<GOmariometal.globalTransform.t[2]<<std::endl;
 
     GOPeach.programID=programID;
     GOPeach.lireOBJ("../meshes/Peach.obj");
@@ -507,7 +507,7 @@ void sceneNiveau1(Scene *scene){
     GOYoshi.setLocalTransform(tYoshi.combine_with(tYoshi.rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f)));
     
     // Affichage de la lumière :
-    std::cout<<"Chargement de la lumière"<<std::endl;
+    //std::cout<<"Chargement de la lumière"<<std::endl;
     
     light.programID=programID;
     light.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
@@ -518,7 +518,7 @@ void sceneNiveau1(Scene *scene){
     light.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light.lightIntensity;
 
     // Ajout de la caméra :
-    std::cout<<"Chargement de la Caméra"<<std::endl;
+    //std::cout<<"Chargement de la Caméra"<<std::endl;
     GOmariometal.addChild(&camera);
     scene->camera = camera;
     scene->camera.lookAt(&GOmariometal);
@@ -603,19 +603,21 @@ void sceneNiveau1(Scene *scene){
     GOmariometal.collisions.push_back(&GOQuestionToad);
     GOQuestionToad.collisions.push_back(&GOmariometal);
     GOQuestionToad.collisions.push_back(&GOToad);
-    GOchateau.stars.push_back(&GOStarPlateforme);
-    GOchateau.stars[0]->auSol=true;
-    GOchateau.stars[0]->programID=programID;
-    GOchateau.stars[0]->lireOBJ("../meshes/star.obj");
-    GOchateau.stars[0]->rajouterOBJ();
-    GOchateau.stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(-0.5,80.0,39.0),1.0));
-    GOchateau.stars[0]->nom="star";
-    GOchateau.stars[0]->isIA=true;
-    // GOchateau.stars[0]->auSol=false;
-    GOchateau.stars[0]->collisions.push_back(&GOchateau);
-    GOchateau.stars[0]->collisions.push_back(&GOmariometal);
-    GOchateau.addChild(GOchateau.stars[0]);
-    GOmariometal.collisions.push_back(GOchateau.stars[0]);
+    if(!scene->niveau1){
+        GOchateau.stars.push_back(&GOStarPlateforme);
+        GOchateau.stars[0]->auSol=true;
+        GOchateau.stars[0]->programID=programID;
+        GOchateau.stars[0]->lireOBJ("../meshes/star.obj");
+        GOchateau.stars[0]->rajouterOBJ();
+        GOchateau.stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(-0.5,80.0,39.0),1.0));
+        GOchateau.stars[0]->nom="star";
+        GOchateau.stars[0]->isIA=true;
+        // GOchateau.stars[0]->auSol=false;
+        GOchateau.stars[0]->collisions.push_back(&GOchateau);
+        GOchateau.stars[0]->collisions.push_back(&GOmariometal);
+        GOchateau.addChild(GOchateau.stars[0]);
+        GOmariometal.collisions.push_back(GOchateau.stars[0]);
+    }
     GOmariometal.nom="mario";
     GOPeach.nom="peach";
     GOchateau.nom="chateau";
@@ -658,7 +660,7 @@ void sceneNiveau2(Scene *scene){
 
     GOMetalMario2.programID=programID;
     GOMetalMario2.lireOBJ("../meshes/Mario.obj");
-    std::cout<<"Chargement de l'objet"<<std::endl;
+    //std::cout<<"Chargement de l'objet"<<std::endl;
     GOMetalMario2.rajouterOBJ();
     GOMetalMario2.isGround = true;
     Transform scale = Transform().scale(0.020f);
@@ -750,13 +752,15 @@ void sceneNiveau2(Scene *scene){
     GOGoomba8.setGlobalTransform(tgoomba);
     GOGoomba8.nom="goomba";
 
-    GOBattanKing.programID=programID;
-    GOBattanKing.lireOBJ("../meshes/battan_king.obj");
-    Transform tBattanKing=Transform(glm::mat3x3(1.0),glm::vec3(37.0,90.0,-90.0),0.15);
-    GOBattanKing.rajouterOBJ();
-    GOBattanKing.setGlobalTransform(tBattanKing);
-    GOBattanKing.nom="battan";
-    // GOBattanKing.battanPV3=loadTextureHUD()
+    if(!scene->niveau2){
+        GOBattanKing.programID=programID;
+        GOBattanKing.lireOBJ("../meshes/battan_king.obj");
+        Transform tBattanKing=Transform(glm::mat3x3(1.0),glm::vec3(37.0,90.0,-90.0),0.15);
+        GOBattanKing.rajouterOBJ();
+        GOBattanKing.setGlobalTransform(tBattanKing);
+        GOBattanKing.nom="battan";
+        // GOBattanKing.battanPV3=loadTextureHUD()
+    }
 
     GOcanon.programID=programID;
     GOcanon.lireOBJ("../meshes/houdai.obj");
@@ -779,7 +783,7 @@ void sceneNiveau2(Scene *scene){
     scene->root.addChild(&GOBobombBattlefieldDS);
     GOBobombBattlefieldDS.addChild(&GOMetalMario2);
     GOBobombBattlefieldDS.addChild(&GOGoomba1);
-    GOBobombBattlefieldDS.addChild(&GOBattanKing);
+    if(!scene->niveau2)GOBobombBattlefieldDS.addChild(&GOBattanKing);
     GOBobombBattlefieldDS.addChild(&GOGoomba2);
     GOBobombBattlefieldDS.addChild(&GOGoomba3);
     GOBobombBattlefieldDS.addChild(&GOGoomba4);
@@ -801,14 +805,14 @@ void sceneNiveau2(Scene *scene){
     GOMetalMario2.collisions.push_back(&GOGoomba4);
     GOMetalMario2.collisions.push_back(&GOGoomba3);
     GOMetalMario2.collisions.push_back(&GOGoomba2);
-    GOMetalMario2.collisions.push_back(&GOBattanKing);
+    if(!scene->niveau2)GOMetalMario2.collisions.push_back(&GOBattanKing);
     GOMetalMario2.collisions.push_back(&GOcanon);
     GOMetalMario2.collisions.push_back(&GOchainchomp);
     // GOMetalMario2.collisions.push_back(&GObridge);
     GOGoomba1.collisions.push_back(&GOBobombBattlefieldDS);
-    GOBattanKing.collisions.push_back(&GOBobombBattlefieldDS);
+    if(!scene->niveau2)GOBattanKing.collisions.push_back(&GOBobombBattlefieldDS);
     GOGoomba1.collisions.push_back(&GOMetalMario2);
-    GOBattanKing.collisions.push_back(&GOMetalMario2);
+    if(!scene->niveau2)GOBattanKing.collisions.push_back(&GOMetalMario2);
     GOGoomba2.collisions.push_back(&GOBobombBattlefieldDS);
     GOGoomba2.collisions.push_back(&GOMetalMario2);
     GOGoomba3.collisions.push_back(&GOBobombBattlefieldDS);
@@ -830,7 +834,7 @@ void sceneNiveau2(Scene *scene){
     GOBobombBattlefieldDS.map=true;
     GOMetalMario2.mettreAuSol(&GOBobombBattlefieldDS);
     GOGoomba1.mettreAuSol(&GOBobombBattlefieldDS);
-    GOBattanKing.mettreAuSol(&GOBobombBattlefieldDS);
+    if(!scene->niveau2)GOBattanKing.mettreAuSol(&GOBobombBattlefieldDS);
     GOGoomba2.mettreAuSol(&GOBobombBattlefieldDS);
     GOGoomba3.mettreAuSol(&GOBobombBattlefieldDS);
     GOGoomba4.mettreAuSol(&GOBobombBattlefieldDS);
@@ -844,8 +848,8 @@ void sceneNiveau2(Scene *scene){
     scene->camera.lookAt(&GOMetalMario2);
     GOGoomba1.creerIA();
     GOGoomba1.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
-    GOBattanKing.creerIA();
-    GOBattanKing.boiteEnglobante.setVerticesEspace(GOBattanKing.globalTransform);
+    if(!scene->niveau2)GOBattanKing.creerIA();
+    if(!scene->niveau2)GOBattanKing.boiteEnglobante.setVerticesEspace(GOBattanKing.globalTransform);
     GOGoomba2.creerIA();
     GOGoomba2.boiteEnglobante.setVerticesEspace(GOGoomba2.globalTransform);
     GOGoomba3.creerIA();
@@ -863,7 +867,7 @@ void sceneNiveau2(Scene *scene){
     // GOchainchomp.creerIA();
     // GOchainchomp.boiteEnglobante.setVerticesEspace(GOchainchomp.globalTransform);
     GOMetalMario2.pv=3;
-    GOBattanKing.pv=3;
+    if(!scene->niveau2)GOBattanKing.pv=3;
     GOGoomba1.pv=1;
     GOGoomba2.pv=1;
     GOGoomba3.pv=1;
@@ -994,11 +998,11 @@ void sceneNiveau3(Scene *scene){
     GOkoopa1.creerIA();
     GOkoopa1.boiteEnglobante.setVerticesEspace(GOkoopa1.globalTransform);
     GOMetalMario3.pv=3;
-    GOBowser.pv=1;
+    GOBowser.pv=3;
     GOkoopa1.pv=1;
     GOkoopa2.pv=1;
     GObowserStadium.stars.push_back(&GOstar);
-    std::cout<<"mario position : "<<GOMetalMario3.centreEspace[0]<<" "<<GOMetalMario3.centreEspace[1]<<" "<<GOMetalMario3.centreEspace[2]<<std::endl;
+    //std::cout<<"mario position : "<<GOMetalMario3.centreEspace[0]<<" "<<GOMetalMario3.centreEspace[1]<<" "<<GOMetalMario3.centreEspace[2]<<std::endl;
     scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
     // Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 Soundtrack - Bowser's Theme.wav");
 }
@@ -1029,6 +1033,35 @@ void clearNiveaux(){
     GOBowser.clearGameObject();
     GOBobombBattlefieldDS.clearGameObject();
     GOGoomba1.clearGameObject();
+    GOGoomba2.clearGameObject();
+    GOGoomba3.clearGameObject();
+    GOGoomba4.clearGameObject();
+    GOGoomba5.clearGameObject();
+    GOGoomba6.clearGameObject();
+    GOGoomba7.clearGameObject();
+    GOGoomba8.clearGameObject();
+    GOQuestion.clearGameObject();
+    GOQuestion2.clearGameObject();
+    GOQuestion3.clearGameObject();
+    GOQuestion4.clearGameObject();
+    GOQuestion5.clearGameObject();
+    GOQuestion6.clearGameObject();
+    GOQuestion7.clearGameObject();
+    GOQuestion8.clearGameObject();
+    GOQuestion9.clearGameObject();
+    GOQuestion10.clearGameObject();
+    GOQuestion11.clearGameObject();
+    GOQuestion12.clearGameObject();
+    GOQuestion13.clearGameObject();
+    GOQuestion14.clearGameObject();
+    GOQuestion15.clearGameObject();
+    GOQuestion16.clearGameObject();
+    GOQuestion17.clearGameObject();
+    GOQuestion18.clearGameObject();
+    GOQuestion19.clearGameObject();
+    GOQuestionToad.clearGameObject();
+    GOQuestionYoshi.clearGameObject();
+    GOcanon.clearGameObject();
     GOkoopa1.clearGameObject();
     GOkoopa2.clearGameObject();
     GOMetalMario2.clearGameObject();
@@ -1036,6 +1069,11 @@ void clearNiveaux(){
     GObowserStadium.clearGameObject();
     GOmariometal.clearGameObject();
     GOPeach.clearGameObject();
+    GOYoshi.clearGameObject();
+    GOToad.clearGameObject();
+    GOchateau.clearGameObject();
+    GOStarPlateforme.clearGameObject();
+    GOstar.clearGameObject();
     GOchateau.clearGameObject();
     empecherMouvement();
 }
@@ -1131,7 +1169,6 @@ void changerNiveau(){
         toggleInputZ = false;
         activeToogle=true;
     }if(scene.reset){
-        std::cout<<"hihi"<<std::endl;
         scene.nouveauPV=true;
         scene.reset=false;
         if(niveau==1){
@@ -1298,7 +1335,7 @@ void initText2Da(const char * texturePath){
     int width, height, numComponents;
     unsigned char * data = stbi_load (texturePath,&width,&height,&numComponents,0);
     if(data == NULL){
-        std::cout<<"Erreur de chargement de la texture : "<<texturePath<<std::endl;
+        //std::cout<<"Erreur de chargement de la texture : "<<texturePath<<std::endl;
         return ;
     }
     glGenTextures (1, &Text2DTextureID);
@@ -1441,7 +1478,7 @@ int main( void )
     scene.root.programID=programID;
     scene.programID=programID;
     scene.creerSkybox();
-    std::cout<<"Niveau crée"<<std::endl;
+    //std::cout<<"Niveau crée"<<std::endl;
 
     // Audio::init();
 

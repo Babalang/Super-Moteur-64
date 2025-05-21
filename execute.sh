@@ -25,4 +25,4 @@ echo "Building the project with make..."
 make -j VERBOSE=1 || error_exit "Failed to build project."
 echo "Project built."
 
-./launch-TP5.sh || error_exit "Failed to launch the project."
+./launch-main.sh || error_exit "Failed to launch the project."
