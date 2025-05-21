@@ -97,12 +97,6 @@ class Scene{
             }
         }
         if(niveau==2){
-            // for(int i=0;i<obj->collisions.size();i++){
-            //     if(obj->collisions[i]->nom=="star"){
-            //         Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
-            //         camera.lookAt(obj->collisions[i]);
-            //     }
-            // }
             if(obj->nbCollision>0){
                 if(obj->collisions[obj->nbCollision]->nom=="star"){
                     Audio::playAudioOnce("../audios/UI/Completion.wav",glm::vec3(0.0f));
@@ -113,12 +107,6 @@ class Scene{
             }
         }
         if(niveau==3){
-            // for(int i=0;i<obj->collisions.size();i++){
-            //     if(obj->collisions[i]->nom=="star"){
-            //         Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
-            //         camera.lookAt(obj->collisions[i]);
-            //     }
-            // }
             if(obj->nbCollision>0){
                 if(obj->collisions[obj->nbCollision]->nom=="star"){
                     Audio::playAudioOnce("../audios/UI/Completion.wav",glm::vec3(0.0f));

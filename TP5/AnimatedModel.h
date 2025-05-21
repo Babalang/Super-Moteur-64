@@ -14,8 +14,6 @@
 #include <iostream>
 #include <unistd.h>
 
-// Include GLEW
-
 // Include GLFW
 #include <GLFW/glfw3.h>
 #include <glm/gtx/string_cast.hpp>
@@ -37,8 +35,8 @@ using namespace glm;
 #include<unordered_map>
 #include "Transform.h"
 
-#include <assimp/scene.h>       // pour aiScene, aiNode, aiAnimation...
-#include <glm/glm.hpp>          // glm pour les maths (vec3, mat4, quat)
+#include <assimp/scene.h>
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -55,42 +53,33 @@ class AnimatedModel {
     std::shared_ptr<Assimp::Importer> importer;
     std::map<std::string, const aiScene*> animScenes;
     std::map<std::string, std::shared_ptr<Assimp::Importer>> animationImporters;
+
     bool processAnimation(const std::string& path, const aiAnimation* animation) {
         try {
             float ticksPerSecond = animation->mTicksPerSecond != 0 ? animation->mTicksPerSecond : 25.0f;
             float durationInSeconds = animation->mDuration / ticksPerSecond;
             const float targetFPS = 24.0f;
-            
             std::vector<std::vector<glm::mat4>> bakedFrames;
             size_t numFrames = static_cast<size_t>(durationInSeconds * targetFPS);
             bakedFrames.reserve(numFrames);
-            
-            std::cout << "Baking animation: " << path << " (" << numFrames << " frames)" << std::endl;
-            
-            // Vérifier la validité des données avant le baking
+            std::cout << "Baking animation: " << path << " (" << numFrames << " frames)" << std::endl;            
             if (!baseScene || !baseScene->mRootNode) {
                 std::cerr << "❌ Invalid base scene or root node" << std::endl;
                 return false;
             }
-
-            // Copier les données d'animation nécessaires
             std::vector<aiNodeAnim*> channelsCopy;
             for (unsigned int i = 0; i < animation->mNumChannels; i++) {
                 channelsCopy.push_back(animation->mChannels[i]);
             }
-            
             for (float t = 0.0f; t < durationInSeconds; t += 1.0f / targetFPS) {
                 float animationTime = fmod(t * ticksPerSecond, animation->mDuration);
                 std::map<std::string, glm::mat4> boneTransforms;
-                
                 try {
                     ReadNodeHierarchy(animationTime, baseScene->mRootNode, glm::mat4(1.0f), boneTransforms, animation);
-                    
                     std::vector<glm::mat4> finalBones(boneOffsets.size(), glm::mat4(1.0f));
                     for (const auto& pair : boneNameToIndex) {
                         const std::string& boneName = pair.first;
                         int boneIndex = pair.second;
-                        
                         if (boneIndex >= 0 && boneIndex < boneOffsets.size()) {
                             if (boneTransforms.count(boneName) > 0) {
                                 finalBones[boneIndex] = boneTransforms[boneName] * boneOffsets[boneIndex];
@@ -100,20 +89,18 @@ class AnimatedModel {
                     bakedFrames.push_back(std::move(finalBones));
                 }
                 catch (const std::exception& e) {
-                    std::cerr << "❌ Error processing frame at time " << t << ": " << e.what() << std::endl;
+                    std::cerr << " !! Error processing frame at time " << t << ": " << e.what() << std::endl;
                     continue;
                 }
             }
-            
             if (!bakedFrames.empty()) {
                 bakedAnimations[path] = std::move(bakedFrames);
                 return true;
             }
-            
             return false;
         }
         catch (const std::exception& e) {
-            std::cerr << "❌ Error baking animation: " << e.what() << std::endl;
+            std::cerr << " !! Error baking animation: " << e.what() << std::endl;
             return false;
         }
     }
@@ -130,20 +117,18 @@ class AnimatedModel {
         float scale;
 
         AnimatedModel() : importer(std::make_shared<Assimp::Importer>()) {
-            // Configuration de l'importeur
             importer->SetPropertyInteger(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, 1);
         }
 
     
-    glm::mat4 aiMat4ToGlm(const aiMatrix4x4& from) {
-        glm::mat4 to;
-        to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
-        to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
-        to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
-        to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
-        return to;
-    }
-
+        glm::mat4 aiMat4ToGlm(const aiMatrix4x4& from) {
+            glm::mat4 to;
+            to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+            to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+            to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+            to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+            return to;
+        }
 
         aiVector3D CalcInterpolatedValueFromKey(float animationTime, const int numKeys, const aiVectorKey* const vectorKey) const
         {
@@ -153,24 +138,17 @@ class AnimatedModel {
                 ret = vectorKey[0].mValue;
                 return ret;
             }
-
             unsigned int keyIndex = FindKeyIndex(animationTime, numKeys, vectorKey);
             unsigned int nextKeyIndex = keyIndex + 1;
-
             assert(nextKeyIndex < numKeys);
-
             float deltaTime = vectorKey[nextKeyIndex].mTime - vectorKey[keyIndex].mTime;
             float factor = (animationTime - (float)vectorKey[keyIndex].mTime) / deltaTime;
-
             assert(factor >= 0.0f && factor <= 1.0f);
-
             const aiVector3D& startValue = vectorKey[keyIndex].mValue;
             const aiVector3D& endValue = vectorKey[nextKeyIndex].mValue;
-
             ret.x = startValue.x + (endValue.x - startValue.x) * factor;
             ret.y = startValue.y + (endValue.y - startValue.y) * factor;
             ret.z = startValue.z + (endValue.z - startValue.z) * factor;
-
             return ret;
         }
 
@@ -182,22 +160,16 @@ class AnimatedModel {
                 ret = quatKey[0].mValue;
                 return ret;
             }
-
             unsigned int keyIndex = FindKeyIndex(animationTime, numKeys, quatKey);
             unsigned int nextKeyIndex = keyIndex + 1;
-
             assert(nextKeyIndex < numKeys);
-
             float deltaTime = quatKey[nextKeyIndex].mTime - quatKey[keyIndex].mTime;
             float factor = (animationTime - (float)quatKey[keyIndex].mTime) / deltaTime;
-
             assert(factor >= 0.0f && factor <= 1.0f);
-
             const aiQuaternion& startValue = quatKey[keyIndex].mValue;
             const aiQuaternion& endValue = quatKey[nextKeyIndex].mValue;
             aiQuaternion::Interpolate(ret, startValue, endValue, factor);
             ret = ret.Normalize();
-
             return ret;
         }
 
@@ -235,14 +207,12 @@ class AnimatedModel {
             for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
                 aiVector3D pos = mesh->mVertices[i];
                 result.indexed_vertices.push_back(glm::vec3(pos.x, pos.y, pos.z));
-    
                 if (mesh->HasNormals()) {
                     aiVector3D n = mesh->mNormals[i];
                     result.normal.push_back(glm::vec3(n.x, n.y, n.z));
                 } else {
                     result.normal.push_back(glm::vec3(0.0f));
                 }
-    
                 if (mesh->mTextureCoords[0]) {
                     aiVector3D uv = mesh->mTextureCoords[0][i];
                     result.texCoords.push_back(glm::vec2(uv.x, uv.y));
@@ -266,106 +236,96 @@ class AnimatedModel {
             std::map<std::string, glm::mat4>& boneTransforms, 
             const aiAnimation* currentAnimation = nullptr) {
             try {
-            if (!node) {
-            std::cerr << "Node is null!" << std::endl;
-            return;
-            }
-
-            std::string nodeName(node->mName.data);
-            const aiAnimation* animation = currentAnimation ? currentAnimation : 
-            (baseScene && baseScene->mNumAnimations > 0 ? baseScene->mAnimations[0] : nullptr);
-
-            if (!animation) {
-            std::cerr << "No valid animation found for node: " << nodeName << std::endl;
-            return;
-            }
-
-            glm::mat4 nodeTransform;
-
-            const aiNodeAnim* nodeAnim = FindNodeAnim(animation, nodeName);
-
-            if (node == baseScene->mRootNode || nodeName.find("Hips") != std::string::npos) {
-            // Pour le root node et les hanches
-            if (nodeAnim && nodeAnim->mNumRotationKeys > 0 && nodeAnim->mNumScalingKeys > 0) {
-                const aiVector3D& scaling = CalcInterpolatedValueFromKey(
-                    animationTime, 
-                    nodeAnim->mNumScalingKeys, 
-                    nodeAnim->mScalingKeys
-                );
-                const aiQuaternion& rotationQ = CalcInterpolatedValueFromKey(
-                    animationTime, 
-                    nodeAnim->mNumRotationKeys, 
-                    nodeAnim->mRotationKeys
-                );
-                
-                glm::mat4 scalingM = glm::scale(glm::mat4(1.0f), 
-                    glm::vec3(scaling.x, scaling.y, scaling.z));
-                glm::mat4 rotationM = glm::toMat4(
-                    glm::quat(rotationQ.w, rotationQ.x, rotationQ.y, rotationQ.z));
-                
-                if (node == baseScene->mRootNode) {
-                    scalingM = glm::scale(glm::mat4(1.0f), glm::vec3(this->scale));
+                if (!node) {
+                    std::cerr << "Node is null!" << std::endl;
+                    return;
                 }
-                
-                nodeTransform = rotationM * scalingM;
-            } else {
-                nodeTransform = node == baseScene->mRootNode ? 
-                    glm::scale(glm::mat4(1.0f), glm::vec3(this->scale)) : 
-                    aiMat4ToGlm(node->mTransformation);
-            }
-            } else {
-            if (nodeAnim) {
-                // Vérifier que nous avons des keyframes valides
-                if (nodeAnim->mNumScalingKeys > 0 && 
-                    nodeAnim->mNumRotationKeys > 0 && 
-                    nodeAnim->mNumPositionKeys > 0) {
-                    
-                    const aiVector3D& scaling = CalcInterpolatedValueFromKey(
-                        animationTime, 
-                        nodeAnim->mNumScalingKeys, 
-                        nodeAnim->mScalingKeys
-                    );
-                    const aiQuaternion& rotationQ = CalcInterpolatedValueFromKey(
-                        animationTime, 
-                        nodeAnim->mNumRotationKeys, 
-                        nodeAnim->mRotationKeys
-                    );
-                    const aiVector3D& translation = CalcInterpolatedValueFromKey(
-                        animationTime, 
-                        nodeAnim->mNumPositionKeys, 
-                        nodeAnim->mPositionKeys
-                    );
 
-                    nodeTransform = glm::translate(glm::mat4(1.0f), 
-                        glm::vec3(translation.x, translation.y, translation.z)) *
-                        glm::toMat4(glm::quat(rotationQ.w, rotationQ.x, rotationQ.y, rotationQ.z)) *
-                        glm::scale(glm::mat4(1.0f), 
+                std::string nodeName(node->mName.data);
+                const aiAnimation* animation = currentAnimation ? currentAnimation : 
+                (baseScene && baseScene->mNumAnimations > 0 ? baseScene->mAnimations[0] : nullptr);
+                if (!animation) {
+                    std::cerr << "No valid animation found for node: " << nodeName << std::endl;
+                    return;
+                }
+
+                glm::mat4 nodeTransform;
+
+                const aiNodeAnim* nodeAnim = FindNodeAnim(animation, nodeName);
+
+                if (node == baseScene->mRootNode || nodeName.find("Hips") != std::string::npos) {
+                    if (nodeAnim && nodeAnim->mNumRotationKeys > 0 && nodeAnim->mNumScalingKeys > 0) {
+                        const aiVector3D& scaling = CalcInterpolatedValueFromKey(
+                            animationTime, 
+                            nodeAnim->mNumScalingKeys, 
+                            nodeAnim->mScalingKeys
+                        );
+                        const aiQuaternion& rotationQ = CalcInterpolatedValueFromKey(
+                            animationTime, 
+                            nodeAnim->mNumRotationKeys, 
+                            nodeAnim->mRotationKeys
+                        );
+                        glm::mat4 scalingM = glm::scale(glm::mat4(1.0f), 
                             glm::vec3(scaling.x, scaling.y, scaling.z));
+                        glm::mat4 rotationM = glm::toMat4(
+                            glm::quat(rotationQ.w, rotationQ.x, rotationQ.y, rotationQ.z));
+                        if (node == baseScene->mRootNode) {
+                            scalingM = glm::scale(glm::mat4(1.0f), glm::vec3(this->scale));
+                        }
+                        nodeTransform = rotationM * scalingM;
+                    } else {
+                        nodeTransform = node == baseScene->mRootNode ? 
+                            glm::scale(glm::mat4(1.0f), glm::vec3(this->scale)) : 
+                            aiMat4ToGlm(node->mTransformation);
+                    }
                 } else {
-                    nodeTransform = aiMat4ToGlm(node->mTransformation);
+                    if (nodeAnim) {
+                        if (nodeAnim->mNumScalingKeys > 0 && 
+                            nodeAnim->mNumRotationKeys > 0 && 
+                            nodeAnim->mNumPositionKeys > 0) {
+                            const aiVector3D& scaling = CalcInterpolatedValueFromKey(
+                                animationTime, 
+                                nodeAnim->mNumScalingKeys, 
+                                nodeAnim->mScalingKeys
+                            );
+                            const aiQuaternion& rotationQ = CalcInterpolatedValueFromKey(
+                                animationTime, 
+                                nodeAnim->mNumRotationKeys, 
+                                nodeAnim->mRotationKeys
+                            );
+                            const aiVector3D& translation = CalcInterpolatedValueFromKey(
+                                animationTime, 
+                                nodeAnim->mNumPositionKeys, 
+                                nodeAnim->mPositionKeys
+                            );
+                            nodeTransform = glm::translate(glm::mat4(1.0f), 
+                                glm::vec3(translation.x, translation.y, translation.z)) *
+                                glm::toMat4(glm::quat(rotationQ.w, rotationQ.x, rotationQ.y, rotationQ.z)) *
+                                glm::scale(glm::mat4(1.0f), 
+                                    glm::vec3(scaling.x, scaling.y, scaling.z));
+                        } else {
+                            nodeTransform = aiMat4ToGlm(node->mTransformation);
+                        }
+                    } else {
+                        nodeTransform = aiMat4ToGlm(node->mTransformation);
+                    }
                 }
-            } else {
-                nodeTransform = aiMat4ToGlm(node->mTransformation);
-            }
-            }
-
-            glm::mat4 globalTransform = parentTransform * nodeTransform;
-            boneTransforms[nodeName] = globalTransform;
-
-            for (unsigned int i = 0; i < node->mNumChildren; i++) {
-            if (node->mChildren[i]) {
-                ReadNodeHierarchy(animationTime, node->mChildren[i], 
-                    globalTransform, boneTransforms, currentAnimation);
-            }
-            }
+                glm::mat4 globalTransform = parentTransform * nodeTransform;
+                boneTransforms[nodeName] = globalTransform;
+                for (unsigned int i = 0; i < node->mNumChildren; i++) {
+                    if (node->mChildren[i]) {
+                        ReadNodeHierarchy(animationTime, node->mChildren[i], 
+                            globalTransform, boneTransforms, currentAnimation);
+                    }
+                }
             }
             catch (const std::exception& e) {
-            std::cerr << "Error in ReadNodeHierarchy: " << e.what() << std::endl;
+                std::cerr << "Error in ReadNodeHierarchy: " << e.what() << std::endl;
             }
-            }
+        }
+
         void loadAnimatedModel(const std::string& path, float scale = 1.0f) {
             this->scale = scale;
-            
             unsigned int flags = 
                 aiProcess_Triangulate | 
                 aiProcess_GenNormals | 
@@ -388,14 +348,14 @@ class AnimatedModel {
             }
             this->globalInverseTransform = glm::inverse(aiMat4ToGlm(baseScene->mRootNode->mTransformation));
             if (!baseScene->HasAnimations()) {
-                std::cerr << "⚠️ Aucune animation dans le fichier DAE !" << std::endl;
+                std::cerr << " !! Aucune animation dans le fichier DAE !" << std::endl;
             } else {
                 std::cout << "Root node name: " << baseScene->mRootNode->mName.C_Str() << std::endl;
                 std::cout << "Root node children: " << baseScene->mRootNode->mNumChildren << std::endl;
                 std::cout << "Nombre d'animations : " << baseScene->mNumAnimations << std::endl;
                 std::cout << "Frames (duration): " << baseScene->mAnimations[0]->mDuration << std::endl;
                 std::cout << "Ticks per second: " << baseScene->mAnimations[0]->mTicksPerSecond << std::endl;
-                PrintNodeHierarchy(baseScene->mRootNode);  
+                //PrintNodeHierarchy(baseScene->mRootNode);  
             }
             for (unsigned int i = 0; i < baseScene->mNumMeshes; i++) {
                 aiMesh* mesh = baseScene->mMeshes[i];
@@ -422,8 +382,7 @@ class AnimatedModel {
                                 test+=weight;
                                 break;
                             }
-                        }
-                        
+                        } 
                     }
                     for (unsigned int v = 0; v < processedMesh.Weights.size(); v++) {
                         float sumWeights = 0.0f;
@@ -458,7 +417,6 @@ class AnimatedModel {
                         continue;
                     }
                     ReadNodeHierarchy(animationTime, baseScene->mRootNode, glm::mat4(1.0f),boneTransforms);
-                    
                     std::vector<glm::mat4> finalBones(boneOffsets.size(), glm::mat4(1.0f));
                     for (auto& [boneName, index] : boneNameToIndex) {
                         if (boneTransforms.find(boneName) != boneTransforms.end()) {
@@ -473,6 +431,7 @@ class AnimatedModel {
                 bakedAnimations[path] = bakedFrames;
             }
         }
+
         bool addAnimation(const std::string& path) {
             try {
                 unsigned int flags = 
@@ -486,34 +445,25 @@ class AnimatedModel {
                 const aiScene* animScene = animImporter->ReadFile(path, flags);
                 
                 if (!animScene || !animScene->HasAnimations()) {
-                    std::cerr << "❌ No animation found in: " << path << std::endl;
+                    std::cerr << " !! No animation found in: " << path << std::endl;
                     return false;
-                }
-        
-                // Stocker l'importeur et la scène
+                }        
                 animationImporters[path] = animImporter;
-                animScenes[path] = animScene;
-                
-                // Traiter l'animation
+                animScenes[path] = animScene;                
                 const aiAnimation* animation = animScene->mAnimations[0];
                 float ticksPerSecond = animation->mTicksPerSecond != 0 ? animation->mTicksPerSecond : 25.0f;
                 float durationInSeconds = animation->mDuration / ticksPerSecond;
                 const float targetFPS = 24.0f;
-                
                 std::vector<std::vector<glm::mat4>> bakedFrames;
                 size_t numFrames = static_cast<size_t>(durationInSeconds * targetFPS);
                 bakedFrames.reserve(numFrames);
-                
                 std::cout << "Baking animation: " << path << std::endl;
                 std::cout << "Duration: " << durationInSeconds << " seconds" << std::endl;
                 std::cout << "Frames: " << numFrames << std::endl;
-                
                 for (float t = 0.0f; t < durationInSeconds; t += 1.0f / targetFPS) {
                     float animationTime = fmod(t * ticksPerSecond, animation->mDuration);
                     std::map<std::string, glm::mat4> boneTransforms;
-                    
                     ReadNodeHierarchy(animationTime, baseScene->mRootNode, glm::mat4(1.0f), boneTransforms, animation);
-                    
                     std::vector<glm::mat4> finalBones(boneOffsets.size(), glm::mat4(1.0f));
                     for (const auto& pair : boneNameToIndex) {
                         if (boneTransforms.count(pair.first)) {
@@ -522,30 +472,29 @@ class AnimatedModel {
                     }
                     bakedFrames.push_back(finalBones);
                 }
-                
                 if (!bakedFrames.empty()) {
                     bakedAnimations[path] = std::move(bakedFrames);
                     animations[path].push_back(animation);
-                    std::cout << "✅ Animation ajoutée: " << path << std::endl;
+                    std::cout << "Animation ajoutée: " << path << std::endl;
                     return true;
                 }
         
                 return false;
             }
             catch (const std::exception& e) {
-                std::cerr << "❌ Error loading animation: " << e.what() << std::endl;
+                std::cerr << " !! Error loading animation: " << e.what() << std::endl;
                 return false;
             }
         }
         
         void DrawAnimatedModel(GLuint shaderProgram, int frameIndex, float animTime, const std::string& animPath, const Transform modelMatrix) {
             if (bakedAnimations.find(animPath) == bakedAnimations.end()) {
-                std::cerr << "❌ Animation not found: " << animPath << std::endl;
+                std::cerr << " !! Animation not found: " << animPath << std::endl;
                 return;
             } 
             const auto& frames = bakedAnimations[animPath];
             if (frames.empty()) {
-                std::cerr << "❌ No frames in animation: " << animPath << std::endl;
+                std::cerr << " !! No frames in animation: " << animPath << std::endl;
                 return;
             }
             frameIndex = frameIndex % frames.size();

@@ -13,8 +13,6 @@
 #include <iostream>
 #include <unistd.h>
 
-// Include GLEW
-
 // Include GLFW
 #include <GLFW/glfw3.h>
 
@@ -145,7 +143,6 @@ class Mesh{
             }
             generateUVs();
             if(test){
-                // std::cout<<"Calcul des normales"<<std::endl;
                 compute_Normals();
             }
         }
@@ -159,7 +156,6 @@ class Mesh{
         bool setMesh(const char* path) {
             bool test = loadOFF(path, indexed_vertices, this->indices, this->triangles );
             if(test){
-                // std::cout<<"Calcul des normales"<<std::endl;
                 compute_Normals();
             }
             return test;
@@ -237,7 +233,6 @@ class Mesh{
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            // std::cout<<"help me"<<std::endl;
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             GLenum format = GL_RGB;
             if(numComponents == 2){
@@ -456,7 +451,6 @@ class Mesh{
                                                 &height,
                                                 &numComponents, 
                                                 STBI_rgb_alpha);
-                                                // 0);
                 if(data == NULL){
                     std::cout<<"Erreur de chargement de la texture : "<<f<<std::endl;
                     return;
@@ -464,8 +458,7 @@ class Mesh{
                 glGenTextures (1, &this->Text2DalbedoID);
                 glBindTexture (GL_TEXTURE_2D, this->Text2DalbedoID);
                 std::string s(f);
-                if(s=="../textures/koopa_all.png" || s=="../textures/kuribo_cmp4.png" || s=="../textures/battan_king_face.png" || s=="../textures/battan_king_back_1.png" || s=="../textures/ookan.png" || s=="../textures/houdai_cmp4.png"){
-                    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+                if(s=="../textures/koopa_all.png" || s=="../textures/wood.png" || s=="../textures/wall_grass_b.png" || s=="../textures/wall_grass_a.png" || s=="../textures/tree_shadow.png" || s=="../textures/tonnel_grass.png" || s=="../textures/tonnel.png" || s=="../textures/start_grass.png" || s=="../textures/start.png" || s=="../textures/soil.png" || s=="../textures/slope_soil.png" || s=="../textures/slope_grass.png" || s=="../textures/slope.png" || s=="../textures/roller.png" || s=="../textures/rock_cannon.png" || s=="../textures/rock_b.png" || s=="../textures/rock_a_grass.png" || s=="../textures/rock_a.png" || s=="../textures/grass2.png" || s=="../textures/flower_leaf.png" || s=="../textures/flower.png" || s=="../textures/fence_thorn.png" || s=="../textures/fence.png" || s=="../textures/way.png" || s=="../textures/kuribo_cmp4.png" || s=="../textures/battan_king_face.png" || s=="../textures/battan_king_back_1.png" || s=="../textures/ookan.png" || s=="../textures/houdai_cmp4.png" || s=="../textures/kinopio.png"){                    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
                     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
                 }else{
                     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -637,7 +630,7 @@ class Mesh{
             float a = glm::dot(edge1, h);
 
             if (fabs(a) < EPSILON)
-                return false; // Rayon parallèle au triangle
+                return false;
 
             float f = 1.0f / a;
             glm::vec3 s = origin - v0;

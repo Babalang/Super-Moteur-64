@@ -26,9 +26,9 @@ class Transform{
             return glm::normalize(m*p);
         }
         Transform combine_with(Transform t) const {
-            glm::mat3 combined_m = this->m * t.m; // Combine les rotations
-            glm::vec3 combined_t = this->t + (this->m * t.t); // Combine les translations sans appliquer l'échelle
-            float combined_s = this->s * t.s; // Combine les échelles
+            glm::mat3 combined_m = this->m * t.m;
+            glm::vec3 combined_t = this->t + (this->m * t.t);
+            float combined_s = this->s * t.s;
             return Transform(combined_m, combined_t, combined_s);
         }
         

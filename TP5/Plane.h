@@ -11,8 +11,6 @@
 #include <iostream>
 #include <unistd.h>
 
-// Include GLEW
-
 // Include GLFW
 #include <GLFW/glfw3.h>
 
@@ -115,7 +113,7 @@ class Plane : public Mesh{
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glBindTexture (GL_TEXTURE_2D, 0); // unbind the texture
+            glBindTexture (GL_TEXTURE_2D, 0); 
             std::cout<<"Texture loaded"<<std::endl;
             return textureID;
         }
@@ -226,27 +224,20 @@ class Plane : public Mesh{
             return glm::vec2(u, v);
         }
 
-        // Fonction pour appliquer un filtre de moyenne mobile sur la heightmap
         float applySmoothingFilter(int x, int y, int textureWidth, int textureHeight, const std::vector<unsigned char>& textureData) {
             float sum = 0.0f;
             int count = 0;
-
-            // Appliquer un filtre de 3x3 (pixel voisin immédiat)
             for (int dy = -4; dy <= 4; ++dy) {
                 for (int dx = -4; dx <= 4; ++dx) {
                     int nx = x + dx;
                     int ny = y + dy;
-
-                    // Gérer les bords de l'image
                     if (nx >= 0 && ny >= 0 && nx < textureWidth && ny < textureHeight) {
                         int index = ny * textureWidth + nx;
-                        sum += (textureData[index] / 255.0f);  // Valeur normalisée de [0,1]
+                        sum += (textureData[index] / 255.0f);
                         ++count;
                     }
                 }
             }
-
-            // Retourner la moyenne des voisins
             return sum / count;
         }
 
@@ -261,7 +252,7 @@ class Plane : public Mesh{
                 int x = static_cast<int>(uv.x * textureWidth) % textureWidth;
                 int y = static_cast<int>(uv.y * textureHeight) % textureHeight;
                 float smoothedHeight = applySmoothingFilter(x, y, textureWidth, textureHeight, textureData);
-                return ((smoothedHeight - 0.5) * scale);  // Retourner la hauteur lissée
+                return ((smoothedHeight - 0.5) * scale);
             } 
             return 0.0f;
         }

@@ -241,7 +241,7 @@ class GameObject{
             float scaleFromFile = readDaeUnitScale(basePath);
             animationMeshes.loadAnimatedModel(basePath, scaleFromFile*2);
             hasAnimation = true;
-            std::cout << "✅ Modèle de base chargé : "<<basePath << std::endl;
+            std::cout << "Modèle de base chargé : "<<basePath << std::endl;
             for (auto& mesh : animationMeshes.baseMeshes) {
                 mesh.loadPBR("../textures/assemblies/albedo.png",
                             "../textures/assemblies/normal.png",
@@ -251,7 +251,7 @@ class GameObject{
             }
             for (const auto& anim : animationFiles) {
                 animationMeshes.addAnimation(anim);
-                std::cout << "✅ Animation ajoutée : " << anim << std::endl;
+                std::cout << "Animation ajoutée : " << anim << std::endl;
             }
             for (auto& mesh : animationMeshes.baseMeshes) {
                 mesh.programID = programID;
@@ -274,31 +274,27 @@ class GameObject{
             GLuint scaleUniformID = glGetUniformLocation(programID, "scale");
             if (isMoving) {
                 if(hasAnimation){
-                    for(auto& mesh : this->animationMeshes.baseMeshes){
-                        //std::cout<<"draw"<<std::endl;
-                        //mesh.draw(false);
+                    elapsedTime += deltaTime;
+                    if (elapsedTime >= frameDuration) {
+                        currentFrame = (currentFrame + 1) % animationMeshes.bakedAnimations[currentAnimationKey].size();
+                        elapsedTime = 0.0f;
                     }
-                elapsedTime += deltaTime;
-                if (elapsedTime >= frameDuration) {
-                    currentFrame = (currentFrame + 1) % animationMeshes.bakedAnimations[currentAnimationKey].size();
-                    elapsedTime = 0.0f;
-                }
                 
-                if(length(axe) > 0.0f){
-                    glm::vec3 projectedAxe = glm::normalize(glm::vec3(axe.x, 0.0f, axe.z));
-                    glm::vec3 reference = glm::vec3(0.0f, 0.0f, 1.0f);
-                    float dotProduct = glm::dot(projectedAxe, reference);
-                    float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f));
-                    float angleSignedRadians = glm::atan(projectedAxe.x, projectedAxe.z);
-                    float angleDegrees = glm::degrees(angleSignedRadians);
-                    rotAnimation = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angleDegrees);
-                
-                }
-                if(rightAxe == vec3(0.0f) && frontAxe == vec3(0.0f) && isGround){
-                    setAnimation("../animations/mario/Idle.dae");
-                }
-                Transform translation = Transform().translation(glm::vec3(0.0f,1.0f,0.0f),this->transform.s/0.011f);
-                animationMeshes.DrawAnimatedModel(this->programID, currentFrame, elapsedTime, currentAnimationKey, this->globalTransform.combine_with(translation).combine_with(rotAnimation));
+                    if(length(axe) > 0.0f){
+                        glm::vec3 projectedAxe = glm::normalize(glm::vec3(axe.x, 0.0f, axe.z));
+                        glm::vec3 reference = glm::vec3(0.0f, 0.0f, 1.0f);
+                        float dotProduct = glm::dot(projectedAxe, reference);
+                        float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f));
+                        float angleSignedRadians = glm::atan(projectedAxe.x, projectedAxe.z);
+                        float angleDegrees = glm::degrees(angleSignedRadians);
+                        rotAnimation = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angleDegrees);
+                    
+                    }
+                    if(rightAxe == vec3(0.0f) && frontAxe == vec3(0.0f) && isGround){
+                        setAnimation("../animations/mario/Idle.dae");
+                    }
+                    Transform translation = Transform().translation(glm::vec3(0.0f,1.0f,0.0f),this->transform.s/0.011f);
+                    animationMeshes.DrawAnimatedModel(this->programID, currentFrame, elapsedTime, currentAnimationKey, this->globalTransform.combine_with(translation).combine_with(rotAnimation));
                 }
                 if (speed != glm::vec3(0.0, 0.0, 0.0)){
                     if(!isCollision)PhysicMove(deltaTime);
@@ -307,17 +303,6 @@ class GameObject{
                     if (hasLOD) {
                         updateLOD(cameraPosition);
                     }
-                    // bool dansCamera=true;
-                    // for(int i=0;i<this->boiteEnglobante.vertices_Espace.size();i++){
-                    //     for(int j=0;j<frustum.size();j++){
-                    //         if(glm::dot(glm::vec3(frustum[j]),this->boiteEnglobante.vertices_Espace[i])+frustum[j].w<0){
-                    //             dansCamera=false;
-                    //             break;
-                    //         }
-                    //     }
-                    //     if(!dansCamera)break;
-                    // }
-                    // if(dansCamera)
                     this->mesh.draw();
                 } else if (hasPlan) {
                     glUniform1f(scaleUniformID, this->transform.s);
@@ -370,7 +355,6 @@ class GameObject{
                     }else if(this->nom=="shell"){
                         this->bougeCarapace(deltaTime);
                         if(this->carapaceRespawn){
-                            std::cout<<this->carapaceRespawn<<std::endl;
                             this->clearGameObject();
                             this->nom="koopa";
                             this->isIA=true;
@@ -452,7 +436,6 @@ class GameObject{
                         this->bowserFireBall[0].fireBallBowser(deltaTime);
                         this->bowserFireBall[0].setMesh(this->bowserFireBall[0].highMesh);
                         this->bowserFireBall[0].mesh.draw();
-                        // std::cout<<this->bowserFireBall[0].centreEspace[0]<<" "<<this->bowserFireBall[0].centreEspace[1]<<" "<<this->bowserFireBall[0].centreEspace[2]<<std::endl;
                     }else if(this->nom=="koopa"){
                         this->avancer=true;
                     }else if(this->nom=="goomba"){
@@ -570,7 +553,6 @@ class GameObject{
                     glm::vec2 intersect = this->parent->plan.intersection(this->globalTransform.t, glm::vec3(0.0,-1.0,0.0), this->parent->transform.s);
                     height = this->parent->plan.getHeightAtUV(intersect, this->parent->transform.s);
                 }
-                // glm::vec3 NormalizedAxe = glm::length(frontAxe+rightAxe) > 0.0f ? glm::normalize(frontAxe+rightAxe) : frontAxe+rightAxe;
                 glm::vec3 NormalizedAxe=frontAxe+rightAxe;
                 axe = NormalizedAxe;
                 glm::vec3 movement = NormalizedAxe * (vitesse * this->globalTransform.s * deltaTime);
@@ -617,7 +599,6 @@ class GameObject{
                     this->speed=glm::vec3(0.0);
                     this->changementDuNiveau=false;
                 }
-                // std::cout<<this->centreEspace[0]<<" "<<this->centreEspace[1]<<" "<<this->centreEspace[2]<<std::endl;
             }
         }
         
@@ -651,7 +632,6 @@ class GameObject{
             for(int i=0;i<this->collisions.size();i++){
                 if(collisions[i]->map){
                     if(collisions[i]->nom=="chateau"){
-                        std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaachateau"<<std::endl;
                         for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
                             float minX=std::numeric_limits<float>::max(),minY=std::numeric_limits<float>::max(),minZ=std::numeric_limits<float>::max(),maxX=0.0,maxY=0.0,maxZ=0.0;
                             for(int k=0;k<collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace.size();k++){
@@ -667,7 +647,6 @@ class GameObject{
                                     for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
                                         for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
                                             if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
-                                                std::cout<<collisions[i]->nom<<std::endl;
                                                 this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
                                                 return i;
                                             }
@@ -678,13 +657,11 @@ class GameObject{
                             }
                         }
                     }else{
-                        // std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabobomb"<<std::endl;
                         for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
                             for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
                                 for(int l=0;l<this->boiteEnglobante.triangles.size();l++){
                                     if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
                                         this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
-                                        // std::cout<<collisions[i]->nom<<std::endl;
                                         return i;
                                     }
                                 }
@@ -906,7 +883,6 @@ class GameObject{
             while( 1 ){
                 long position = ftell(file);
                 char lineHeader[128];
-                // read the first word of the line
                 int res = fscanf(file, "%s", lineHeader);
                 if (res == EOF){
                     if(Factuel){
@@ -944,9 +920,7 @@ class GameObject{
                     }
                     glm::vec3 centre = glm::vec3((minX+maxX)/2,(minY+maxY)/2,(minZ+maxZ)/2);
                     this->centre=centre;
-                    std::cout<<"centre : "<<centre.x<<" "<<centre.y<<" "<<centre.z<<std::endl;
                     this->bas=glm::vec3(centre[0],minY,centre[2]);
-                    std::cout<<"bas : "<<this->bas.x<<" "<<this->bas.y<<" "<<this->bas.z<<std::endl;
                     glm::vec3 p1=glm::vec3(minX,minY,minZ);
                     glm::vec3 p2=glm::vec3(maxX,minY,minZ);
                     glm::vec3 p3=glm::vec3(maxX,minY,maxZ);
@@ -1069,7 +1043,6 @@ class GameObject{
                     goa.mesh.texCoords.clear();
                     fseek(file, position, SEEK_SET);
                 }
-                // else : parse lineHeader
                 else if ( strcmp( lineHeader, "mtllib" ) == 0 ){
                     char mtllib[100];
                     fscanf(file, "%s\n", mtllib );
@@ -1151,14 +1124,11 @@ class GameObject{
                     normalIndices.push_back(normalIndex[1]);
                     normalIndices.push_back(normalIndex[2]);
                 }else{
-                    // Probably a comment, eat up the rest of the line
                     char stupidBuffer[10000];
                     fgets(stupidBuffer, 1000, file);
                 }
     
-            }
-            // For each vertex of each triangle
-            
+            }            
             fclose(file);
             std::cout<<"fini de charger le fichier OBJ !"<<std::endl;
             return true;
@@ -1185,13 +1155,9 @@ class GameObject{
             if (isGround) {
                 std::cout << "Cet objet est marqué comme sol, pas de boîte englobante générée." << std::endl;
                 return;
-            }
-        
-            // Initialiser les valeurs min et max
+            }        
             glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
-            glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
-        
-            // Parcourir les vertices du mesh
+            glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());        
             for (const auto& vertex : mesh.indexed_vertices) {
                 if (vertex.x < min.x) min.x = vertex.x;
                 if (vertex.y < min.y) min.y = vertex.y;
@@ -1200,13 +1166,9 @@ class GameObject{
                 if (vertex.x > max.x) max.x = vertex.x;
                 if (vertex.y > max.y) max.y = vertex.y;
                 if (vertex.z > max.z) max.z = vertex.z;
-            }
-        
-            // Calculer le centre et les dimensions de la boîte englobante
+            }        
             this->centre = (min + max) / 2.0f;
-            this->bas = glm::vec3(centre.x, min.y, centre.z);
-        
-            // Créer les 8 points de la boîte englobante
+            this->bas = glm::vec3(centre.x, min.y, centre.z);        
             glm::vec3 p1 = glm::vec3(min.x, min.y, min.z);
             glm::vec3 p2 = glm::vec3(max.x, min.y, min.z);
             glm::vec3 p3 = glm::vec3(max.x, min.y, max.z);
@@ -1214,12 +1176,8 @@ class GameObject{
             glm::vec3 p5 = glm::vec3(min.x, max.y, min.z);
             glm::vec3 p6 = glm::vec3(max.x, max.y, min.z);
             glm::vec3 p7 = glm::vec3(max.x, max.y, max.z);
-            glm::vec3 p8 = glm::vec3(min.x, max.y, max.z);
-        
-            // Ajouter les points à la boîte englobante
-            boiteEnglobante.indexed_vertices = {p1, p2, p3, p4, p5, p6, p7, p8};
-        
-            // Ajouter les triangles pour former la boîte
+            glm::vec3 p8 = glm::vec3(min.x, max.y, max.z);        
+            boiteEnglobante.indexed_vertices = {p1, p2, p3, p4, p5, p6, p7, p8};        
             boiteEnglobante.triangles = {
                 {0, 1, 2}, {2, 3, 0}, // Face inférieure
                 {4, 5, 6}, {6, 7, 4}, // Face supérieure
@@ -1227,21 +1185,15 @@ class GameObject{
                 {1, 2, 6}, {6, 5, 1}, // Face droite
                 {2, 3, 7}, {7, 6, 2}, // Face arrière
                 {3, 0, 4}, {4, 7, 3}  // Face gauche
-            };
-        
-            // Ajouter les indices pour le rendu
+            };        
             boiteEnglobante.indices.clear();
             for (const auto& triangle : boiteEnglobante.triangles) {
                 boiteEnglobante.indices.insert(boiteEnglobante.indices.end(), triangle.begin(), triangle.end());
-            }
-        
-            // Calculer les normales pour le rendu
+            }        
             boiteEnglobante.compute_Normals();
 
             boiteEnglobante.programID = this->programID;
-            boiteEnglobante.filename = "../textures/2k_moon.jpg";
-        
-            // Marquer la boîte englobante comme active
+            boiteEnglobante.filename = "../textures/2k_moon.jpg";        
             isBoiteEnglobante = true;
         }
 
@@ -1405,7 +1357,7 @@ class GameObject{
             boiteEnglobante.normal.clear();
             boiteEnglobante.texCoords.clear();
             isGround = false;
-            // collisions.clear();
+            //collisions.clear();
             map=false;
             auSol=false;
             index = 0;
@@ -1419,7 +1371,6 @@ class GameObject{
         }
 
         void mettreAuSol(GameObject* map){
-            std::cout<<this->nom<<std::endl;
             while(this->getCollision()==-1){
                 this->globalTransform.t.y-=0.1f;
                 this->setGlobalTransform(this->globalTransform);
@@ -1467,14 +1418,9 @@ class GameObject{
             if(difftime(time(NULL),this->timerIA)>4){
                 this->carapaceRespawn=true;
             }
-            // if(direction!=glm::normalize(this->collisions[2]->basEspace-this->basEspace) && glm::distance(this->basEspace,this->collisions[2]->basEspace)>20){
-            //     std::cout<<"respawn"<<std::endl;
-            //     this->carapaceRespawn=true;
-            // }
         }
 
         void descendreEtoile(float deltaTime){
-            std::cout<<this->basEspace[1]<<std::endl;
             if(!this->auSol){
                 if(this->basEspace[1]>=this->collisions[1]->centreEspace[1]){
                     glm::vec3 newPosition = this->globalTransform.t + glm::vec3(0.0,-1.0,0.0) * glm::vec3(3.0) * deltaTime;

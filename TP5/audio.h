@@ -106,8 +106,6 @@ namespace Audio {
 
 
         if (fmtSize > 16) file.ignore(fmtSize - 16);
-
-        // chercher chunk "data"
         char chunkId[4];
         uint32_t dataSize = 0;
         while (file.read(chunkId, 4)) {
@@ -115,12 +113,9 @@ namespace Audio {
             if (strncmp(chunkId, "data", 4) == 0) break;
             file.ignore(dataSize);
         }
-
         if (dataSize == 0) return false;
-
         std::vector<int16_t> data(dataSize / 2);
         file.read(reinterpret_cast<char*>(data.data()), dataSize);
-
         alGenBuffers(1, &outBuffer);
         ALenum format;
         if (numChannels == 1) {
@@ -131,10 +126,7 @@ namespace Audio {
             std::cerr << "Unsupported number of channels: " << numChannels << "\n";
             return false;
         }
-
         alBufferData(outBuffer, format, data.data(), dataSize, sampleRate);
-
-
         ALenum err = alGetError();
         if (err != AL_NO_ERROR) {
             std::cerr << "OpenAL error: " << err << std::endl;
@@ -148,9 +140,8 @@ namespace Audio {
     ALuint getBuffer(const std::string& filePath) {
         auto it = loadedBuffers.find(filePath);
         if (it != loadedBuffers.end()) {
-            return it->second; // buffer déjà chargé
+            return it->second;
         }
-        
         ALuint buffer;
         if (!loadWavFile(filePath, buffer)) {
             std::cerr << "Failed to load audio: " << filePath << std::endl;
@@ -162,35 +153,30 @@ namespace Audio {
 
     inline void playAudio(const std::string& filePath, const glm::vec3& position) {
         init();
-        
         ALuint buffer = getBuffer(filePath);
         if (buffer == 0) return;
-        
         ALuint source;
         alGenSources(1, &source);
         alSourcei(source, AL_BUFFER, buffer);
         alSource3f(source, AL_POSITION, position.x, position.y, position.z);
         alSourcef(source, AL_GAIN, 0.4f);
         alSourcePlay(source);
-        
         activeSounds.push_back({ source, buffer  }); 
     }
 
-
-        inline void update() {
-            std::vector<SoundInstance> stillPlaying;
-            for (auto& sound : activeSounds) {
-                ALint state;
-                alGetSourcei(sound.source, AL_SOURCE_STATE, &state);
-                if (state == AL_PLAYING) {
-                    stillPlaying.push_back(sound);
-                } else {
-                    alDeleteSources(1, &sound.source);
-                    // Ne pas supprimer le buffer ici, il est partagé !
-                }
+    inline void update() {
+        std::vector<SoundInstance> stillPlaying;
+        for (auto& sound : activeSounds) {
+            ALint state;
+            alGetSourcei(sound.source, AL_SOURCE_STATE, &state);
+            if (state == AL_PLAYING) {
+                stillPlaying.push_back(sound);
+            } else {
+                alDeleteSources(1, &sound.source);
             }
-            activeSounds = stillPlaying;
         }
+        activeSounds = stillPlaying;
+    }
 
 
     inline ALuint playBackgroundMusic(const std::string& filePath) {
@@ -201,11 +187,10 @@ namespace Audio {
             std::cerr << "Failed to load background music: " << filePath << std::endl;
             return 0;
         }
-
         ALuint source;
         alGenSources(1, &source);
         alSourcei(source, AL_BUFFER, buffer);
-        alSourcei(source, AL_LOOPING, AL_TRUE);  // 👈 boucle infinie
+        alSourcei(source, AL_LOOPING, AL_TRUE);
         alSourcef(source, AL_GAIN, 0.2f);
         alSourcePlay(source);
 
@@ -214,21 +199,16 @@ namespace Audio {
     }
 
     inline void switchBackgroundMusic(const std::string& filePath) {
-        // On cherche la source de la musique de fond actuelle (en supposant qu'il y en a une seule)
         for (auto it = activeSounds.begin(); it != activeSounds.end(); ++it) {
-            // Ici on peut supposer que la musique de fond est en boucle (AL_LOOPING == AL_TRUE)
             ALint looping = 0;
             alGetSourcei(it->source, AL_LOOPING, &looping);
             if (looping == AL_TRUE) {
                 alSourceStop(it->source);
                 alDeleteSources(1, &it->source);
-                // On ne supprime pas le buffer, il est dans loadedBuffers pour réutilisation
                 activeSounds.erase(it);
                 break;
             }
         }
-
-        // Puis on lance la nouvelle musique de fond
         playBackgroundMusic(filePath);
     }
 
@@ -238,15 +218,12 @@ namespace Audio {
             ALint state;
             alGetSourcei(it->second, AL_SOURCE_STATE, &state);
             if (state == AL_PLAYING) {
-                // Le son joue déjà, ne rien faire
                 return;
             } else {
-                // Son fini, on peut supprimer la source et l'enlever de la map
                 alDeleteSources(1, &it->second);
                 playingSources.erase(it);
             }
         }
-        // Jouer le son normalement et mémoriser la source
         ALuint buffer = getBuffer(filePath);
         if (buffer == 0) return;
 
@@ -264,9 +241,9 @@ namespace Audio {
         auto it = playingSources.find(filePath);
         if (it != playingSources.end()) {
             ALuint source = it->second;
-            alSourceStop(source);       // Arrête la lecture
-            alDeleteSources(1, &source); // Supprime la source OpenAL
-            playingSources.erase(it);    // Enlève de la map
+            alSourceStop(source);
+            alDeleteSources(1, &source); 
+            playingSources.erase(it);
         }
     }
 
