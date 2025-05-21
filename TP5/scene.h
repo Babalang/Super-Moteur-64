@@ -1,3 +1,6 @@
+#ifndef SCENE_H
+#define SCENE_H
+
 // Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +16,7 @@ class Scene{
     GameObject root;
     Camera camera;
     GLuint programID;
-    int niveau=2;
+    int niveau=1;
     bool reset=false;
     Mesh skyboxplafond;
     Mesh skyboxsol;
@@ -48,7 +51,7 @@ class Scene{
         this->animation(elapsedTime);
         this->sautIA(Obj);
         this->root.testIA(Obj,elapsedTime);
-        this->drawSkybox();
+        //this->drawSkybox();
         this->root.draw(camera.globalTransform.t, elapsedTime);
         this->testChangementNiveau(Map,Obj);
     }
@@ -300,3 +303,4 @@ class Scene{
         }
     }
 };
+#endif

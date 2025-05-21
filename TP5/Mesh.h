@@ -1,6 +1,12 @@
+#ifndef MESH_H
+#define MESH_H
 // Include standard headers
 #include <GL/glew.h>
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
@@ -27,6 +33,10 @@ using namespace glm;
 #include <TP5/stb_image.h>
 #include<unordered_map>
 #include "Transform.h"
+#include <map>
+#include <string>
+#include <array>
+#include <future>
 
 class Line {
     private:
@@ -115,8 +125,15 @@ class Mesh{
         std::vector<GLuint> texturesID;
         int scale=1;
         MTL mtl;
-
-        Mesh():filename(""){}
+        std::vector<std::array<int,4>> BoneIDs;     // 4 os max par vertex
+        std::vector<std::array<float,4>> Weights;  // poids correspondants
+        std::map<std::string, glm::mat4> boneOffsets;
+        std::map<int, std::string> boneIDToName;
+        
+        Mesh():filename(""){
+            BoneIDs.resize(indexed_vertices.size(), {-1,-1,-1,-1});
+            Weights.resize(indexed_vertices.size(), {0.f, 0.f, 0.f, 0.f});
+        }
 
         Mesh(const char* path, const char* texture, bool isPBR = false):filename(texture), isPBR(isPBR){
             bool test = loadOFF(path,indexed_vertices, this->indices, this->triangles);
@@ -286,7 +303,7 @@ class Mesh{
             }
         }
 
-        void draw(){
+        void draw( bool test = true){
             if(this->programID == 0){
                 std::cout<<"Erreur de chargement du shader !"<<std::endl;
                 return;
@@ -294,7 +311,8 @@ class Mesh{
             glUseProgram(this->programID);
             glGenBuffers(1,&this->vertexbuffer);
             glBindBuffer(GL_ARRAY_BUFFER,this->vertexbuffer);
-            glBufferData(GL_ARRAY_BUFFER,this->vertices_Espace.size()*sizeof(glm::vec3),&this->vertices_Espace[0],GL_STATIC_DRAW);
+            if(test){glBufferData(GL_ARRAY_BUFFER,this->vertices_Espace.size()*sizeof(glm::vec3),&this->vertices_Espace[0],GL_STATIC_DRAW);}
+            else{glBufferData(GL_ARRAY_BUFFER,this->indexed_vertices.size()*sizeof(glm::vec3),&this->indexed_vertices[0],GL_STATIC_DRAW);}
 
             glGenBuffers(1,&this->Text2DUVBufferID);
             glBindBuffer(GL_ARRAY_BUFFER,this->Text2DUVBufferID);
@@ -323,6 +341,7 @@ class Mesh{
 
             sendTexture();
             glDrawElements(GL_TRIANGLES,this->indices.size(),GL_UNSIGNED_SHORT,(void*)0);
+            glDisableVertexAttribArray(2);
             glDisableVertexAttribArray(1);
             glDisableVertexAttribArray(0);
             glDeleteBuffers(1, &this->vertexbuffer);
@@ -636,8 +655,17 @@ class Mesh{
             t = f * glm::dot(edge2, q);
             return t > EPSILON;
         }
-
-        
+        	
+        void SetVertexBoneData(int vertexID, int boneID, float weight) {
+            for (int i=0; i<4; ++i) {
+                if (BoneIDs[vertexID][i] == -1) {
+                    BoneIDs[vertexID][i] = boneID;
+                    Weights[vertexID][i] = weight;
+                    return;
+                }
+            }
+        }
 
 };
+#endif
 

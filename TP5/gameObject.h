@@ -1,8 +1,21 @@
+#ifndef GAMEOBJECT_H
+#define GAMEOBJECT_H
+
 
 #include <TP5/Plane.h>
 #include <TP5/Transform.h>
 #include <TP5/audio.h>
+#include <TP5/AnimatedModel.h>
 #include <time.h>
+// Assimp
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+//Map
+#include <map>
+#include <fstream>
+#include <string>
+#include <regex>
 
 
 
@@ -93,6 +106,16 @@ class GameObject{
         bool isIA=false;
         bool avancer=false;
         glm::vec3 positionAvance;
+
+        //Animation
+        AnimatedModel animationMeshes;
+        bool hasAnimation = false;
+        int currentFrame = 0;
+        float frameDuration = 1.0f / 24.0f; // 24 fps
+        float elapsedTime = 0.0f;
+        std::string currentAnimationKey = "";
+        Transform rotAnimation;
+        bool isMovingAnim = false;
         
         bool isMoving = true;
 
@@ -187,13 +210,100 @@ class GameObject{
                             
         }
 
+        float readDaeUnitScale(const std::string& filepath) {
+            std::ifstream file(filepath);
+            if (!file.is_open()) {
+                std::cerr << "Erreur : Impossible d'ouvrir le fichier " << filepath << std::endl;
+                return 1.0f;
+            }
+            std::string line;
+            std::regex unitRegex(R"(<unit\s+meter=\"([0-9]*\.?[0-9]+)\"/>)");
+            while (std::getline(file, line)) {
+                std::smatch match;
+                if (std::regex_search(line, match, unitRegex)) {
+                    if (match.size() > 1) {
+                        float meterValue = std::stof(match[1].str());
+                        std::cout << "Unité trouvée dans le .dae : " << meterValue << " m" << std::endl;
+                        return meterValue;
+                    }
+                }
+            }
+            std::cout << "Pas de balise <unit meter=.../> trouvée, on prend 1.0 par défaut." << std::endl;
+            return 1.0f;
+        }
+
+        void loadAnimations(const std::vector<std::string>& animationFiles) {
+            if(animationFiles.empty()) {
+                std::cerr << "No animation files provided!" << std::endl;
+                return;
+            }
+            std::string basePath = animationFiles[0];
+            float scaleFromFile = readDaeUnitScale(basePath);
+            animationMeshes.loadAnimatedModel(basePath, scaleFromFile*2);
+            hasAnimation = true;
+            std::cout << "✅ Modèle de base chargé : "<<basePath << std::endl;
+            for (auto& mesh : animationMeshes.baseMeshes) {
+                mesh.loadPBR("../textures/assemblies/albedo.png",
+                            "../textures/assemblies/normal.png",
+                            "../textures/assemblies/roughness.png",
+                            "../textures/assemblies/metallic.png",
+                            "../textures/assemblies/ao.png");
+            }
+            for (const auto& anim : animationFiles) {
+                animationMeshes.addAnimation(anim);
+                std::cout << "✅ Animation ajoutée : " << anim << std::endl;
+            }
+            for (auto& mesh : animationMeshes.baseMeshes) {
+                mesh.programID = programID;
+            }
+            setAnimation(animationFiles[0]);
+        }
+        void setAnimation(const std::string& animationKey) {
+            if(animationKey != currentAnimationKey){
+                if (animationMeshes.bakedAnimations.find(animationKey) != animationMeshes.bakedAnimations.end()) {
+                    currentAnimationKey = animationKey;
+                    currentFrame = 0;
+                    elapsedTime = 0.0f;
+                } else {
+                    std::cerr << "Animation key '" << animationKey << "' not found!" << std::endl;
+                }
+            }
+        }
+
         void draw(const glm::vec3 cameraPosition, float deltaTime) {
             GLuint scaleUniformID = glGetUniformLocation(programID, "scale");
             if (isMoving) {
+                if(hasAnimation){
+                    for(auto& mesh : this->animationMeshes.baseMeshes){
+                        //std::cout<<"draw"<<std::endl;
+                        //mesh.draw(false);
+                    }
+                elapsedTime += deltaTime;
+                if (elapsedTime >= frameDuration) {
+                    currentFrame = (currentFrame + 1) % animationMeshes.bakedAnimations[currentAnimationKey].size();
+                    elapsedTime = 0.0f;
+                }
+                
+                if(length(axe) > 0.0f){
+                    glm::vec3 projectedAxe = glm::normalize(glm::vec3(axe.x, 0.0f, axe.z));
+                    glm::vec3 reference = glm::vec3(0.0f, 0.0f, 1.0f);
+                    float dotProduct = glm::dot(projectedAxe, reference);
+                    float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f));
+                    float angleSignedRadians = glm::atan(projectedAxe.x, projectedAxe.z);
+                    float angleDegrees = glm::degrees(angleSignedRadians);
+                    rotAnimation = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angleDegrees);
+                
+                }
+                if(rightAxe == vec3(0.0f) && frontAxe == vec3(0.0f) && isGround){
+                    setAnimation("../animations/mario/Idle.dae");
+                }
+                Transform translation = Transform().translation(glm::vec3(0.0f,1.0f,0.0f),this->transform.s/0.011f);
+                animationMeshes.DrawAnimatedModel(this->programID, currentFrame, elapsedTime, currentAnimationKey, this->globalTransform.combine_with(translation).combine_with(rotAnimation));
+                }
                 if (speed != glm::vec3(0.0, 0.0, 0.0)){
                     if(!isCollision)PhysicMove(deltaTime);
                 }
-                if (hasMesh || M) {
+                if (hasMesh || M && !hasAnimation) {
                     if (hasLOD) {
                         updateLOD(cameraPosition);
                     }
@@ -226,13 +336,16 @@ class GameObject{
                     GLuint LightColorUniformID = glGetUniformLocation(programID, lightColorName.c_str());
                     glUniform3f(LightColorUniformID, this->lightColor[0], this->lightColor[1], this->lightColor[2]);
                 }
-                for (int i = 0; i < this->enfant.size(); i++) {
-                    this->enfant[i]->draw(cameraPosition, deltaTime);
-                    this->enfant[i]->isCollision=this->isCollision;
-                }
-                for (int i = 0; i < this->objetsOBJ.size(); i++) {
-                    this->objetsOBJ[i].draw(cameraPosition, deltaTime);
-                    this->objetsOBJ[i].isCollision=this->isCollision;
+                if(!hasAnimation){
+                    for (int i = 0; i < this->enfant.size(); i++) {
+                        this->enfant[i]->draw(cameraPosition, deltaTime);
+                        this->enfant[i]->isCollision=this->isCollision;
+                    }
+                }else {
+                    for (int i = this->objetsOBJ.size(); i < this->enfant.size(); i++) {
+                        this->enfant[i]->draw(cameraPosition, deltaTime);
+                        this->enfant[i]->isCollision=this->isCollision;
+                    }
                 }
             }
             if(avancer){
@@ -1446,3 +1559,4 @@ class GameObject{
             }
         }
 };
+#endif

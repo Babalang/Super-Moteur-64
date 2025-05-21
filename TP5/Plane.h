@@ -1,6 +1,10 @@
 // Include standard headers
 #include <GL/glew.h>
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
@@ -25,7 +29,6 @@ using namespace glm;
 #include <common/texture.hpp>
 #include <common/text2D.hpp>
 #include <TP5/Mesh.h>
-
 #include "Transform.h"
 
 class Plane : public Mesh{

@@ -150,7 +150,7 @@ void main(){
         for(int i = 0; i < 1; ++i) 
         {
                 // calculate per-light radiance
-                vec3 L = -normalize(lightPositions[i] - worldPos);
+                vec3 L = normalize(lightPositions[i] - worldPos);
                 vec3 H = normalize(V + L);
                 float distance    = length(lightPositions[i] - worldPos);
                 float attenuation = 1.0 / (distance * distance);
@@ -179,8 +179,8 @@ void main(){
                 
         colortmp = colortmp / (colortmp + vec3(1.0));
         colortmp = pow(colortmp, vec3(1.0/2.2));  
-        
-        color = vec4(colortmp,TexCoordout1[3]);
+        if(isPBR == 1) {color = vec4(colortmp,TexCoordout1[3]);}
+        else {color = texture(albedoMap,TexCoordout);}
         }
         
 }

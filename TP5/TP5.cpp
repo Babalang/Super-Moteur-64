@@ -1,12 +1,19 @@
 // Include standard headers
 #include <GL/glew.h>
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
 #include <iostream>
 #include <unistd.h>
 #include <random>
+#include <fstream>
+#include <string>
+#include <regex>
 
 // Include GLEW
 
@@ -78,6 +85,14 @@ GLuint programID;
 bool changementDuNiveau=true;
 float vitesse=1.0;
 
+//Animations
+std::vector<std::string> animations = {
+    "../animations/mario/Idle.dae",
+    "../animations/mario/Walking.dae",
+    "../animations/mario/Running.dae",
+    "../animations/mario/Jump.dae"
+};
+
 // Création d'un générateur et d'une distribution
 std::random_device rd;
 std::mt19937 gen(rd()); // moteur Mersenne Twister
@@ -134,16 +149,17 @@ void processInput(GLFWwindow *window)
 
         }
         if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS){
-            scene.camera.orbitalRadius = glm::min(100.0f, scene.camera.orbitalRadius + cameraZoomSpeed);
+            scene.camera.orbitalRadius = glm::min(1000.0f, scene.camera.orbitalRadius + cameraZoomSpeed);
             std::cout<<"Camera distance : "<<scene.camera.orbitalRadius<<std::endl;
         }
     }
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (scene.camera.parent->speed[1]<=0.0f)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
             if(!toggleInputI && !changementDuNiveau){
                 toggleInputI = true;
             }else{
                 glm::vec3 tmp = glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t)*vitesse;
-                // Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
+                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 tmp.y = 0.0f ;
                 scene.camera.parent->frontAxe = tmp ;
                 changementDuNiveau=false;
@@ -154,11 +170,12 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->frontAxe = glm::vec3(0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (!scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
             if(!toggleInputK && !changementDuNiveau){
                 toggleInputK = true;
             }else{
                 glm::vec3 tmp = -glm::normalize(scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t)*vitesse;
-                // Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
+                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 tmp.y = 0.0f ;
                 scene.camera.parent->frontAxe = tmp ;
                 changementDuNiveau=false;
@@ -169,11 +186,12 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->frontAxe = glm::vec3(0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (!scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
             if(!toggleInputL && !changementDuNiveau){
                 toggleInputL = true;
             }else{
                 scene.camera.parent->rightAxe = glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe))*vitesse;
-                // Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
+                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 changementDuNiveau=false;
             }
         }
@@ -182,11 +200,12 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->rightAxe = glm::vec3(0.0f,0.0,0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (!scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
             if(!toggleInputJ && !changementDuNiveau){
                 toggleInputJ = true;
             }else{
                 scene.camera.parent->rightAxe = -glm::normalize(glm::cross((scene.camera.parent->globalTransform.t - scene.camera.globalTransform.t), scene.camera.parent->upAxe))*vitesse;
-                // Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
+                Audio::playAudioOnce("../audios/UI/snd_se_common_Step_Grass.wav",glm::vec3(0.0f));
                 changementDuNiveau=false;
             }
         }
@@ -194,21 +213,24 @@ void processInput(GLFWwindow *window)
             toggleInputJ = false;
             scene.camera.parent->rightAxe = glm::vec3(0.0f,0.0,0.0f);
         }
-        if(glfwGetKey(window, GLFW_KEY_SPACE) && toggleInputSpace == false){
-            toggleInputSpace = true;
-            if(scene.camera.parent->isGround){
-                if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
-                scene.camera.parent->isGround=false;
-                int r = dist(gen);
-                Audio::stopAudio("../audios/UI/snd_se_common_Step_Grass.wav");
-                if(r==0){
-                    Audio::playAudio("../audios/Sauts/jump.wav",glm::vec3(0.0f));
-                } else if (r==1) {
-                    Audio::playAudio("../audios/Sauts/jump_2.wav",glm::vec3(0.0f));
-                } else {
-                    Audio::playAudio("../audios/Sauts/Yahoo.wav",glm::vec3(0.0f));
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
+            if(toggleInputSpace == false){
+                toggleInputSpace = true;
+                if(scene.camera.parent->isGround){
+                    if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
+                    scene.camera.parent->isGround=false;
+                    int r = dist(gen);
+                    Audio::stopAudio("../audios/UI/snd_se_common_Step_Grass.wav");
+                    if(r==0){
+                        Audio::playAudio("../audios/Sauts/jump.wav",glm::vec3(0.0f));
+                    } else if (r==1) {
+                        Audio::playAudio("../audios/Sauts/jump_2.wav",glm::vec3(0.0f));
+                    } else {
+                        Audio::playAudio("../audios/Sauts/Yahoo.wav",glm::vec3(0.0f));
+                    }
                 }
             }
+            scene.camera.parent->setAnimation("../animations/mario/Jump.dae");
         }
         if(glfwGetKey(window, GLFW_KEY_TAB) && toggleInputTab == false){
             toggleInputTab = true;
@@ -216,6 +238,8 @@ void processInput(GLFWwindow *window)
             Audio::playAudio("../audios/menu.wav", glm::vec3(0.0f));
         }
         if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+            if((scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Running.dae");}            }
+            if(toggleInputSHIFT==false){
             toggleInputSHIFT = true;
             vitesse=3.0;
         }
@@ -314,6 +338,7 @@ void sceneNiveau1(Scene *scene){
     Transform translation =Transform(glm::mat3(1.0f), glm::vec3(20.0f, 10.0f, -50.5f), 1.0f);
     GOmariometal.setGlobalTransform(translation);
     std::cout<<GOmariometal.globalTransform.t[0]<<" "<<GOmariometal.globalTransform.t[1]<<" "<<GOmariometal.globalTransform.t[2]<<std::endl;
+    GOmariometal.loadAnimations(animations);
 
     GOPeach.programID=programID;
     GOPeach.lireOBJ("../meshes/Peach.obj");
@@ -394,6 +419,7 @@ void sceneNiveau2(Scene *scene){
     Transform translation =Transform(glm::mat3(1.0f), glm::vec3(-132.0,10.0,126.0), 1.0f);//-132.0,10.0,126.0 50.0,90.0,-100.0
     GOMetalMario2.setGlobalTransform(translation);
     GOMetalMario2.nom="mario";
+    GOMetalMario2.loadAnimations(animations);
 
     light2.programID=programID;
     light2.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
@@ -625,6 +651,7 @@ void sceneNiveau3(Scene *scene){
     GOMetalMario3.initialTransform = GOMetalMario3.transform;
     Transform translation =Transform(glm::mat3(1.0f), glm::vec3(0.0f, 120.0f, -50.0f), 1.0f);
     GOMetalMario3.setGlobalTransform(translation);
+    GOMetalMario3.loadAnimations(animations);
 
     light3.programID=programID;
     light3.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
