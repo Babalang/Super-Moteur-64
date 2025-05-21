@@ -22,6 +22,7 @@ uniform bool isHUD;
 uniform vec4 hudColor;
 uniform bool isText;
 uniform bool isFond;
+uniform bool isSkybox;
 // Ouput data
 out vec4 color;
 const float PI = 3.14159265359;
@@ -105,82 +106,87 @@ void main(){
                 }
         }else if(isText){
                 color=texture(text,TexCoordout);
-        }else{
-        vec4 TexCoordout1=texture(albedoMap,TexCoordout);
-        vec3 albedo =  pow(texture(albedoMap, TexCoordout).rgb, vec3(2.2));
-        vec3 normal = normalize(Normal);
-        float metallic = 0.4;
-        float roughness = 0.2;
-        float ao = 1.0;
-        int test = 0;
-        if (isPBR == 1){
-                normal     = getNormalFromNormalMap();
-                metallic  = texture(metallicMap, TexCoordout).r;
-                roughness = texture(roughnessMap, TexCoordout).r;
-                ao        = texture(aoMap, TexCoordout).r;
-                test = 1;
-        } else if(useHeightMap == 1){
-                if(height<GrassHeight){
-                        albedo = texture(albedoMap, TexCoordout).rgb;
-                        metallic = 0.0;
-                        roughness = 0.6;
-                        ao = 0.3;
-                } else if(height<RockHeight){
-                        albedo = texture(normalMap, TexCoordout).rgb;
-                        metallic = 0.0;
-                        roughness = 0.7;
-                        ao = 0.4;
-                } else{
-                        albedo = texture(roughnessMap, TexCoordout).rgb;
-                        metallic = 0.0;
-                        roughness = 0.8;
-                        ao = 0.3;
+        }else if(isSkybox){
+                color=texture(albedoMap,TexCoordout);
+        }        
+        else{
+                vec4 TexCoordout1=texture(albedoMap,TexCoordout);
+                vec3 albedo =  pow(texture(albedoMap, TexCoordout).rgb, vec3(2.2));
+                vec3 normal = normalize(Normal);
+                float metallic = 0.4;
+                float roughness = 0.2;
+                float ao = 1.0;
+                int test = 0;
+                if (isPBR == 1){
+                        normal     = getNormalFromNormalMap();
+                        metallic  = texture(metallicMap, TexCoordout).r;
+                        roughness = texture(roughnessMap, TexCoordout).r;
+                        ao        = texture(aoMap, TexCoordout).r;
+                        test = 1;
+                } else if(useHeightMap == 1){
+                        if(height<GrassHeight){
+                                albedo = texture(albedoMap, TexCoordout).rgb;
+                                metallic = 0.0;
+                                roughness = 0.6;
+                                ao = 0.3;
+                        } else if(height<RockHeight){
+                                albedo = texture(normalMap, TexCoordout).rgb;
+                                metallic = 0.0;
+                                roughness = 0.7;
+                                ao = 0.4;
+                        } else{
+                                albedo = texture(roughnessMap, TexCoordout).rgb;
+                                metallic = 0.0;
+                                roughness = 0.8;
+                                ao = 0.3;
+                        }
+                        test = 2;
                 }
-                test = 2;
-        }
 
-        vec3 N = normalize(Normal);
-        vec3 V = normalize(camPos - worldPos);
+                vec3 N = normalize(Normal);
+                vec3 V = normalize(camPos - worldPos);
 
-        vec3 F0 = vec3(0.04); 
-        F0 = mix(F0, albedo, metallic);
+                vec3 F0 = vec3(0.04); 
+                F0 = mix(F0, albedo, metallic);
+                                
+                // reflectance equation
+                vec3 Lo = vec3(0.0);
+                for(int i = 0; i < 1; ++i) 
+                {
+                        // calculate per-light radiance
+                        vec3 L = -normalize(lightPositions[i] - worldPos);
+                        //vec3 L=normalize(vec3(1,2,1));
+                        vec3 H = normalize(V + L);
+                        float distance    = length(lightPositions[i] - worldPos);
+                        float attenuation = 1.0 / (distance * distance);
+                        vec3 radiance     = lightColors[i] * attenuation;        
                         
-        // reflectance equation
-        vec3 Lo = vec3(0.0);
-        for(int i = 0; i < 1; ++i) 
-        {
-                // calculate per-light radiance
-                vec3 L = -normalize(lightPositions[i] - worldPos);
-                vec3 H = normalize(V + L);
-                float distance    = length(lightPositions[i] - worldPos);
-                float attenuation = 1.0 / (distance * distance);
-                vec3 radiance     = lightColors[i] * attenuation;        
+                        // cook-torrance brdf
+                        float NDF = DistributionGGX(N, H, roughness);        
+                        float G   = GeometrySmith(N, V, L, roughness);      
+                        vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
+                        
+                        vec3 kS = F;
+                        vec3 kD = vec3(1.0) - kS;
+                        kD *= 1.0 - metallic;	  
+                        
+                        vec3 numerator    = NDF * G * F;
+                        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+                        vec3 specular     = numerator / denominator;  
+                        
+                        // add to outgoing radiance Lo
+                        float NdotL = max(dot(N, L), 0.0);                
+                        Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
+                }   
                 
-                // cook-torrance brdf
-                float NDF = DistributionGGX(N, H, roughness);        
-                float G   = GeometrySmith(N, V, L, roughness);      
-                vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
+                vec3 ambient = vec3(0.3) * albedo * ao;
+                vec3 colortmp = ambient + Lo;
+                        
+                colortmp = colortmp / (colortmp + vec3(1.0));
+                colortmp = pow(colortmp, vec3(1.0/2.2));  
                 
-                vec3 kS = F;
-                vec3 kD = vec3(1.0) - kS;
-                kD *= 1.0 - metallic;	  
-                
-                vec3 numerator    = NDF * G * F;
-                float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-                vec3 specular     = numerator / denominator;  
-                
-                // add to outgoing radiance Lo
-                float NdotL = max(dot(N, L), 0.0);                
-                Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
-        }   
-        
-        vec3 ambient = vec3(0.03) * albedo * ao;
-        vec3 colortmp = ambient + Lo;
-                
-        colortmp = colortmp / (colortmp + vec3(1.0));
-        colortmp = pow(colortmp, vec3(1.0/2.2));  
-        
-        color = vec4(colortmp,TexCoordout1[3]);
+                color = vec4(colortmp,TexCoordout1[3]);
+                color=TexCoordout1;
         }
         
 }

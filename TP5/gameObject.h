@@ -1,8 +1,15 @@
 
 #include <TP5/Plane.h>
 #include <TP5/Transform.h>
-#include <TP5/audio.h>
+// #include <TP5/audio.h>
 #include <time.h>
+// Assimp
+// #include <assimp/Importer.hpp> 
+// #include <assimp/scene.h>
+// #include <assimp/postprocess.h>
+
+//Map
+#include <map>
 
 
 
@@ -60,7 +67,7 @@ class GameObject{
         std::vector<GameObject*> collisions;
         bool map=false;
         bool auSol=true;
-        int pv=3;
+        int pv=0;
         std::string collisionChateau;
         Transform transformSol;
         int nbCollision=-1;
@@ -93,6 +100,16 @@ class GameObject{
         bool isIA=false;
         bool avancer=false;
         glm::vec3 positionAvance;
+
+        //Animation
+        // AnimatedModel animationMeshes;
+        // bool hasAnimation = false;
+        // int currentFrame = 0;
+        // float frameDuration = 1.0f / 24.0f; // 24 fps
+        // float elapsedTime = 0.0f;
+        // std::string currentAnimationKey = "";
+        // Transform rotAnimation;
+        // bool isMovingAnim = false;
         
         bool isMoving = true;
 
@@ -187,9 +204,49 @@ class GameObject{
                             
         }
 
+        // void setAnimation(const std::string& animationKey) {
+        //     if(animationKey != currentAnimationKey){
+        //         if (animationMeshes.bakedAnimations.find(animationKey) != animationMeshes.bakedAnimations.end()) {
+        //             currentAnimationKey = animationKey;
+        //             currentFrame = 0;
+        //             elapsedTime = 0.0f;
+        //         } else {
+        //             std::cerr << "Animation key '" << animationKey << "' not found!" << std::endl;
+        //         }
+        //     }
+        // }
+
         void draw(const glm::vec3 cameraPosition, float deltaTime) {
             GLuint scaleUniformID = glGetUniformLocation(programID, "scale");
             if (isMoving) {
+                // if(hasAnimation){
+                //     for(auto& mesh : this->animationMeshes.baseMeshes){
+                //         //std::cout<<"draw"<<std::endl;
+                //         //mesh.draw(false);
+                //     }
+                // elapsedTime += deltaTime;
+                // if (elapsedTime >= frameDuration) {
+                //     currentFrame = (currentFrame + 1) % animationMeshes.bakedAnimations[currentAnimationKey].size();
+                //     elapsedTime = 0.0f;
+                // }
+                
+                // if(length(axe) > 0.0f){
+                //     glm::vec3 projectedAxe = glm::normalize(glm::vec3(axe.x, 0.0f, axe.z));
+                //     glm::vec3 reference = glm::vec3(0.0f, 0.0f, 1.0f);
+                //     float dotProduct = glm::dot(projectedAxe, reference);
+                //     float angleRadians = glm::acos(glm::clamp(dotProduct, -1.0f, 1.0f));
+                //     float angleSignedRadians = glm::atan(projectedAxe.x, projectedAxe.z);
+                //     float angleDegrees = glm::degrees(angleSignedRadians);
+                //     rotAnimation = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), angleDegrees);
+                
+                // }
+                // if(length(axe) <=0.0f){
+                //     std::cout<<length(axe)<<std::endl;
+                //     setAnimation("../animations/mario/Idle.dae");
+                // }
+                // Transform translation = Transform().translation(glm::vec3(0.0f,1.0f,0.0f),this->transform.s/0.011f);
+                // animationMeshes.DrawAnimatedModel(this->programID, currentFrame, elapsedTime, currentAnimationKey, this->globalTransform.combine_with(translation).combine_with(rotAnimation));
+                // }
                 if (speed != glm::vec3(0.0, 0.0, 0.0)){
                     if(!isCollision)PhysicMove(deltaTime);
                 }
@@ -234,6 +291,10 @@ class GameObject{
                     this->objetsOBJ[i].draw(cameraPosition, deltaTime);
                     this->objetsOBJ[i].isCollision=this->isCollision;
                 }
+                // for (int i = this->objetsOBJ.size(); i < this->enfant.size(); i++) {
+                //     this->enfant[i]->draw(cameraPosition, deltaTime);
+                //     this->enfant[i]->isCollision=this->isCollision;
+                // }
             }
             if(avancer){
                 this->moveToPosition(deltaTime);
@@ -289,6 +350,8 @@ class GameObject{
                         obj->collisions[0]->stars[0]->collisions.push_back(obj);
                         obj->collisions[0]->addChild(obj->collisions[0]->stars[0]);
                         obj->collisions.push_back(obj->collisions[0]->stars[0]);
+                        std::cout<<obj->collisions[0]->stars[0]->nom<<std::endl;
+                        std::cout<<"etoile"<<std::endl;
                     }else if(this->nom=="star"){
                         this->descendreEtoile(deltaTime);
                     }else if(this->nom=="goomba"){
@@ -342,7 +405,7 @@ class GameObject{
                         // std::cout<<this->bowserFireBall[0].centreEspace[0]<<" "<<this->bowserFireBall[0].centreEspace[1]<<" "<<this->bowserFireBall[0].centreEspace[2]<<std::endl;
                     }else if(this->nom=="koopa"){
                         this->avancer=true;
-                    }else if(this->nom=="goomba"){
+                    }else if(this->nom=="goomba" || this->nom=="chainchomp"){
                         if(glm::distance(this->centreEspace,obj->centreEspace)<20){
                             this->avancer=true;
                         }else{
@@ -504,7 +567,7 @@ class GameObject{
                     this->speed=glm::vec3(0.0);
                     this->changementDuNiveau=false;
                 }
-                // std::cout<<this->centreEspace[0]<<" "<<this->centreEspace[1]<<" "<<this->centreEspace[2]<<std::endl;
+                std::cout<<this->basEspace[0]<<" "<<this->basEspace[1]<<" "<<this->basEspace[2]<<std::endl;
             }
         }
         
@@ -538,7 +601,6 @@ class GameObject{
             for(int i=0;i<this->collisions.size();i++){
                 if(collisions[i]->map){
                     if(collisions[i]->nom=="chateau"){
-                        std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaachateau"<<std::endl;
                         for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
                             float minX=std::numeric_limits<float>::max(),minY=std::numeric_limits<float>::max(),minZ=std::numeric_limits<float>::max(),maxX=0.0,maxY=0.0,maxZ=0.0;
                             for(int k=0;k<collisions[i]->objetsOBJ[j].boiteEnglobante.vertices_Espace.size();k++){
@@ -554,7 +616,6 @@ class GameObject{
                                     for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
                                         for(int l=0;l<collisions[i]->boiteEnglobante.triangles.size();l++){
                                             if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
-                                                std::cout<<collisions[i]->nom<<std::endl;
                                                 this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
                                                 return i;
                                             }
@@ -565,14 +626,14 @@ class GameObject{
                             }
                         }
                     }else{
-                        // std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabobomb"<<std::endl;
                         for(int j=0;j<collisions[i]->objetsOBJ.size();j++){
                             for(int k=0;k<collisions[i]->objetsOBJ[j].mesh.triangles.size();k++){
-                                for(int l=0;l<this->boiteEnglobante.triangles.size();l++){
-                                    if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
-                                        this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
-                                        // std::cout<<collisions[i]->nom<<std::endl;
-                                        return i;
+                                if(glm::distance(this->centreEspace,collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]])<40 || glm::distance(this->centreEspace,collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]])<40 || glm::distance(this->centreEspace,collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]])<40){
+                                    for(int l=0;l<this->boiteEnglobante.triangles.size();l++){
+                                        if(trianglesIntersect(collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][0]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][1]],collisions[i]->objetsOBJ[j].mesh.vertices_Espace[collisions[i]->objetsOBJ[j].mesh.triangles[k][2]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][0]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][1]],this->boiteEnglobante.vertices_Espace[this->boiteEnglobante.triangles[l][2]])){
+                                            this->collisionChateau=collisions[i]->objetsOBJ[j].nom;
+                                            return i;
+                                        }
                                     }
                                 }
                             }
@@ -1319,7 +1380,7 @@ class GameObject{
         void bougeCarapace(float deltaTime){
             glm::vec3 direction;
             if(this->nbCollision!=-1){
-                Audio::playAudioOnce("../audios/UI/move shell.wav",glm::vec3(0.0f));
+                // Audio::playAudioOnce("../audios/UI/move shell.wav",glm::vec3(0.0f));
                 direction=-this->directionCarapace;
                 Ray ray;ray.m_origin=this->centreEspace;ray.m_direction=glm::vec3(0.0,-1.0,0.0);
                 for(int i=0;i<this->collisions[0]->objetsOBJ.size();i++){
@@ -1349,7 +1410,7 @@ class GameObject{
                 this->directionCarapace=direction;
                 nbCollision=a;
                 this->collisions[nbCollision]->pv-=1;
-                Audio::playAudioOnce("../audios/bowser/mort.wav",glm::vec3(0.0f));
+                // Audio::playAudioOnce("../audios/bowser/mort.wav",glm::vec3(0.0f));
             }
             if(difftime(time(NULL),this->timerIA)>4){
                 this->carapaceRespawn=true;
@@ -1361,7 +1422,6 @@ class GameObject{
         }
 
         void descendreEtoile(float deltaTime){
-            std::cout<<this->basEspace[1]<<std::endl;
             if(!this->auSol){
                 if(this->basEspace[1]>=this->collisions[1]->centreEspace[1]){
                     glm::vec3 newPosition = this->globalTransform.t + glm::vec3(0.0,-1.0,0.0) * glm::vec3(3.0) * deltaTime;

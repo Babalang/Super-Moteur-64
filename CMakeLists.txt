@@ -15,18 +15,12 @@ if( CMAKE_BINARY_DIR MATCHES " " )
 	message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
 
-
+set(CMAKE_CXX_STANDARD 17)  # Force C++17
+set(CMAKE_CXX_STANDARD_REQUIRED YES)  # Rend C++17 obligatoire
+message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
 
 # Compile external dependencies 
 add_subdirectory (external)
-
-# Activer la compilation statique d'OpenAL Soft
-set(ALSOFT_STATIC_LIBS ON CACHE BOOL "Build static OpenAL Soft" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Disable shared libs" FORCE)
-
-# Ajoute OpenAL Soft
-add_subdirectory(external/openal-soft-master)
-
 
 # On Visual 2005 and above, this module can set the debug working directory
 cmake_policy(SET CMP0026 OLD)
@@ -44,8 +38,6 @@ include_directories(
 	external/glfw-3.1.2/include/
 	external/glm-0.9.7.1/
 	external/glew-1.13.0/include/
-    external/openal-soft-master/include
-    external/openal-soft-master/build/include
 	.
 
 )
@@ -54,7 +46,6 @@ set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW_1130
-	OpenAL
 )
 
 add_definitions(

@@ -1,6 +1,8 @@
 if(MSVC AND NOT "${MSVC_VERSION}" LESS 1400)
 	add_definitions( "/MP" )
 endif()
+set(CMAKE_CXX_STANDARD 17)  # Ou 20, selon la version que tu souhaites
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 
 add_definitions(

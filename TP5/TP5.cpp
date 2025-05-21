@@ -7,6 +7,9 @@
 #include <iostream>
 #include <unistd.h>
 #include <random>
+#include <fstream>
+#include <string>
+#include <regex>
 
 // Include GLEW
 
@@ -34,7 +37,7 @@ using namespace glm;
 #define STB_IMAGE_IMPLEMENTATION
 // #include "stb_image.h"
 #include <TP5/stb_image.h>
-#include <TP5/audio.h>
+// #include <TP5/audio.h>
 // #include "../cegui-0-8-7/cegui/include/CEGUI/CEGUI.h"
 #endif
 
@@ -63,7 +66,7 @@ bool toggleInputSHIFT = false;
 bool activeToogle=false;
 
 // timing
-float deltaTime = 0.0f;	// time between current frame and last frame
+float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 int nbFrames = 0;
 bool StartOftheGame = true;
@@ -78,12 +81,10 @@ GLuint programID;
 bool changementDuNiveau=true;
 float vitesse=1.0;
 
-// Création d'un générateur et d'une distribution
 std::random_device rd;
-std::mt19937 gen(rd()); // moteur Mersenne Twister
+std::mt19937 gen(rd());
 std::uniform_int_distribution<int> dist(0, 3);
 
-// Fonction pour afficher le compteur de FPS
 double affiche(GLFWwindow *window,double lastTime){
     double currentTime = glfwGetTime();
     nbFrames++;
@@ -97,6 +98,32 @@ double affiche(GLFWwindow *window,double lastTime){
     return lastTime;
 }
 
+// float readDaeUnitScale(const std::string& filepath) {
+//     std::ifstream file(filepath);
+//     if (!file.is_open()) {
+//         std::cerr << "Erreur : Impossible d'ouvrir le fichier " << filepath << std::endl;
+//         return 1.0f;  // Par défaut, on retourne 1.0 si erreur
+//     }
+
+//     std::string line;
+//     // Ici, on échappe bien les guillemets avec \"
+//     std::regex unitRegex(R"(<unit\s+meter=\"([0-9]*\.?[0-9]+)\"/>)");
+
+//     while (std::getline(file, line)) {
+//         std::smatch match;
+//         if (std::regex_search(line, match, unitRegex)) {
+//             if (match.size() > 1) {
+//                 float meterValue = std::stof(match[1].str());
+//                 std::cout << "Unité trouvée dans le .dae : " << meterValue << " m" << std::endl;
+//                 return meterValue;
+//             }
+//         }
+//     }
+
+//     std::cout << "Pas de balise <unit meter=.../> trouvée, on prend 1.0 par défaut." << std::endl;
+//     return 1.0f;
+// }
+
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -106,17 +133,16 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    float cameraSpeed = 5.f * deltaTime; // Ajuster la vitesse en fonction du temps écoulé
-    float cameraZoomSpeed = 0.1f; // Vitesse de zoom de la caméra
+    float cameraSpeed = 5.f * deltaTime;
+    float cameraZoomSpeed = 0.1f;
 
 
-    // Récupérer les vecteurs de direction de la caméra
-    glm::vec3 cameraPosition = scene.camera.globalTransform.t; // Position actuelle de la caméra
-    glm::mat3 cameraRotation = scene.camera.transform.m; // Rotation actuelle de la caméra
-    glm::vec3 cameraTarget = -cameraRotation[2];               // Axe Z local (direction vers l'avant)
-    glm::vec3 cameraRight = cameraRotation[0];                 // Axe X local (direction droite)
+    glm::vec3 cameraPosition = scene.camera.globalTransform.t;
+    glm::mat3 cameraRotation = scene.camera.transform.m;
+    glm::vec3 cameraTarget = -cameraRotation[2];
+    glm::vec3 cameraRight = cameraRotation[0];
     glm::vec3 cameraUp = cameraRotation[1];  
-    glm::vec3 cameraFront = glm::normalize(cameraPosition - scene.camera.targetPosition);                  // Axe Y local (direction vers le haut)
+    glm::vec3 cameraFront = glm::normalize(cameraPosition - scene.camera.targetPosition);
 
     if(activeToogle){if(!changementDuNiveau){
     if (scene.camera.mode == CAMERA_MODE::ORBITAL) {
@@ -199,21 +225,21 @@ void processInput(GLFWwindow *window)
             if(scene.camera.parent->isGround){
                 if(scene.camera.parent->speed[1] <= glm::vec3(0.0)[1]) scene.camera.parent->speed = glm::vec3(0.0f,10.0f,0.0f);
                 scene.camera.parent->isGround=false;
-                int r = dist(gen);
-                Audio::stopAudio("../audios/UI/snd_se_common_Step_Grass.wav");
-                if(r==0){
-                    Audio::playAudio("../audios/Sauts/jump.wav",glm::vec3(0.0f));
-                } else if (r==1) {
-                    Audio::playAudio("../audios/Sauts/jump_2.wav",glm::vec3(0.0f));
-                } else {
-                    Audio::playAudio("../audios/Sauts/Yahoo.wav",glm::vec3(0.0f));
-                }
+                // int r = dist(gen);
+                // Audio::stopAudio("../audios/UI/snd_se_common_Step_Grass.wav");
+                // if(r==0){
+                //     Audio::playAudio("../audios/Sauts/jump.wav",glm::vec3(0.0f));
+                // } else if (r==1) {
+                //     Audio::playAudio("../audios/Sauts/jump_2.wav",glm::vec3(0.0f));
+                // } else {
+                //     Audio::playAudio("../audios/Sauts/Yahoo.wav",glm::vec3(0.0f));
+                // }
             }
         }
         if(glfwGetKey(window, GLFW_KEY_TAB) && toggleInputTab == false){
             toggleInputTab = true;
             carte=!carte;
-            Audio::playAudio("../audios/menu.wav", glm::vec3(0.0f));
+            // Audio::playAudio("../audios/menu.wav", glm::vec3(0.0f));
         }
         if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
             toggleInputSHIFT = true;
@@ -285,7 +311,7 @@ GLuint loadTextureHUD(std::string filename){
     return texture;                                                                      
 }
 
-GameObject GOchateau;GameObject GOmariometal;GameObject light, GOPeach;
+GameObject GOchateau;GameObject GOmariometal;GameObject light, GOStarPlateforme,GOPeach, GOToad, GOYoshi, GOQuestion, GOQuestion2, GOQuestion3, GOQuestion4, GOQuestion5, GOQuestion6, GOQuestion7, GOQuestion8, GOQuestion9, GOQuestion10, GOQuestion11, GOQuestion12, GOQuestion13, GOQuestion14, GOQuestion15, GOQuestion16, GOQuestion17, GOQuestion18, GOQuestion19, GOQuestionYoshi, GOQuestionToad;
 void sceneNiveau1(Scene *scene){
     GLuint programID=scene->root.programID;
 
@@ -302,16 +328,36 @@ void sceneNiveau1(Scene *scene){
     GOmariometal.rajouterOBJ();
     GOmariometal.isGround = true;
     Transform scale = Transform().scale(0.020f);
-    Transform roll = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f); // Roll (90° autour de Z)
-    Transform yaw = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f); // Yaw (180° autour de Y)
-    Transform combined = yaw.combine_with(roll); // Combinaison des transformations
+    Transform roll = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
+    Transform yaw = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
+    Transform combined = yaw.combine_with(roll);
 
     GOmariometal.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,0.0),1.0).combine_with(scale).combine_with(roll));
     GOmariometal.initialTransform = GOmariometal.transform;
 
+    // std::string path = "../animations/mario/Idle.dae";
+    // float scaleFromFile = readDaeUnitScale(path);
+    // std::cout<<"UnitScale : "<<scaleFromFile<<std::endl;
+    // std::cout << "Chargement de la première animation..." << std::endl;
+    // GOmariometal.animationMeshes.loadAnimatedModel("../animations/mario/Idle.dae", scaleFromFile*2);
+    // GOmariometal.hasAnimation = true;
+    // std::cout << "Chargement des animations supplémentaires..." << std::endl;
+    // GOmariometal.animationMeshes.addAnimation("../animations/mario/Walking.dae");
+    // GOmariometal.animationMeshes.addAnimation("../animations/mario/Running.dae");
+    // GOmariometal.animationMeshes.addAnimation("../animations/mario/Jump.dae");
+    // GOmariometal.setAnimation("../animations/mario/Idle.dae");
+
+    // for(auto& mesh : GOmariometal.animationMeshes.baseMeshes){
+    //     mesh.programID = programID;
+    //     mesh.loadPBR("../textures/assemblies/albedo.png", "../textures/assemblies/normal.png", "../textures/assemblies/roughness.png", "../textures/assemblies/metallic.png", "../textures/assemblies/ao.png");
+    // }
+
+    // GOmariometal.hasAnimation = true;
+
     
     // Parent = translation uniquement
     Transform translation =Transform(glm::mat3(1.0f), glm::vec3(20.0f, 10.0f, -50.5f), 1.0f);
+    // Transform translation =Transform(glm::mat3(1.0f), glm::vec3(0.0f, 80.0f, 32.0f), 1.0f);
     GOmariometal.setGlobalTransform(translation);
     std::cout<<GOmariometal.globalTransform.t[0]<<" "<<GOmariometal.globalTransform.t[1]<<" "<<GOmariometal.globalTransform.t[2]<<std::endl;
 
@@ -320,6 +366,145 @@ void sceneNiveau1(Scene *scene){
     GOPeach.rajouterOBJ();
     Transform tPeach=Transform(glm::mat3x3(1.0),glm::vec3(-3.0,5.0,20.0),0.02);
     GOPeach.setLocalTransform(tPeach.combine_with(tPeach.rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f)));
+
+    GOQuestion.programID=programID;
+    GOQuestion.lireOBJ("../meshes/question.obj");
+    GOQuestion.rajouterOBJ();
+    Transform tQuestion=Transform(glm::mat3x3(1.0),glm::vec3(-37.0,-1.0,-22.0),0.1);
+    GOQuestion.setLocalTransform(tQuestion.combine_with(tQuestion.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion2.programID=programID;
+    GOQuestion2.lireOBJ("../meshes/question.obj");
+    GOQuestion2.rajouterOBJ();
+    Transform tQuestion2=Transform(glm::mat3x3(1.0),glm::vec3(-40.0,4.0,-29.0),0.1);
+    GOQuestion2.setLocalTransform(tQuestion2.combine_with(tQuestion2.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion3.programID=programID;
+    GOQuestion3.lireOBJ("../meshes/question.obj");
+    GOQuestion3.rajouterOBJ();
+    Transform tQuestion3=Transform(glm::mat3x3(1.0),glm::vec3(-46.0,8.0,-40.0),0.1);
+    GOQuestion3.setLocalTransform(tQuestion3.combine_with(tQuestion3.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion4.programID=programID;
+    GOQuestion4.lireOBJ("../meshes/question.obj");
+    GOQuestion4.rajouterOBJ();
+    Transform tQuestion4=Transform(glm::mat3x3(1.0),glm::vec3(-32.0,12.0,-38.0),0.1);
+    GOQuestion4.setLocalTransform(tQuestion4.combine_with(tQuestion4.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion5.programID=programID;
+    GOQuestion5.lireOBJ("../meshes/question.obj");
+    GOQuestion5.rajouterOBJ();
+    Transform tQuestion5=Transform(glm::mat3x3(1.0),glm::vec3(-24.0,16.0,-28.0),0.1);
+    GOQuestion5.setLocalTransform(tQuestion5.combine_with(tQuestion5.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion6.programID=programID;
+    GOQuestion6.lireOBJ("../meshes/question.obj");
+    GOQuestion6.rajouterOBJ();
+    Transform tQuestion6=Transform(glm::mat3x3(1.0),glm::vec3(-12.0,20.0,-23.0),0.1);
+    GOQuestion6.setLocalTransform(tQuestion6.combine_with(tQuestion6.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion7.programID=programID;
+    GOQuestion7.lireOBJ("../meshes/question.obj");
+    GOQuestion7.rajouterOBJ();
+    Transform tQuestion7=Transform(glm::mat3x3(1.0),glm::vec3(-4.0,24.0,-10.0),0.1);
+    GOQuestion7.setLocalTransform(tQuestion7.combine_with(tQuestion7.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion8.programID=programID;
+    GOQuestion8.lireOBJ("../meshes/question.obj");
+    GOQuestion8.rajouterOBJ();
+    Transform tQuestion8=Transform(glm::mat3x3(1.0),glm::vec3(8.0,28.0,-1.0),0.1);
+    GOQuestion8.setLocalTransform(tQuestion8.combine_with(tQuestion8.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion9.programID=programID;
+    GOQuestion9.lireOBJ("../meshes/question.obj");
+    GOQuestion9.rajouterOBJ();
+    Transform tQuestion9=Transform(glm::mat3x3(1.0),glm::vec3(17.0,32.0,-11.0),0.1);
+    GOQuestion9.setLocalTransform(tQuestion9.combine_with(tQuestion9.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion10.programID=programID;
+    GOQuestion10.lireOBJ("../meshes/question.obj");
+    GOQuestion10.rajouterOBJ();
+    Transform tQuestion10=Transform(glm::mat3x3(1.0),glm::vec3(29.0,36.0,-18.0),0.1);
+    GOQuestion10.setLocalTransform(tQuestion10.combine_with(tQuestion10.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion11.programID=programID;
+    GOQuestion11.lireOBJ("../meshes/question.obj");
+    GOQuestion11.rajouterOBJ();
+    Transform tQuestion11=Transform(glm::mat3x3(1.0),glm::vec3(20.0,40.0,-30.0),0.1);
+    GOQuestion11.setLocalTransform(tQuestion11.combine_with(tQuestion11.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion12.programID=programID;
+    GOQuestion12.lireOBJ("../meshes/question.obj");
+    GOQuestion12.rajouterOBJ();
+    Transform tQuestion12=Transform(glm::mat3x3(1.0),glm::vec3(12.0,44.0,-18.0),0.1);
+    GOQuestion12.setLocalTransform(tQuestion12.combine_with(tQuestion12.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion13.programID=programID;
+    GOQuestion13.lireOBJ("../meshes/question.obj");
+    GOQuestion13.rajouterOBJ();
+    Transform tQuestion13=Transform(glm::mat3x3(1.0),glm::vec3(9.0,48.0,-3.0),0.1);
+    GOQuestion13.setLocalTransform(tQuestion13.combine_with(tQuestion13.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion14.programID=programID;
+    GOQuestion14.lireOBJ("../meshes/question.obj");
+    GOQuestion14.rajouterOBJ();
+    Transform tQuestion14=Transform(glm::mat3x3(1.0),glm::vec3(4.0,52.0,11.0),0.1);
+    GOQuestion14.setLocalTransform(tQuestion14.combine_with(tQuestion14.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion15.programID=programID;
+    GOQuestion15.lireOBJ("../meshes/question.obj");
+    GOQuestion15.rajouterOBJ();
+    Transform tQuestion15=Transform(glm::mat3x3(1.0),glm::vec3(1.0,56.0,23.0),0.1);
+    GOQuestion15.setLocalTransform(tQuestion15.combine_with(tQuestion15.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion16.programID=programID;
+    GOQuestion16.lireOBJ("../meshes/question.obj");
+    GOQuestion16.rajouterOBJ();
+    Transform tQuestion16=Transform(glm::mat3x3(1.0),glm::vec3(-8.0,60.0,35.0),0.1);
+    GOQuestion16.setLocalTransform(tQuestion16.combine_with(tQuestion16.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion17.programID=programID;
+    GOQuestion17.lireOBJ("../meshes/question.obj");
+    GOQuestion17.rajouterOBJ();
+    Transform tQuestion17=Transform(glm::mat3x3(1.0),glm::vec3(-2.0,64.0,46.0),0.1);
+    GOQuestion17.setLocalTransform(tQuestion17.combine_with(tQuestion17.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion18.programID=programID;
+    GOQuestion18.lireOBJ("../meshes/question.obj");
+    GOQuestion18.rajouterOBJ();
+    Transform tQuestion18=Transform(glm::mat3x3(1.0),glm::vec3(7.0,68.0,39.0),0.1);
+    GOQuestion18.setLocalTransform(tQuestion18.combine_with(tQuestion18.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestion19.programID=programID;
+    GOQuestion19.lireOBJ("../meshes/question.obj");
+    GOQuestion19.rajouterOBJ();
+    Transform tQuestion19=Transform(glm::mat3x3(1.0),glm::vec3(0.0,72.0,32.0),0.1);
+    GOQuestion19.setLocalTransform(tQuestion19.combine_with(tQuestion19.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestionYoshi.programID=programID;
+    GOQuestionYoshi.lireOBJ("../meshes/question.obj");
+    GOQuestionYoshi.rajouterOBJ();
+    Transform tQuestionYoshi=Transform(glm::mat3x3(1.0),glm::vec3(5.0,75.0,45.0),0.1);
+    GOQuestionYoshi.setLocalTransform(tQuestionYoshi.combine_with(tQuestionYoshi.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOQuestionToad.programID=programID;
+    GOQuestionToad.lireOBJ("../meshes/question.obj");
+    GOQuestionToad.rajouterOBJ();
+    Transform tQuestionToad=Transform(glm::mat3x3(1.0),glm::vec3(-6.0,75.0,45.0),0.1);
+    GOQuestionToad.setLocalTransform(tQuestionToad.combine_with(tQuestionToad.rotation(glm::vec3(1.0f, 0.0f, 0.0f), 90.0f)));
+
+    GOToad.programID=programID;
+    GOToad.lireOBJ("../meshes/toad.obj");
+    GOToad.rajouterOBJ();
+    Transform tToad=Transform(glm::mat3x3(1.0),glm::vec3(-6.0,80.0,45.0),0.20);
+    tToad=tToad.combine_with(tToad.rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f));
+    GOToad.setLocalTransform(tToad.combine_with(tToad.rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f)));
+
+    GOYoshi.programID=programID;
+    GOYoshi.lireOBJ("../meshes/yoshi3.obj");
+    GOYoshi.rajouterOBJ();
+    Transform tYoshi=Transform(glm::mat3x3(1.0),glm::vec3(5.0,80.0,45.0),0.20);
+    GOYoshi.setLocalTransform(tYoshi.combine_with(tYoshi.rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f)));
     
     // Affichage de la lumière :
     std::cout<<"Chargement de la lumière"<<std::endl;
@@ -340,19 +525,110 @@ void sceneNiveau1(Scene *scene){
     scene->root.addChild(&GOchateau);
     GOchateau.addChild(&GOmariometal);
     GOchateau.addChild(&GOPeach);
+    GOchateau.addChild(&GOToad);
+    GOchateau.addChild(&GOYoshi);
     scene->lights.push_back(&light);
     GOchateau.map=true;
     GOmariometal.collisions.push_back(&GOchateau);
     GOmariometal.collisions.push_back(&GOPeach);
+    GOmariometal.collisions.push_back(&GOToad);
+    GOmariometal.collisions.push_back(&GOYoshi);
     GOPeach.collisions.push_back(&GOchateau);
+    GOToad.collisions.push_back(&GOchateau);
+    GOYoshi.collisions.push_back(&GOchateau);
+    GOToad.collisions.push_back(&GOQuestionToad);
+    GOYoshi.collisions.push_back(&GOQuestionYoshi);
+    GOchateau.addChild(&GOQuestion);
+    GOmariometal.collisions.push_back(&GOQuestion);
+    GOQuestion.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion2);
+    GOmariometal.collisions.push_back(&GOQuestion2);
+    GOQuestion2.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion3);
+    GOmariometal.collisions.push_back(&GOQuestion3);
+    GOQuestion3.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion4);
+    GOmariometal.collisions.push_back(&GOQuestion4);
+    GOQuestion4.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion5);
+    GOmariometal.collisions.push_back(&GOQuestion5);
+    GOQuestion5.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion6);
+    GOmariometal.collisions.push_back(&GOQuestion6);
+    GOQuestion6.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion7);
+    GOmariometal.collisions.push_back(&GOQuestion7);
+    GOQuestion7.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion8);
+    GOmariometal.collisions.push_back(&GOQuestion8);
+    GOQuestion8.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion9);
+    GOmariometal.collisions.push_back(&GOQuestion9);
+    GOQuestion9.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion10);
+    GOmariometal.collisions.push_back(&GOQuestion10);
+    GOQuestion10.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion11);
+    GOmariometal.collisions.push_back(&GOQuestion11);
+    GOQuestion11.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion12);
+    GOmariometal.collisions.push_back(&GOQuestion12);
+    GOQuestion12.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion13);
+    GOmariometal.collisions.push_back(&GOQuestion13);
+    GOQuestion13.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion14);
+    GOmariometal.collisions.push_back(&GOQuestion14);
+    GOQuestion14.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion15);
+    GOmariometal.collisions.push_back(&GOQuestion15);
+    GOQuestion15.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion16);
+    GOmariometal.collisions.push_back(&GOQuestion16);
+    GOQuestion16.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion17);
+    GOmariometal.collisions.push_back(&GOQuestion17);
+    GOQuestion17.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion18);
+    GOmariometal.collisions.push_back(&GOQuestion18);
+    GOQuestion18.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestion19);
+    GOmariometal.collisions.push_back(&GOQuestion19);
+    GOQuestion19.collisions.push_back(&GOmariometal);
+    GOchateau.addChild(&GOQuestionYoshi);
+    GOmariometal.collisions.push_back(&GOQuestionYoshi);
+    GOQuestionYoshi.collisions.push_back(&GOmariometal);
+    GOQuestionYoshi.collisions.push_back(&GOYoshi);
+    GOchateau.addChild(&GOQuestionToad);
+    GOmariometal.collisions.push_back(&GOQuestionToad);
+    GOQuestionToad.collisions.push_back(&GOmariometal);
+    GOQuestionToad.collisions.push_back(&GOToad);
+    GOchateau.stars.push_back(&GOStarPlateforme);
+    GOchateau.stars[0]->auSol=true;
+    GOchateau.stars[0]->programID=programID;
+    GOchateau.stars[0]->lireOBJ("../meshes/star.obj");
+    GOchateau.stars[0]->rajouterOBJ();
+    GOchateau.stars[0]->setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(-0.5,80.0,39.0),1.0));
+    GOchateau.stars[0]->nom="star";
+    GOchateau.stars[0]->isIA=true;
+    // GOchateau.stars[0]->auSol=false;
+    GOchateau.stars[0]->collisions.push_back(&GOchateau);
+    GOchateau.stars[0]->collisions.push_back(&GOmariometal);
+    GOchateau.addChild(GOchateau.stars[0]);
+    GOmariometal.collisions.push_back(GOchateau.stars[0]);
     GOmariometal.nom="mario";
     GOPeach.nom="peach";
     GOchateau.nom="chateau";
+    GOToad.nom="toad";
+    GOYoshi.nom="yoshi";
     GOPeach.mettreAuSol(&GOchateau);
     GOmariometal.mettreAuSol(&GOchateau);
+    GOYoshi.mettreAuSol(&GOchateau);
+    GOToad.mettreAuSol(&GOchateau);
+    scene->reset=false;
     GOmariometal.pv=3;
     scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
-    Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 - Inside Peachs Castle Music.wav");
+    // Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 - Inside Peachs Castle Music.wav");
 }
 
 GameObject GOBobombBattlefieldDS,GOBattanKing,light2,GOGoomba1,GOGoomba2,GOGoomba3,GOGoomba4,GOGoomba5,GOGoomba6,GOGoomba7,GOGoomba8,GOMetalMario2,GOstar,GOcanon,GOchainchomp;
@@ -387,7 +663,7 @@ void sceneNiveau2(Scene *scene){
     GOMetalMario2.isGround = true;
     Transform scale = Transform().scale(0.020f);
     Transform roll = Transform().rotation(glm::vec3(1.0f, 0.0f, 0.0f), -90.0f);
-    Transform yaw = Transform().rotation(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
+    Transform yaw = Transform().rotation(glm::vec3(0.0f, 0.0f, 1.0f), 90.0f);
     Transform combined = yaw.combine_with(roll);
     GOMetalMario2.setLocalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,1.0,0.0),1.0).combine_with(scale).combine_with(roll));
     GOMetalMario2.initialTransform = GOMetalMario2.transform;
@@ -515,7 +791,7 @@ void sceneNiveau2(Scene *scene){
     GOBobombBattlefieldDS.addChild(&GOchainchomp);
     // GOBobombBattlefieldDS.addChild(&GObridge);
     scene->lights.push_back(&light2);
-    Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 - Main Theme Music - Bob-Omb Battlefield.wav");
+    // Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 - Main Theme Music - Bob-Omb Battlefield.wav");
     GOMetalMario2.collisions.push_back(&GOBobombBattlefieldDS);
     GOMetalMario2.collisions.push_back(&GOGoomba1);
     GOMetalMario2.collisions.push_back(&GOGoomba8);
@@ -571,19 +847,21 @@ void sceneNiveau2(Scene *scene){
     GOBattanKing.creerIA();
     GOBattanKing.boiteEnglobante.setVerticesEspace(GOBattanKing.globalTransform);
     GOGoomba2.creerIA();
-    GOGoomba2.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba2.boiteEnglobante.setVerticesEspace(GOGoomba2.globalTransform);
     GOGoomba3.creerIA();
-    GOGoomba3.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba3.boiteEnglobante.setVerticesEspace(GOGoomba3.globalTransform);
     GOGoomba4.creerIA();
-    GOGoomba4.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba4.boiteEnglobante.setVerticesEspace(GOGoomba4.globalTransform);
     GOGoomba5.creerIA();
-    GOGoomba5.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba5.boiteEnglobante.setVerticesEspace(GOGoomba5.globalTransform);
     GOGoomba6.creerIA();
-    GOGoomba6.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba6.boiteEnglobante.setVerticesEspace(GOGoomba6.globalTransform);
     GOGoomba7.creerIA();
-    GOGoomba7.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba7.boiteEnglobante.setVerticesEspace(GOGoomba7.globalTransform);
     GOGoomba8.creerIA();
-    GOGoomba8.boiteEnglobante.setVerticesEspace(GOGoomba1.globalTransform);
+    GOGoomba8.boiteEnglobante.setVerticesEspace(GOGoomba8.globalTransform);
+    // GOchainchomp.creerIA();
+    // GOchainchomp.boiteEnglobante.setVerticesEspace(GOchainchomp.globalTransform);
     GOMetalMario2.pv=3;
     GOBattanKing.pv=3;
     GOGoomba1.pv=1;
@@ -594,7 +872,7 @@ void sceneNiveau2(Scene *scene){
     GOGoomba6.pv=1;
     GOGoomba7.pv=1;
     GOGoomba8.pv=1;
-    GOMetalMario2.pv=10;
+    GOchainchomp.pv=10;
     GOBobombBattlefieldDS.stars.push_back(&GOstar);
     // scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);z
     // scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
@@ -629,7 +907,7 @@ void sceneNiveau3(Scene *scene){
     light3.programID=programID;
     light3.setLODMeshes("../meshes/sphere.off",false, "../textures/s2.ppm");
     light3.setLocalTransform(Transform().scale(5.0f));
-    light3.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(275.0,275.0,275.0),1.0));
+    light3.setGlobalTransform(Transform(glm::mat3x3(1.0),glm::vec3(0.0,120.0,0.0),1.0));
     light3.lightIntensity = 100000.0f;
     light3.isLight = true;
     light3.lightColor = glm::vec3(1.0f,1.0f,0.8f)* light3.lightIntensity;
@@ -716,13 +994,13 @@ void sceneNiveau3(Scene *scene){
     GOkoopa1.creerIA();
     GOkoopa1.boiteEnglobante.setVerticesEspace(GOkoopa1.globalTransform);
     GOMetalMario3.pv=3;
-    GOBowser.pv=3;
+    GOBowser.pv=1;
     GOkoopa1.pv=1;
     GOkoopa2.pv=1;
     GObowserStadium.stars.push_back(&GOstar);
     std::cout<<"mario position : "<<GOMetalMario3.centreEspace[0]<<" "<<GOMetalMario3.centreEspace[1]<<" "<<GOMetalMario3.centreEspace[2]<<std::endl;
     scene->camera.orbitalRadius *= (scene->camera.parent->transform.s/0.02f);
-    Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 Soundtrack - Bowser's Theme.wav");
+    // Audio::switchBackgroundMusic("../audios/SoundTrack/Super Mario 64 Soundtrack - Bowser's Theme.wav");
 }
 
 void empecherMouvement(){
@@ -762,11 +1040,38 @@ void clearNiveaux(){
     empecherMouvement();
 }
 
+std::vector<glm::vec2> verticesChargement{glm::vec2{-1.0f,1.0f},glm::vec2{-1.0f,-1.0f},glm::vec2{1.0f,-1.0f},glm::vec2{1.0f,-1.0f},glm::vec2{1.0f,1.0f},glm::vec2{-1.0f,1.0f}};
+std::vector<glm::vec2> uvChargement{glm::vec2{0.0f,0.0f},glm::vec2{0.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,1.0f},glm::vec2{1.0f,0.0f},glm::vec2{0.0f,0.0f}};
+std::vector<unsigned short> indicesChargement{0,1,2,3,4,5};
+GLuint ChargementVBuffer, ChargementIBuffer, ChargementUVBuffer, textureChargement;
+void afficherChargement(){
+    glGenBuffers(1, &ChargementVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, ChargementVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, verticesChargement.size()*sizeof(glm::vec2), &verticesChargement[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &ChargementIBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ChargementIBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesChargement), &indicesChargement[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &ChargementUVBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, ChargementUVBuffer);
+    glBufferData(GL_ARRAY_BUFFER, uvChargement.size()*sizeof(glm::vec2), &uvChargement[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, ChargementVBuffer);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(4);
+    glBindBuffer(GL_ARRAY_BUFFER, ChargementUVBuffer);
+    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ChargementIBuffer);
+    glDisable(GL_DEPTH_TEST);
+    sendTexture(textureChargement);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void changerNiveau(){
     if(niveau==3){
         for(int i=0;i<GOMetalMario3.collisions.size();i++){
             if(GOMetalMario3.collisions[i]->nom=="star"){
-                Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
+                // Audio::playAudioOnce("../audios/UI/Continued.wav",glm::vec3(0.0));
                 scene.camera.lookAt(GOMetalMario3.collisions[i]);
             }
         }
@@ -826,6 +1131,7 @@ void changerNiveau(){
         toggleInputZ = false;
         activeToogle=true;
     }if(scene.reset){
+        std::cout<<"hihi"<<std::endl;
         scene.nouveauPV=true;
         scene.reset=false;
         if(niveau==1){
@@ -1088,10 +1394,9 @@ int main( void )
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // Open a window and create its OpenGL context
     window = glfwCreateWindow( SCR_WIDTH, SCR_HEIGHT, "TP3 - GLFW", NULL, NULL);
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
@@ -1101,8 +1406,7 @@ int main( void )
     }
     glfwMakeContextCurrent(window);
 
-    // Initialize GLEW
-    glewExperimental = true; // Needed for core profile
+    glewExperimental = true;
     if (glewInit() != GLEW_OK) {
         fprintf(stderr, "Failed to initialize GLEW\n");
         getchar();
@@ -1139,7 +1443,7 @@ int main( void )
     scene.creerSkybox();
     std::cout<<"Niveau crée"<<std::endl;
 
-    Audio::init();
+    // Audio::init();
 
 
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
@@ -1148,44 +1452,51 @@ int main( void )
     double lastTime = glfwGetTime();
     int nbFrames = 0;
 
-    std::cout<<"iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"<<std::endl;
     texturePV=loadTextureHUD("../textures/mario3.png");
     textureCarte=loadTextureHUD("../textures/star0.png");
     textureStar=loadTextureHUD("../textures/star0.png");
+    textureChargement=loadTextureHUD("../textures/star0.png");
     initText2Da("../textures/white.png");
     scene.nbPV=3;
     GOMetalMario3.pv=3;
 
     do{
-        changerNiveau();
-        if(scene.nouvelleEtoile){
-            if(scene.nbEtoiles==1){
-                textureStar=loadTextureHUD("../textures/star1.png");
-            }if(scene.nbEtoiles==2){
-                textureStar=loadTextureHUD("../textures/star2.png");
-            }if(scene.nbEtoiles==3){
-                textureStar=loadTextureHUD("../textures/star3.png");
-            }
-            scene.nouvelleEtoile=false;
-        }if(scene.nouveauPV){
-            if(scene.nbPV==1){
-                texturePV=loadTextureHUD("../textures/mario1.png");
-            }if(scene.nbPV==2){
-                texturePV=loadTextureHUD("../textures/mario2.png");
-            }if(scene.nbPV==3){
-                texturePV=loadTextureHUD("../textures/mario3.png");
-            }
-            scene.nouveauPV=false;
-        }if(scene.nouveauNiveau){
-            if(scene.niveau==1){
-                textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
-            }if(scene.niveau==2){
-                textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
-            }if(scene.niveau==3){
-                textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
-            }
-            scene.nouveauNiveau=false;
+        if(scene.niveau!=niveau){
+            glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_TRUE);
+            glUniform1i(glGetUniformLocation(programID, "isFond"), GL_TRUE);
+            afficherChargement();
+            glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_FALSE);
+            glUniform1i(glGetUniformLocation(programID, "isFond"), GL_FALSE);
         }
+        changerNiveau();
+        // if(scene.nouvelleEtoile){
+        //     if(scene.nbEtoiles==1){
+        //         textureStar=loadTextureHUD("../textures/star1.png");
+        //     }if(scene.nbEtoiles==2){
+        //         textureStar=loadTextureHUD("../textures/star2.png");
+        //     }if(scene.nbEtoiles==3){
+        //         textureStar=loadTextureHUD("../textures/star3.png");
+        //     }
+        //     scene.nouvelleEtoile=false;
+        // }if(scene.nouveauPV){
+        //     if(scene.nbPV==1){
+        //         texturePV=loadTextureHUD("../textures/mario1.png");
+        //     }if(scene.nbPV==2){
+        //         texturePV=loadTextureHUD("../textures/mario2.png");
+        //     }if(scene.nbPV==3){
+        //         texturePV=loadTextureHUD("../textures/mario3.png");
+        //     }
+        //     scene.nouveauPV=false;
+        // }if(scene.nouveauNiveau){
+        //     if(scene.niveau==1){
+        //         textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
+        //     }if(scene.niveau==2){
+        //         textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
+        //     }if(scene.niveau==3){
+        //         textureCarte=loadTextureHUD("../textures/5EDC83BD_c.png");
+        //     }
+        //     scene.nouveauNiveau=false;
+        // }
         lastTime = affiche(window,lastTime);
         // Measure speed
         // per-frame time logic
@@ -1236,39 +1547,41 @@ int main( void )
 
         }
         
+        glUniform1i(glGetUniformLocation(programID, "isSkybox"), GL_TRUE);
+        scene.drawSkybox();
+        glUniform1i(glGetUniformLocation(programID, "isSkybox"), GL_FALSE);
         glUniform1i(glGetUniformLocation(programID, "isText"), GL_FALSE);
         glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_FALSE);
         scene.draw(deltaTime);
-        glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_TRUE);
-        // glUniform4f(glGetUniformLocation(programID, "hudColor"), 0.0f, 0.0f, 0.0f, 1.0f);
-        glUniform1i(glGetUniformLocation(programID, "isFond"), GL_TRUE);
-        afficherFond(verticesPV,uvPV,indicesPV);
-        afficherFond(verticesStar,uvStar,indicesStar);
-        glUniform1i(glGetUniformLocation(programID, "isFond"), GL_FALSE);
-        afficherPV();
-        afficherStar();
-        if(carte){
-            glUniform1i(glGetUniformLocation(programID, "isFond"), GL_TRUE);
-            afficherFond(verticesCarte,uvCarte,indicesCarte);
-            glUniform1i(glGetUniformLocation(programID, "isFond"), GL_FALSE);
-            afficherCarte();
-        }
+        // // glUniform4f(glGetUniformLocation(programID, "hudColor"), 0.0f, 0.0f, 0.0f, 1.0f);
+        // glUniform1i(glGetUniformLocation(programID, "isFond"), GL_TRUE);
+        // afficherFond(verticesPV,uvPV,indicesPV);
+        // afficherFond(verticesStar,uvStar,indicesStar);
+        // glUniform1i(glGetUniformLocation(programID, "isFond"), GL_FALSE);
+        // afficherPV();
+        // afficherStar();
+        // if(carte){
+        //     glUniform1i(glGetUniformLocation(programID, "isFond"), GL_TRUE);
+        //     afficherFond(verticesCarte,uvCarte,indicesCarte);
+        //     glUniform1i(glGetUniformLocation(programID, "isFond"), GL_FALSE);
+        //     afficherCarte();
+        // }
         // glUniform1i(glGetUniformLocation(programID, "isHUD"), GL_FALSE);
         // glUniform1i(glGetUniformLocation(programID, "isText"), GL_TRUE);
         // printText2Da("caca",100,100,30);
 
-        Audio::update();
+        // Audio::update();
         // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-    } // Check if the ESC key was pressed or the window was closed
+    }
     while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
            glfwWindowShouldClose(window) == 0 );
 
     glDeleteProgram(programID);
     glDeleteVertexArrays(1, &VertexArrayID);
-    Audio::cleanup();
+    // Audio::cleanup();
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
 
