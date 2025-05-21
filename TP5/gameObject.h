@@ -73,7 +73,7 @@ class GameObject{
         std::vector<GameObject*> collisions;
         bool map=false;
         bool auSol=true;
-        int pv=3;
+        int pv=0;
         std::string collisionChateau;
         Transform transformSol;
         int nbCollision=-1;

@@ -154,7 +154,7 @@ void processInput(GLFWwindow *window)
         }
     }
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (scene.camera.parent->speed[1]<=0.0f)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
+            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)  && (scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
             if(!toggleInputI && !changementDuNiveau){
                 toggleInputI = true;
             }else{
@@ -170,7 +170,7 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->frontAxe = glm::vec3(0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (!scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
+            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
             if(!toggleInputK && !changementDuNiveau){
                 toggleInputK = true;
             }else{
@@ -186,7 +186,7 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->frontAxe = glm::vec3(0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (!scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
+            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
             if(!toggleInputL && !changementDuNiveau){
                 toggleInputL = true;
             }else{
@@ -200,7 +200,7 @@ void processInput(GLFWwindow *window)
             scene.camera.parent->rightAxe = glm::vec3(0.0f,0.0,0.0f);
         }
         if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (!scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
+            if((!glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) && (scene.camera.parent->isGround)){scene.camera.parent->setAnimation("../animations/mario/Walking.dae");}
             if(!toggleInputJ && !changementDuNiveau){
                 toggleInputJ = true;
             }else{

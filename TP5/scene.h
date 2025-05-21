@@ -51,7 +51,7 @@ class Scene{
         this->animation(elapsedTime);
         this->sautIA(Obj);
         this->root.testIA(Obj,elapsedTime);
-        //this->drawSkybox();
+        this->drawSkybox();
         this->root.draw(camera.globalTransform.t, elapsedTime);
         this->testChangementNiveau(Map,Obj);
     }
@@ -131,34 +131,47 @@ class Scene{
     }
 
     void creerSkybox(){
-        this->skyboxplafond.vertices_Espace={
-            glm::vec3(300.0f, 300.0f, -300.0f),
-            glm::vec3(-300.0f, 300.0f, -300.0f),
-            glm::vec3(-300.0f, 300.0f, 300.0f),
-            glm::vec3(-300.0f, 300.0f, 300.0f),
-            glm::vec3(300.0f, 300.0f, 300.0f),
-            glm::vec3(300.0f, 300.0f, -300.0f)
-        };
-        this->skyboxplafond.texCoords={
-            glm::vec2(1.0f, 1.0f),
-            glm::vec2(0.0f, 1.0f),
-            glm::vec2(0.0f, 0.0f),
-            glm::vec2(0.0f, 0.0f),
-            glm::vec2(1.0f, 0.0f),
-            glm::vec2(1.0f, 1.0f)
-        };
-        this->skyboxplafond.indices={0,1,2,3,4,5};
-        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
+        this->skyboxplafond.indexed_vertices.push_back(glm::vec3(300.0f, 300.0f, -300.0f));
+        this->skyboxplafond.indexed_vertices.push_back(glm::vec3(-300.0f, 300.0f, -300.0f));
+        this->skyboxplafond.indexed_vertices.push_back(glm::vec3(-300.0f, 300.0f, 300.0f));
+        this->skyboxplafond.indexed_vertices.push_back(glm::vec3(-300.0f, 300.0f, 300.0f));
+        this->skyboxplafond.indexed_vertices.push_back(glm::vec3(300.0f, 300.0f, 300.0f));
+        this->skyboxplafond.indexed_vertices.push_back(glm::vec3(300.0f, 300.0f, -300.0f));
+        this->skyboxplafond.vertices_Espace.push_back(glm::vec3(300.0f, 300.0f, -300.0f));
+        this->skyboxplafond.vertices_Espace.push_back(glm::vec3(-300.0f, 300.0f, -300.0f));
+        this->skyboxplafond.vertices_Espace.push_back(glm::vec3(-300.0f, 300.0f, 300.0f));
+        this->skyboxplafond.vertices_Espace.push_back(glm::vec3(-300.0f, 300.0f, 300.0f));
+        this->skyboxplafond.vertices_Espace.push_back(glm::vec3(300.0f, 300.0f, 300.0f));
+        this->skyboxplafond.vertices_Espace.push_back(glm::vec3(300.0f, 300.0f, -300.0f));
+        this->skyboxplafond.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxplafond.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxplafond.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxplafond.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxplafond.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxplafond.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxplafond.texCoords.push_back(glm::vec2(1.0f, 1.0f));
+        this->skyboxplafond.texCoords.push_back(glm::vec2(0.0f, 1.0f));
+        this->skyboxplafond.texCoords.push_back(glm::vec2(0.0f, 0.0f));
+        this->skyboxplafond.texCoords.push_back(glm::vec2(0.0f, 0.0f));
+        this->skyboxplafond.texCoords.push_back(glm::vec2(1.0f, 0.0f));
+        this->skyboxplafond.texCoords.push_back(glm::vec2(1.0f, 1.0f));
+        this->skyboxplafond.indices.push_back(0);
+        this->skyboxplafond.indices.push_back(1);
+        this->skyboxplafond.indices.push_back(2);
+        this->skyboxplafond.indices.push_back(3);
+        this->skyboxplafond.indices.push_back(4);
+        this->skyboxplafond.indices.push_back(5);
+        std::vector<unsigned short> a={0,1,2},b={3,4,5};
+        this->skyboxplafond.triangles.push_back(a);
+        this->skyboxplafond.triangles.push_back(b);
         this->skyboxplafond.programID=this->root.programID;
         
-        this->skyboxsol.vertices_Espace={
-            glm::vec3(300.0f, -300.0f, -300.0f),
-            glm::vec3(-300.0f, -300.0f, -300.0f),
-            glm::vec3(-300.0f, -300.0f, 300.0f),
-            glm::vec3(-300.0f, -300.0f, 300.0f),
-            glm::vec3(300.0f, -300.0f, 300.0f),
-            glm::vec3(300.0f, -300.0f, -300.0f)
-        };
+        this->skyboxsol.vertices_Espace.push_back(glm::vec3(300.0f, -300.0f, -300.0f));
+        this->skyboxsol.vertices_Espace.push_back(glm::vec3(-300.0f, -300.0f, -300.0f));
+        this->skyboxsol.vertices_Espace.push_back(glm::vec3(-300.0f, -300.0f, 300.0f));
+        this->skyboxsol.vertices_Espace.push_back(glm::vec3(-300.0f, -300.0f, 300.0f));
+        this->skyboxsol.vertices_Espace.push_back(glm::vec3(300.0f, -300.0f, 300.0f));
+        this->skyboxsol.vertices_Espace.push_back(glm::vec3(300.0f, -300.0f, -300.0f));
         this->skyboxsol.texCoords={
             glm::vec2(1.0f, 1.0f),
             glm::vec2(0.0f, 1.0f),
@@ -167,8 +180,15 @@ class Scene{
             glm::vec2(1.0f, 0.0f),
             glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxplafond.indices={0,1,2,3,4,5};
-        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
+
+        this->skyboxsol.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxsol.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxsol.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxsol.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxsol.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxsol.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxsol.indices={0,1,2,3,4,5};
+        this->skyboxsol.triangles={{0,1,2},{3,4,5}};
         this->skyboxsol.programID=this->root.programID;
         
         this->skyboxmur1.vertices_Espace={
@@ -187,8 +207,15 @@ class Scene{
             glm::vec2(1.0f, 0.0f),
             glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxplafond.indices={0,1,2,3,4,5};
-        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
+
+        this->skyboxmur1.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur1.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur1.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur1.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur1.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur1.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur1.indices={0,1,2,3,4,5};
+        this->skyboxmur1.triangles={{0,1,2},{3,4,5}};
         this->skyboxmur1.programID=this->root.programID;
         
         this->skyboxmur2.vertices_Espace={
@@ -207,8 +234,15 @@ class Scene{
             glm::vec2(1.0f, 0.0f),
             glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxplafond.indices={0,1,2,3,4,5};
-        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
+
+        this->skyboxmur2.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur2.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur2.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur2.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur2.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur2.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur2.indices={0,1,2,3,4,5};
+        this->skyboxmur2.triangles={{0,1,2},{3,4,5}};
         this->skyboxmur2.programID=this->root.programID;
         
         this->skyboxmur3.vertices_Espace={
@@ -227,8 +261,15 @@ class Scene{
             glm::vec2(1.0f, 0.0f),
             glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxplafond.indices={0,1,2,3,4,5};
-        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
+
+        this->skyboxmur3.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur3.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur3.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur3.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur3.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur3.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur3.indices={0,1,2,3,4,5};
+        this->skyboxmur3.triangles={{0,1,2},{3,4,5}};
         this->skyboxmur3.programID=this->root.programID;
         
         this->skyboxmur4.vertices_Espace={
@@ -247,10 +288,15 @@ class Scene{
             glm::vec2(1.0f, 0.0f),
             glm::vec2(1.0f, 1.0f)
         };
-        this->skyboxplafond.indices={0,1,2,3,4,5};
-        this->skyboxplafond.triangles={{0,1,2},{3,4,5}};
+        this->skyboxmur4.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur4.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur4.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur4.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur4.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur4.normal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        this->skyboxmur4.indices={0,1,2,3,4,5};
+        this->skyboxmur4.triangles={{0,1,2},{3,4,5}};
         this->skyboxmur4.programID=this->root.programID;
-        
     }
 
     void textureSkybox(std::string f1,std::string f2,std::string f3,std::string f4,std::string f5,std::string f6){
